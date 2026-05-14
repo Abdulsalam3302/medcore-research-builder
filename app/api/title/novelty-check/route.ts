@@ -1,0 +1,19 @@
+import { bad, handleError, ok, safeJson } from "../../_utils";
+import type { TitleInputs } from "@/lib/types";
+import { runNoveltyCheck } from "@/lib/novelty";
+
+export const runtime = "nodejs";
+
+type Body = { inputs: TitleInputs };
+
+export async function POST(req: Request) {
+  try {
+    const body = await safeJson<Body>(req);
+    if (!body?.inputs) return bad("inputs is required");
+    if (!body.inputs.draftTitle?.trim()) return bad("inputs.draftTitle is required");
+    const report = await runNoveltyCheck({ inputs: body.inputs });
+    return ok(report);
+  } catch (e) {
+    return handleError(e);
+  }
+}
