@@ -61,12 +61,18 @@ export function SectionBuilder({
   const [contextNotes, setContextNotes] = useState("");
 
   const guidelineId = project.researchTypeResult?.primaryGuidelineId || "";
-  const guideline = useMemo(
+  const v1Guideline = useMemo(
     () => (guidelineId ? guidelineById(guidelineId) : undefined),
     [guidelineId]
   );
-
-  const checklist = guideline?.checklistPrompts[section] || [];
+  // Prefer the merged v2 checklist from researchTypeResult when available.
+  const checklist =
+    (project.researchTypeResult?.sectionChecklists?.[section] as string[] | undefined) ||
+    (v1Guideline?.checklistPrompts[section] as string[] | undefined) ||
+    [];
+  const guidelineDisplayName =
+    project.researchTypeResult?.primaryGuidelineName || v1Guideline?.name || "";
+  const guidelineAcronym = (guidelineDisplayName.match(/^[A-Z][A-Z0-9+\- ]+/)?.[0] || "Guideline").trim();
 
   async function refine() {
     if (!guidelineId) {
@@ -84,6 +90,7 @@ export function SectionBuilder({
           guidelineId,
           draft: project.sections[section] || "",
           contextNotes: contextNotes || undefined,
+          answers: project.researchTypeAnswers,
         }),
       });
       const data = (await r.json()) as LLMRefineResponse & { error?: string };
@@ -118,8 +125,8 @@ export function SectionBuilder({
             title={meta.title}
             subtitle={meta.help}
             right={
-              guideline ? (
-                <Badge kind="info">{guideline.acronym}</Badge>
+              guidelineId ? (
+                <Badge kind="info">{guidelineAcronym}</Badge>
               ) : (
                 <Badge kind="warn">Select guideline first</Badge>
               )
@@ -191,8 +198,8 @@ export function SectionBuilder({
           <CardHeader
             title="Checklist"
             subtitle={
-              guideline
-                ? `${guideline.name} — ${section}`
+              guidelineId
+                ? `${guidelineDisplayName} — ${section}`
                 : "Pick a research type to see the checklist."
             }
           />

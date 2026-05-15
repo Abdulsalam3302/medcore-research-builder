@@ -27,8 +27,15 @@ export function refineSectionPrompt(args: {
   checklist: string[];
   draft: string;
   contextNotes?: string;
+  contextBlock?: string;            // Context Bundle prompt block
+  journalHints?: string[];          // journal-style fragments
 }) {
-  return `Refine the manuscript ${args.section} below according to ${args.guidelineName}.
+  const ctx = args.contextBlock ? `\n\n${args.contextBlock}\n` : "";
+  const jh =
+    args.journalHints && args.journalHints.length
+      ? `\nJOURNAL STYLE HINTS:\n${args.journalHints.map((h) => "- " + h).join("\n")}\n`
+      : "";
+  return `Refine the manuscript ${args.section} below according to ${args.guidelineName}.${ctx}${jh}
 
 Reporting-guideline checklist items for this section (paraphrased):
 ${args.checklist.map((c, i) => `${i + 1}. ${c}`).join("\n") || "(none configured)"}
@@ -42,12 +49,12 @@ ${args.draft || "(empty)"}
 """
 
 Tasks:
-1. Rewrite the section in clear, scientific English suitable for a medical journal, preserving every fact the author provided. Do not invent numbers, citations, or outcomes.
-2. Reorganize content into the logical structure expected by the guideline.
+1. Rewrite the section in clear, scientific English suitable for the target journal, preserving every fact the author provided. Apply the journal style (reference format, abstract structure, key points, word budget) when relevant to this section. Do not invent numbers, citations, or outcomes.
+2. Reorganize content into the logical structure expected by the guideline + the journal's preferred sectioning.
 3. For each checklist item, mark whether it is covered, partial, or missing. If missing, list it under missingInformation.
 4. Flag any claims that need a citation under claimsNeedingCitation.
 5. Suggest specific PubMed / Crossref search queries the author could run to find supporting evidence.
-6. Warn about any overstatement, causal language unsupported by the design, or methodological red flags.
+6. Warn about any overstatement, causal language unsupported by the design, or methodological red flags — and any failure to satisfy journal-specific requirements (e.g., PPI statement, data sharing, Key Points).
 
 ${REFINE_SECTION_SCHEMA}
 
@@ -68,9 +75,16 @@ export function refineTitlePrompt(args: {
     draftTitle?: string;
   };
   mode: "generate" | "refine";
+  contextBlock?: string;
+  journalHints?: string[];
 }) {
   const i = args.inputs;
-  return `${args.mode === "refine" ? "Refine" : "Generate"} candidate manuscript titles based on the inputs below.
+  const ctx = args.contextBlock ? `\n\n${args.contextBlock}\n` : "";
+  const jh =
+    args.journalHints && args.journalHints.length
+      ? `\nJOURNAL TITLE HINTS:\n${args.journalHints.map((h) => "- " + h).join("\n")}\n`
+      : "";
+  return `${args.mode === "refine" ? "Refine" : "Generate"} candidate manuscript titles based on the inputs below.${ctx}${jh}
 
 Inputs:
 - Research type: ${i.researchType || "(unspecified)"}
@@ -155,8 +169,10 @@ Return ONLY this JSON:
 
 export function finalReportPrompt(args: {
   project: unknown;
+  contextBlock?: string;
 }) {
-  return `Produce a final compliance report for the manuscript project below. Use only data present in the project — do not invent results or references.
+  const ctx = args.contextBlock ? `\n\n${args.contextBlock}\n` : "";
+  return `Produce a final compliance report for the manuscript project below. Use only data present in the project — do not invent results or references.${ctx}
 
 Project (JSON):
 ${JSON.stringify(args.project, null, 2)}

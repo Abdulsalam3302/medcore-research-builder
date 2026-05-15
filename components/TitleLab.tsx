@@ -43,7 +43,7 @@ export function TitleLab({
       const r = await fetch("/api/llm/refine-title", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ mode, inputs }),
+        body: JSON.stringify({ mode, inputs, answers: project.researchTypeAnswers }),
       });
       const data = (await r.json()) as { candidates?: TitleCandidate[]; error?: string };
       if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);

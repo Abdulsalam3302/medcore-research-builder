@@ -1,45 +1,45 @@
 "use client";
 
-import { useState } from "react";
-import type { ProjectState, ResearchTypeAnswers, ResearchTypeResult } from "@/lib/types";
+import { useEffect, useMemo, useState } from "react";
+import type {
+  DesignCategory,
+  DesignSpec,
+  ExpandedNotes,
+  FeatureCategory,
+  FeatureSpec,
+  JournalSpec,
+  ManuscriptType,
+  ProjectState,
+  ResearchTypeAnswersV2,
+  ResearchTypeResult,
+} from "@/lib/types";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { Spinner } from "./ui/Spinner";
 
-const DESIGN_FAMILIES = [
-  "Randomized controlled trial (RCT)",
-  "Cohort study",
-  "Case-control study",
-  "Cross-sectional study",
-  "Systematic review / meta-analysis",
-  "Scoping review",
-  "Diagnostic accuracy study",
-  "Prognostic / prediction model study",
-  "Case report",
-  "Case series",
-  "Clinical practice guideline",
-  "Qualitative study",
-  "Mixed-methods study",
-  "Animal / preclinical study",
-  "Quality improvement project",
-  "Economic evaluation",
-  "Other / custom",
-];
-
-const FEATURES = [
-  "Artificial intelligence / machine learning",
-  "Diagnostic test",
-  "Prediction model",
-  "Digital / eHealth intervention",
-  "Routinely collected health data / registry",
-  "Equity-focused analysis",
-  "Harms / adverse events focus",
-  "Pediatric population",
-  "Surgical intervention",
-  "Imaging study",
-  "Genetic / molecular",
-  "Detailed intervention description (TIDieR)",
-];
+type RegistryPayload = {
+  designs: Array<
+    Pick<
+      DesignSpec,
+      | "id"
+      | "category"
+      | "name"
+      | "shortLabel"
+      | "primaryGuideline"
+      | "whenToUseChecklist"
+      | "manuscriptSections"
+      | "supportingDocuments"
+      | "commonExtensions"
+      | "pitfalls"
+      | "legacyGuidelines"
+      | "appliesTo"
+    >
+  >;
+  designCategories: { id: DesignCategory; label: string; emoji: string }[];
+  journals: JournalSpec[];
+  features: FeatureSpec[];
+  featureCategories: { id: FeatureCategory; label: string; emoji: string }[];
+};
 
 export function ResearchTypeWizard({
   project,
@@ -49,21 +49,36 @@ export function ResearchTypeWizard({
   update: (fn: (p: ProjectState) => ProjectState) => void;
 }) {
   const answers = project.researchTypeAnswers;
-  const [busy, setBusy] = useState(false);
+  const [registry, setRegistry] = useState<RegistryPayload | null>(null);
+  const [loadingReg, setLoadingReg] = useState(true);
+  const [busy, setBusy] = useState<"recommend" | "expand" | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [step, setStep] = useState(0);
 
-  function setAns(patch: Partial<ResearchTypeAnswers>) {
+  useEffect(() => {
+    fetch("/api/registry")
+      .then((r) => r.json())
+      .then((d: RegistryPayload) => setRegistry(d))
+      .catch(() => setErr("Failed to load registry"))
+      .finally(() => setLoadingReg(false));
+  }, []);
+
+  function setAns(patch: Partial<ResearchTypeAnswersV2>) {
     update((p) => ({ ...p, researchTypeAnswers: { ...p.researchTypeAnswers, ...patch } }));
   }
-  function toggleFeature(name: string) {
-    const cur = new Set(answers.features || []);
-    if (cur.has(name)) cur.delete(name);
-    else cur.add(name);
-    setAns({ features: Array.from(cur) });
+  function toggleFeature(id: string) {
+    const cur = new Set(answers.featureIds || []);
+    if (cur.has(id)) cur.delete(id);
+    else cur.add(id);
+    setAns({ featureIds: Array.from(cur) });
   }
 
   async function recommend() {
-    setBusy(true);
+    if (!answers.designId) {
+      setErr("Pick a study design first.");
+      return;
+    }
+    setBusy("recommend");
     setErr(null);
     try {
       const r = await fetch("/api/llm/research-type", {
@@ -71,214 +86,961 @@ export function ResearchTypeWizard({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ answers }),
       });
-      const data = (await r.json()) as ResearchTypeResult & { _source?: string; error?: string };
+      const data = (await r.json()) as ResearchTypeResult & { error?: string };
       if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
       update((p) => ({ ...p, researchTypeResult: data }));
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
-  const result = project.researchTypeResult;
+  async function expandNotes() {
+    setBusy("expand");
+    setErr(null);
+    try {
+      const r = await fetch("/api/llm/expand-notes", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ answers }),
+      });
+      const data = (await r.json()) as { expandedNotes?: ExpandedNotes; error?: string };
+      if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+      setAns({ expandedNotes: data.expandedNotes });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  }
 
+  /* ---------- Derived state ---------- */
+  const selectedDesign = useMemo(
+    () => registry?.designs.find((d) => d.id === answers.designId),
+    [registry, answers.designId]
+  );
+  const selectedJournal = useMemo(
+    () => registry?.journals.find((j) => j.id === answers.journalId),
+    [registry, answers.journalId]
+  );
+  const selectedFeatures = useMemo(
+    () => registry?.features.filter((f) => answers.featureIds?.includes(f.id)) || [],
+    [registry, answers.featureIds]
+  );
+
+  /* ---------- Steps ---------- */
+  const steps = [
+    { id: "design", label: "Design", done: !!answers.designId },
+    { id: "type", label: "Manuscript type", done: !!answers.manuscriptType },
+    { id: "journal", label: "Journal", done: !!answers.journalId },
+    { id: "features", label: "Features", done: (answers.featureIds || []).length > 0 || step >= 4 },
+    { id: "notes", label: "Notes", done: !!answers.notes || step >= 5 },
+    { id: "review", label: "Review", done: !!project.researchTypeResult },
+  ];
+
+  if (loadingReg) {
+    return (
+      <Card>
+        <CardBody>
+          <div className="muted flex items-center gap-2">
+            <Spinner dark /> Loading guideline registry…
+          </div>
+        </CardBody>
+      </Card>
+    );
+  }
+  if (!registry) {
+    return (
+      <Card>
+        <CardBody>
+          <div className="text-med-bad">Registry failed to load. Refresh to retry.</div>
+        </CardBody>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="grid gap-5">
+      {/* Stepper */}
+      <Card>
+        <CardHeader
+          title="Research Type Wizard"
+          subtitle="Pick design → manuscript type → journal → features → notes → review. Each step pulls in the right checklist, supporting documents, and journal style automatically."
+          right={
+            <button
+              className="btn-ghost text-med-brand text-xs"
+              onClick={() =>
+                setAns({
+                  designId: "interv.rct.parallel",
+                  manuscriptType: "original_investigation",
+                  journalId: "bmj",
+                  featureIds: ["intervention.tidier", "pp.gripp2", "open.data-sharing"],
+                  notes:
+                    "Adults aged 18+ with heart failure (NYHA II-III) randomised 1:1 to a structured discharge education programme vs usual care across 6 tertiary teaching hospitals between 2022 and 2024. Primary outcome: 30-day all-cause readmission. Sample size 800. Ethics approved (REC ref 22/045). Registered on ISRCTN.",
+                })
+              }
+            >
+              Load demo
+            </button>
+          }
+        />
+        <CardBody>
+          <Stepper steps={steps} step={step} onJump={setStep} />
+        </CardBody>
+      </Card>
+
+      {/* STEP 1: DESIGN */}
+      {step === 0 && (
+        <DesignPicker
+          registry={registry}
+          selectedId={answers.designId}
+          onSelect={(id) => {
+            setAns({ designId: id });
+            setStep(1);
+          }}
+          selected={selectedDesign}
+        />
+      )}
+
+      {/* STEP 2: MANUSCRIPT TYPE */}
+      {step === 1 && (
+        <ManuscriptTypePicker
+          journal={selectedJournal}
+          selected={answers.manuscriptType}
+          onSelect={(t) => {
+            setAns({ manuscriptType: t });
+            setStep(2);
+          }}
+          onBack={() => setStep(0)}
+        />
+      )}
+
+      {/* STEP 3: JOURNAL */}
+      {step === 2 && (
+        <JournalPicker
+          journals={registry.journals}
+          selectedId={answers.journalId}
+          onSelect={(id) => {
+            setAns({ journalId: id });
+            setStep(3);
+          }}
+          onBack={() => setStep(1)}
+        />
+      )}
+
+      {/* STEP 4: FEATURES */}
+      {step === 3 && (
+        <FeaturesPicker
+          registry={registry}
+          selectedIds={answers.featureIds || []}
+          onToggle={toggleFeature}
+          onContinue={() => setStep(4)}
+          onBack={() => setStep(2)}
+        />
+      )}
+
+      {/* STEP 5: NOTES */}
+      {step === 4 && (
+        <NotesEditor
+          notes={answers.notes || ""}
+          onChange={(t) => setAns({ notes: t })}
+          expanded={answers.expandedNotes}
+          onExpand={expandNotes}
+          busy={busy === "expand"}
+          err={err}
+          onContinue={() => setStep(5)}
+          onBack={() => setStep(3)}
+          onApplyClarification={(q, a) => {
+            const e = answers.expandedNotes || { confidence: "medium" as const };
+            const newNotes = (answers.notes || "") + `\n${q} ${a}`;
+            const remaining = (e.clarifyingQuestions || []).filter((x) => x !== q);
+            setAns({
+              notes: newNotes,
+              expandedNotes: { ...e, clarifyingQuestions: remaining },
+            });
+          }}
+        />
+      )}
+
+      {/* STEP 6: REVIEW */}
+      {step === 5 && (
+        <ReviewStep
+          design={selectedDesign}
+          journal={selectedJournal}
+          features={selectedFeatures}
+          answers={answers}
+          onBack={() => setStep(4)}
+          onRecommend={recommend}
+          busy={busy === "recommend"}
+          result={project.researchTypeResult}
+          err={err}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   Stepper
+   ============================================================ */
+function Stepper({
+  steps,
+  step,
+  onJump,
+}: {
+  steps: { id: string; label: string; done: boolean }[];
+  step: number;
+  onJump: (i: number) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1 overflow-x-auto pb-1">
+      {steps.map((s, i) => {
+        const active = i === step;
+        const done = s.done && !active;
+        return (
+          <button
+            key={s.id}
+            onClick={() => onJump(i)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm shrink-0 ${
+              active
+                ? "bg-med-brand text-white"
+                : done
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            <span className={`h-5 w-5 rounded-full flex items-center justify-center text-[11px] font-semibold ${
+              active ? "bg-white/20" : done ? "bg-emerald-500 text-white" : "bg-white text-slate-500"
+            }`}>{done ? "✓" : i + 1}</span>
+            <span>{s.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ============================================================
+   Step 1 — Design picker (two-level category → specific design)
+   ============================================================ */
+function DesignPicker({
+  registry,
+  selectedId,
+  onSelect,
+  selected,
+}: {
+  registry: RegistryPayload;
+  selectedId?: string;
+  onSelect: (id: string) => void;
+  selected?: RegistryPayload["designs"][number];
+}) {
+  const [cat, setCat] = useState<DesignCategory>(
+    (selected?.category as DesignCategory) || "interventional"
+  );
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return registry.designs.filter((d) => d.category === cat);
+    return registry.designs.filter(
+      (d) =>
+        d.name.toLowerCase().includes(q) ||
+        d.shortLabel.toLowerCase().includes(q) ||
+        d.appliesTo.some((t) => t.includes(q)) ||
+        d.primaryGuideline.acronym.toLowerCase().includes(q)
+    );
+  }, [registry.designs, cat, search]);
+
+  return (
+    <div className="grid lg:grid-cols-3 gap-5">
+      <div className="lg:col-span-1">
+        <Card>
+          <CardHeader title="1. Category" subtitle={`${registry.designs.length} designs · ${registry.designCategories.length} categories`} />
+          <CardBody>
+            <input
+              className="input mb-3"
+              placeholder="Search any design, guideline, or keyword…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <nav className="grid gap-1 max-h-[480px] overflow-y-auto">
+              {registry.designCategories.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => {
+                    setSearch("");
+                    setCat(c.id);
+                  }}
+                  className={`flex items-center justify-between text-left px-3 py-2 rounded-md text-sm ${
+                    cat === c.id && !search
+                      ? "bg-med-brand text-white"
+                      : "hover:bg-slate-100 text-med-ink"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span>{c.emoji}</span>
+                    <span>{c.label}</span>
+                  </span>
+                  <span className="text-xs opacity-60">
+                    {registry.designs.filter((d) => d.category === c.id).length}
+                  </span>
+                </button>
+              ))}
+            </nav>
+          </CardBody>
+        </Card>
+      </div>
+      <div className="lg:col-span-2">
+        <Card>
+          <CardHeader
+            title="2. Specific design"
+            subtitle="Each design carries its own checklist, eligibility criteria, supporting documents, and guideline."
+          />
+          <CardBody className="grid gap-3 max-h-[600px] overflow-y-auto">
+            {filtered.length === 0 && <div className="muted">No designs match.</div>}
+            {filtered.map((d) => (
+              <button
+                key={d.id}
+                onClick={() => onSelect(d.id)}
+                className={`text-left border rounded-lg p-3 transition ${
+                  selectedId === d.id
+                    ? "border-med-brand bg-sky-50"
+                    : "border-med-line hover:bg-slate-50"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="font-medium text-med-ink">{d.name}</div>
+                    <div className="muted mt-0.5">
+                      {d.primaryGuideline.acronym}
+                      {d.primaryGuideline.year ? ` · ${d.primaryGuideline.year}` : ""}
+                    </div>
+                  </div>
+                  {d.legacyGuidelines?.some((l) => l.deprecated) && (
+                    <Badge kind="info">supersedes {d.legacyGuidelines.find((l) => l.deprecated)?.acronym}</Badge>
+                  )}
+                </div>
+                <div className="text-xs text-med-sub mt-2 line-clamp-2">
+                  When to use: {d.whenToUseChecklist.slice(0, 2).join(" · ")}
+                </div>
+              </button>
+            ))}
+          </CardBody>
+        </Card>
+        {selected && <DesignDetail design={selected} />}
+      </div>
+    </div>
+  );
+}
+
+function DesignDetail({ design }: { design: RegistryPayload["designs"][number] }) {
+  return (
+    <Card className="mt-4">
+      <CardHeader
+        title={design.name}
+        subtitle={`${design.primaryGuideline.acronym} ${design.primaryGuideline.year ? `(${design.primaryGuideline.year})` : ""}`}
+        right={
+          <a
+            className="text-med-brand text-xs hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
+            href={design.primaryGuideline.officialUrl}
+          >
+            Official guideline →
+          </a>
+        }
+      />
+      <CardBody className="grid gap-4">
+        <Accordion title="Eligibility / 'when to use' criteria" defaultOpen>
+          <ul className="list-disc list-inside text-sm text-med-sub space-y-1">
+            {design.whenToUseChecklist.map((c, i) => (
+              <li key={i}>{c}</li>
+            ))}
+          </ul>
+        </Accordion>
+        <Accordion title="Supporting documents you'll need">
+          <ul className="text-sm text-med-sub grid gap-2">
+            {design.supportingDocuments.map((d) => (
+              <li key={d.id} className="border border-med-line rounded p-2">
+                <div className="font-medium text-med-ink text-sm">
+                  {d.name}
+                  {d.url && (
+                    <a
+                      className="ml-2 text-med-brand hover:underline text-xs"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href={d.url}
+                    >
+                      open →
+                    </a>
+                  )}
+                </div>
+                <div className="text-xs mt-0.5">{d.description}</div>
+                {d.whenRequired && (
+                  <div className="text-[11px] text-med-sub mt-1 italic">{d.whenRequired}</div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </Accordion>
+        <Accordion title="Common extensions / sub-guidelines">
+          <ul className="text-sm text-med-sub grid gap-1">
+            {design.commonExtensions.map((e, i) => (
+              <li key={i} className="border border-med-line rounded p-2">
+                <div className="font-medium text-med-ink">{e.acronym} — {e.fullName}</div>
+                <div className="text-xs">When: {e.whenToUse}</div>
+              </li>
+            ))}
+            {design.commonExtensions.length === 0 && <div className="muted">No standard extensions.</div>}
+          </ul>
+        </Accordion>
+        <Accordion title="Top reporting pitfalls">
+          <ul className="list-disc list-inside text-sm text-med-sub space-y-1">
+            {design.pitfalls.map((p, i) => (
+              <li key={i}>{p}</li>
+            ))}
+            {design.pitfalls.length === 0 && <div className="muted">—</div>}
+          </ul>
+        </Accordion>
+      </CardBody>
+    </Card>
+  );
+}
+
+/* ============================================================
+   Step 2 — Manuscript type
+   ============================================================ */
+function ManuscriptTypePicker({
+  journal,
+  selected,
+  onSelect,
+  onBack,
+}: {
+  journal?: JournalSpec;
+  selected?: ManuscriptType;
+  onSelect: (t: ManuscriptType) => void;
+  onBack: () => void;
+}) {
+  const types: { id: ManuscriptType; label: string; desc: string }[] = [
+    { id: "original_investigation", label: "Original investigation / research article", desc: "Full research report (main RCT, cohort, etc.)" },
+    { id: "research_letter", label: "Research letter / brief report", desc: "Shorter version with limited word count." },
+    { id: "systematic_review", label: "Systematic review / meta-analysis", desc: "Full SR with synthesis." },
+    { id: "case_report", label: "Case report", desc: "One patient or small case series." },
+    { id: "review", label: "Narrative or scoping review", desc: "Non-systematic review." },
+    { id: "protocol", label: "Study protocol", desc: "Pre-conduct plan." },
+    { id: "viewpoint", label: "Viewpoint / commentary", desc: "Opinion or perspective piece." },
+    { id: "correspondence", label: "Correspondence", desc: "Letter to the editor." },
+  ];
+  return (
+    <Card>
+      <CardHeader title="Manuscript type" subtitle="Drives word limits, abstract structure, and figure caps." right={<button className="btn-ghost text-xs" onClick={onBack}>← Back</button>} />
+      <CardBody className="grid sm:grid-cols-2 gap-3">
+        {types.map((t) => {
+          const active = selected === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => onSelect(t.id)}
+              className={`text-left border rounded-lg p-3 ${
+                active ? "border-med-brand bg-sky-50" : "border-med-line hover:bg-slate-50"
+              }`}
+            >
+              <div className="font-medium text-med-ink">{t.label}</div>
+              <div className="muted mt-1">{t.desc}</div>
+              {journal &&
+                journal.manuscriptTypes.find((m) => m.type === t.id) && (
+                  <div className="text-xs mt-2 text-med-sub">
+                    {journal.name}: {journal.manuscriptTypes.find((m) => m.type === t.id)?.mainTextWordLimit || "—"} words ·
+                    {" "}
+                    {journal.manuscriptTypes.find((m) => m.type === t.id)?.referencesMax || "—"} refs ·
+                    {" "}
+                    {journal.manuscriptTypes.find((m) => m.type === t.id)?.displayItemsMax || "—"} display items
+                  </div>
+                )}
+            </button>
+          );
+        })}
+      </CardBody>
+    </Card>
+  );
+}
+
+/* ============================================================
+   Step 3 — Journal picker
+   ============================================================ */
+function JournalPicker({
+  journals,
+  selectedId,
+  onSelect,
+  onBack,
+}: {
+  journals: JournalSpec[];
+  selectedId?: string;
+  onSelect: (id: string) => void;
+  onBack: () => void;
+}) {
+  const [q, setQ] = useState("");
+  const [otherName, setOtherName] = useState("");
+
+  const tierA = journals.filter((j) => j.tier === "A");
+  const tierB = journals.filter((j) => j.tier === "B");
+  const tierC = journals.filter((j) => j.tier === "C");
+  const filtered = useMemo(() => {
+    const t = q.trim().toLowerCase();
+    if (!t) return tierA;
+    return [...tierA, ...tierB].filter(
+      (j) => j.name.toLowerCase().includes(t) || j.publisher.toLowerCase().includes(t) || j.id.includes(t)
+    );
+  }, [tierA, tierB, q]);
+
+  return (
+    <Card>
+      <CardHeader
+        title="Target journal"
+        subtitle="Locks reference style, abstract structure, word limits, figure rules, and reviewer/editor lens for every downstream step."
+        right={<button className="btn-ghost text-xs" onClick={onBack}>← Back</button>}
+      />
+      <CardBody className="grid gap-4">
+        <input
+          className="input"
+          placeholder="Search journal or publisher…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <section>
+          <div className="label">Top medical journals (hand-curated)</div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-2">
+            {filtered.map((j) => (
+              <JournalCard key={j.id} j={j} active={selectedId === j.id} onSelect={onSelect} />
+            ))}
+          </div>
+        </section>
+        {!q && (
+          <section>
+            <div className="label">Publisher templates (generic per-publisher style)</div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-2">
+              {tierB.map((j) => (
+                <JournalCard key={j.id} j={j} active={selectedId === j.id} onSelect={onSelect} />
+              ))}
+            </div>
+          </section>
+        )}
+        <section>
+          <div className="label">Other journal</div>
+          <div className="border border-med-line rounded-lg p-3 grid gap-2">
+            <div className="text-xs text-med-sub">
+              Paste a journal name. We'll apply an ICMJE-conformant fallback style. Reviewer/editor lenses will be generic.
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <input
+                className="input flex-1 min-w-[200px]"
+                placeholder="e.g. Diabetes Care"
+                value={otherName}
+                onChange={(e) => setOtherName(e.target.value)}
+              />
+              <button
+                className="btn-primary"
+                disabled={!otherName.trim()}
+                onClick={() => onSelect(`other:${otherName.trim()}`)}
+              >
+                Use this journal
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={() => onSelect("icmje-generic")}
+              >
+                Generic ICMJE
+              </button>
+            </div>
+          </div>
+        </section>
+      </CardBody>
+    </Card>
+  );
+}
+
+function JournalCard({
+  j,
+  active,
+  onSelect,
+}: {
+  j: JournalSpec;
+  active: boolean;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <button
+      onClick={() => onSelect(j.id)}
+      className={`text-left border rounded-lg p-3 transition ${
+        active ? "border-med-brand bg-sky-50" : "border-med-line hover:bg-slate-50"
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="font-medium text-med-ink">{j.name}</div>
+        <Badge kind="neutral">{j.tier}</Badge>
+      </div>
+      <div className="muted text-xs mt-0.5">{j.publisher}{j.impactFactor ? ` · IF ${j.impactFactor}` : ""}</div>
+      <div className="text-[11px] text-med-sub mt-2 line-clamp-2">{j.scope || j.notes || "—"}</div>
+    </button>
+  );
+}
+
+/* ============================================================
+   Step 4 — Features
+   ============================================================ */
+function FeaturesPicker({
+  registry,
+  selectedIds,
+  onToggle,
+  onContinue,
+  onBack,
+}: {
+  registry: RegistryPayload;
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+  onContinue: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <Card>
+      <CardHeader
+        title="Special features (optional)"
+        subtitle="Each toggled feature attaches its reporting guideline, supporting documents, and an agent-hint that's injected into every refinement."
+        right={
+          <div className="flex gap-2">
+            <button className="btn-ghost text-xs" onClick={onBack}>← Back</button>
+            <button className="btn-primary" onClick={onContinue}>Continue</button>
+          </div>
+        }
+      />
+      <CardBody className="grid gap-5">
+        {registry.featureCategories.map((c) => {
+          const list = registry.features.filter((f) => f.category === c.id);
+          if (list.length === 0) return null;
+          return (
+            <section key={c.id}>
+              <div className="flex items-center gap-2 mb-2">
+                <span>{c.emoji}</span>
+                <div className="text-sm font-semibold text-med-ink">{c.label}</div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-2">
+                {list.map((f) => {
+                  const on = selectedIds.includes(f.id);
+                  return (
+                    <button
+                      key={f.id}
+                      onClick={() => onToggle(f.id)}
+                      className={`text-left border rounded-lg p-3 transition ${
+                        on ? "border-med-brand bg-sky-50" : "border-med-line hover:bg-slate-50"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="font-medium text-med-ink text-sm">{f.name}</div>
+                        {on && <Badge kind="info">on</Badge>}
+                      </div>
+                      <div className="muted text-xs mt-1">{f.description}</div>
+                      {f.addExtensions && f.addExtensions.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {f.addExtensions.map((e, i) => (
+                            <Badge key={i} kind="neutral">+ {e.acronym}</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+      </CardBody>
+    </Card>
+  );
+}
+
+/* ============================================================
+   Step 5 — Notes (with anticipator)
+   ============================================================ */
+function NotesEditor({
+  notes,
+  onChange,
+  expanded,
+  onExpand,
+  busy,
+  err,
+  onContinue,
+  onBack,
+  onApplyClarification,
+}: {
+  notes: string;
+  onChange: (s: string) => void;
+  expanded?: ExpandedNotes;
+  onExpand: () => void;
+  busy: boolean;
+  err: string | null;
+  onContinue: () => void;
+  onBack: () => void;
+  onApplyClarification: (q: string, a: string) => void;
+}) {
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  return (
+    <div className="grid lg:grid-cols-3 gap-5">
+      <div className="lg:col-span-2">
+        <Card>
+          <CardHeader
+            title="Notes for the assistant"
+            subtitle="Free-text. We'll never invent details; the Expand button structures what you wrote and surfaces clarifying questions."
+            right={
+              <div className="flex gap-2">
+                <button className="btn-ghost text-xs" onClick={onBack}>← Back</button>
+                <button className="btn-primary" onClick={onContinue}>Continue</button>
+              </div>
+            }
+          />
+          <CardBody className="grid gap-3">
+            <textarea
+              className="textarea min-h-[260px]"
+              placeholder="Population, intervention/exposure, comparator, outcome, setting, time period, sample size, data source, ethics, registration, funding — anything that isn't obvious from your earlier choices."
+              value={notes}
+              onChange={(e) => onChange(e.target.value)}
+            />
+            <div className="flex items-center gap-2">
+              <button className="btn-secondary" onClick={onExpand} disabled={busy || !notes.trim()}>
+                {busy && <Spinner dark />} ✨ Expand notes
+              </button>
+              {err && <div className="text-sm text-med-bad">{err}</div>}
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+      <div>
+        {expanded ? (
+          <Card>
+            <CardHeader
+              title="Structured context"
+              right={<Badge kind={expanded.confidence === "high" ? "good" : expanded.confidence === "medium" ? "info" : "warn"}>{expanded.confidence}</Badge>}
+            />
+            <CardBody className="grid gap-2 text-sm">
+              <KV k="Population" v={expanded.population} />
+              <KV k="Condition" v={expanded.condition} />
+              <KV k="Intervention" v={expanded.intervention} />
+              <KV k="Exposure" v={expanded.exposure} />
+              <KV k="Comparator" v={expanded.comparator} />
+              <KV k="Primary outcome" v={expanded.primaryOutcome} />
+              <KV k="Secondary outcomes" v={expanded.secondaryOutcomes?.join("; ")} />
+              <KV k="Setting" v={expanded.setting} />
+              <KV k="Country" v={expanded.country} />
+              <KV k="Time period" v={expanded.timePeriod} />
+              <KV k="Sample size" v={expanded.sampleSize} />
+              <KV k="Data source" v={expanded.dataSource} />
+              <KV k="Ethics" v={expanded.ethicsApproval} />
+              <KV k="Registration" v={expanded.registration} />
+              <KV k="Funding" v={expanded.funding} />
+              {expanded.conflictsDetected && expanded.conflictsDetected.length > 0 && (
+                <div className="mt-2 border border-amber-200 bg-amber-50 rounded-md p-2">
+                  <div className="text-xs font-semibold text-amber-800 mb-1">Conflicts detected</div>
+                  <ul className="list-disc list-inside text-xs text-amber-900 space-y-1">
+                    {expanded.conflictsDetected.map((c, i) => <li key={i}>{c}</li>)}
+                  </ul>
+                </div>
+              )}
+              {expanded.clarifyingQuestions && expanded.clarifyingQuestions.length > 0 && (
+                <div className="mt-2">
+                  <div className="text-xs font-semibold mb-1">Clarifying questions</div>
+                  <ul className="grid gap-2 text-xs">
+                    {expanded.clarifyingQuestions.map((q, i) => (
+                      <li key={i} className="border border-med-line rounded p-2">
+                        <div className="text-med-ink mb-1">{q}</div>
+                        <div className="flex gap-2">
+                          <input
+                            className="input text-xs"
+                            placeholder="Your answer"
+                            value={answers[q] || ""}
+                            onChange={(e) => setAnswers({ ...answers, [q]: e.target.value })}
+                          />
+                          <button
+                            className="btn-secondary text-xs"
+                            disabled={!answers[q]?.trim()}
+                            onClick={() => {
+                              onApplyClarification(q, answers[q]);
+                              const copy = { ...answers };
+                              delete copy[q];
+                              setAnswers(copy);
+                            }}
+                          >
+                            Add
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        ) : (
+          <Card>
+            <CardBody>
+              <div className="muted text-sm">
+                Click <strong>Expand notes</strong> to structure what you wrote into PICO-style fields, detect conflicts with your design, and surface clarifying questions.
+              </div>
+            </CardBody>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function KV({ k, v }: { k: string; v?: string }) {
+  if (!v) return null;
+  return (
+    <div className="flex gap-2 text-sm">
+      <span className="text-med-sub min-w-[10ch]">{k}:</span>
+      <span className="text-med-ink break-words">{v}</span>
+    </div>
+  );
+}
+
+/* ============================================================
+   Step 6 — Review (recommend / show result)
+   ============================================================ */
+function ReviewStep({
+  design,
+  journal,
+  features,
+  answers,
+  onBack,
+  onRecommend,
+  busy,
+  result,
+  err,
+}: {
+  design?: RegistryPayload["designs"][number];
+  journal?: JournalSpec;
+  features: FeatureSpec[];
+  answers: ResearchTypeAnswersV2;
+  onBack: () => void;
+  onRecommend: () => void;
+  busy: boolean;
+  result?: ResearchTypeResult;
+  err: string | null;
+}) {
+  const customJournalName = (answers.journalId || "").startsWith("other:")
+    ? answers.journalId!.slice(6)
+    : undefined;
   return (
     <div className="grid gap-5">
       <Card>
         <CardHeader
-          title="Research Type Wizard"
-          subtitle="Answer a few questions to pick the right EQUATOR reporting guideline."
-        />
-        <CardBody className="grid md:grid-cols-2 gap-5">
-          <div>
-            <label className="label">Study design family</label>
-            <select
-              className="input"
-              value={answers.designFamily || ""}
-              onChange={(e) => setAns({ designFamily: e.target.value })}
-            >
-              <option value="">— Select —</option>
-              {DESIGN_FAMILIES.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="label">Target journal / style (optional)</label>
-            <input
-              className="input"
-              value={answers.targetJournal || ""}
-              onChange={(e) => setAns({ targetJournal: e.target.value })}
-              placeholder="e.g. BMJ, JAMA, Lancet"
-            />
-          </div>
-
-          <div className="md:col-span-2 grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            <Checkbox
-              checked={!!answers.isOriginalResearch}
-              onChange={(v) => setAns({ isOriginalResearch: v })}
-              label="Original research"
-            />
-            <Checkbox
-              checked={!!answers.isProtocol}
-              onChange={(v) => setAns({ isProtocol: v })}
-              label="Protocol (not completed study)"
-            />
-            <Checkbox
-              checked={!!answers.isReview}
-              onChange={(v) => setAns({ isReview: v })}
-              label="Review / synthesis"
-            />
-            <Checkbox
-              checked={!!answers.isCaseReport}
-              onChange={(v) => setAns({ isCaseReport: v })}
-              label="Case report / small series"
-            />
-            <Checkbox
-              checked={!!answers.isGuideline}
-              onChange={(v) => setAns({ isGuideline: v })}
-              label="Clinical practice guideline"
-            />
-            <Checkbox
-              checked={!!answers.isQualityImprovement}
-              onChange={(v) => setAns({ isQualityImprovement: v })}
-              label="Quality improvement"
-            />
-            <Checkbox
-              checked={!!answers.isEconomic}
-              onChange={(v) => setAns({ isEconomic: v })}
-              label="Economic evaluation"
-            />
-            <Checkbox
-              checked={!!answers.isAnimal}
-              onChange={(v) => setAns({ isAnimal: v })}
-              label="Animal / preclinical"
-            />
-            <Checkbox
-              checked={!!answers.isQualitative}
-              onChange={(v) => setAns({ isQualitative: v })}
-              label="Qualitative"
-            />
-            <Checkbox
-              checked={!!answers.isMixedMethods}
-              onChange={(v) => setAns({ isMixedMethods: v })}
-              label="Mixed methods"
-            />
-            <Checkbox
-              checked={!!answers.hasHumanParticipants}
-              onChange={(v) => setAns({ hasHumanParticipants: v })}
-              label="Human participants"
-            />
-            <Checkbox
-              checked={!!answers.ethicsRequired}
-              onChange={(v) => setAns({ ethicsRequired: v })}
-              label="Ethics approval required"
-            />
-            <Checkbox
-              checked={!!answers.registrationRequired}
-              onChange={(v) => setAns({ registrationRequired: v })}
-              label="Trial / review registration required"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="label">Special features (optional)</label>
-            <div className="flex flex-wrap gap-2">
-              {FEATURES.map((f) => {
-                const on = (answers.features || []).includes(f);
-                return (
-                  <button
-                    key={f}
-                    type="button"
-                    onClick={() => toggleFeature(f)}
-                    className={`pill-tab ${on ? "pill-tab-active" : ""}`}
-                  >
-                    {f}
-                  </button>
-                );
-              })}
+          title="Review & confirm"
+          subtitle="Generate the merged checklist, supporting documents, warnings, and journal-aware lenses."
+          right={
+            <div className="flex gap-2">
+              <button className="btn-ghost text-xs" onClick={onBack}>← Back</button>
+              <button className="btn-primary" onClick={onRecommend} disabled={busy || !design}>
+                {busy && <Spinner />} Build my checklist
+              </button>
             </div>
+          }
+        />
+        <CardBody className="grid md:grid-cols-2 gap-4 text-sm">
+          <div className="border border-med-line rounded-lg p-3">
+            <div className="label">Design</div>
+            <div className="font-medium text-med-ink">{design?.name || "—"}</div>
+            <div className="muted">{design?.primaryGuideline.acronym} {design?.primaryGuideline.year}</div>
           </div>
-
-          <div className="md:col-span-2">
-            <label className="label">Notes for the assistant (optional)</label>
-            <textarea
-              className="textarea"
-              value={answers.notes || ""}
-              onChange={(e) => setAns({ notes: e.target.value })}
-              placeholder="Anything unusual about your design, population, or constraints."
-            />
+          <div className="border border-med-line rounded-lg p-3">
+            <div className="label">Manuscript type</div>
+            <div className="font-medium text-med-ink">{answers.manuscriptType || "—"}</div>
           </div>
-
-          <div className="md:col-span-2 flex items-center gap-3">
-            <button className="btn-primary" onClick={recommend} disabled={busy || !answers.designFamily}>
-              {busy ? <Spinner /> : null}
-              Recommend reporting guideline
-            </button>
-            {err && <div className="text-sm text-med-bad">{err}</div>}
+          <div className="border border-med-line rounded-lg p-3">
+            <div className="label">Journal</div>
+            <div className="font-medium text-med-ink">{journal?.name || customJournalName || answers.journalId || "—"}</div>
+            {journal && <div className="muted">{journal.publisher}</div>}
+          </div>
+          <div className="border border-med-line rounded-lg p-3">
+            <div className="label">Special features</div>
+            {features.length === 0 ? (
+              <div className="muted">None</div>
+            ) : (
+              <div className="flex flex-wrap gap-1">
+                {features.map((f) => (
+                  <Badge key={f.id} kind="info">{f.name}</Badge>
+                ))}
+              </div>
+            )}
           </div>
         </CardBody>
+        {err && <div className="px-5 pb-4 text-sm text-med-bad">{err}</div>}
       </Card>
 
       {result && (
         <Card>
           <CardHeader
-            title="Recommended guideline"
+            title="Recommended guideline & checklist"
             subtitle={result.primaryGuidelineName}
-            right={
-              <Badge kind="info">{result.requiredSections.length} required sections</Badge>
-            }
+            right={<Badge kind="good">{result.requiredSections.length} sections</Badge>}
           />
           <CardBody className="grid gap-4">
             {result.warnings.length > 0 && (
               <div className="border border-amber-200 bg-amber-50 rounded-lg p-3 text-sm text-amber-800">
                 <div className="font-semibold mb-1">Warnings</div>
                 <ul className="list-disc list-inside space-y-1">
-                  {result.warnings.map((w, i) => (
-                    <li key={i}>{w}</li>
-                  ))}
+                  {result.warnings.map((w, i) => <li key={i}>{w}</li>)}
                 </ul>
               </div>
             )}
-            {result.notes && <p className="muted">{result.notes}</p>}
+            {result.notes && <div className="muted text-xs italic">{result.notes}</div>}
             {result.possibleExtensionIds.length > 0 && (
-              <div>
-                <div className="label">Possible extensions / sub-guidelines</div>
-                <div className="flex flex-wrap gap-2">
+              <Accordion title={`Extensions in play (${result.possibleExtensionIds.length})`}>
+                <div className="flex flex-wrap gap-1">
                   {result.possibleExtensionIds.map((e) => (
                     <Badge key={e} kind="neutral">{e}</Badge>
                   ))}
                 </div>
-              </div>
+              </Accordion>
             )}
-            <div>
-              <div className="label">Required manuscript sections</div>
-              <div className="flex flex-wrap gap-2">
-                {result.requiredSections.map((s) => (
-                  <Badge key={s} kind="info">{s}</Badge>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="label">Section-specific checklist prompts</div>
+            {result.supportingDocuments && result.supportingDocuments.length > 0 && (
+              <Accordion title={`Supporting documents needed (${result.supportingDocuments.length})`}>
+                <ul className="grid gap-2 text-sm">
+                  {result.supportingDocuments.map((d) => (
+                    <li key={d.id} className="border border-med-line rounded p-2">
+                      <div className="font-medium text-med-ink">
+                        {d.name}
+                        {d.url && (
+                          <a className="ml-2 text-med-brand hover:underline text-xs" target="_blank" rel="noopener noreferrer" href={d.url}>
+                            open →
+                          </a>
+                        )}
+                      </div>
+                      <div className="text-xs">{d.description}</div>
+                      {d.whenRequired && <div className="text-[11px] italic text-med-sub mt-1">{d.whenRequired}</div>}
+                    </li>
+                  ))}
+                </ul>
+              </Accordion>
+            )}
+            <Accordion title="Merged section-by-section checklist" defaultOpen>
               <div className="grid md:grid-cols-2 gap-3">
                 {Object.entries(result.sectionChecklists).map(([sec, items]) => (
                   <div key={sec} className="border border-med-line rounded-lg p-3 bg-slate-50">
-                    <div className="text-sm font-semibold capitalize mb-1.5 text-med-ink">
-                      {sec}
-                    </div>
+                    <div className="text-sm font-semibold capitalize mb-1.5 text-med-ink">{sec}</div>
                     <ul className="space-y-1 text-sm text-med-sub list-disc list-inside">
-                      {(items as string[]).map((it, i) => (
-                        <li key={i}>{it}</li>
-                      ))}
+                      {(items as string[]).map((it, i) => <li key={i}>{it}</li>)}
                     </ul>
                   </div>
                 ))}
               </div>
-            </div>
+            </Accordion>
+            {result.pitfalls && result.pitfalls.length > 0 && (
+              <Accordion title="Top pitfalls to avoid">
+                <ul className="list-disc list-inside text-sm text-med-sub space-y-1">
+                  {result.pitfalls.map((p, i) => <li key={i}>{p}</li>)}
+                </ul>
+              </Accordion>
+            )}
           </CardBody>
         </Card>
       )}
@@ -286,24 +1048,29 @@ export function ResearchTypeWizard({
   );
 }
 
-function Checkbox({
-  checked,
-  onChange,
-  label,
+/* ============================================================
+   Accordion primitive
+   ============================================================ */
+function Accordion({
+  title,
+  defaultOpen,
+  children,
 }: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
 }) {
+  const [open, setOpen] = useState(!!defaultOpen);
   return (
-    <label className="flex items-center gap-2 text-sm cursor-pointer p-2 rounded hover:bg-slate-50">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="h-4 w-4 accent-med-brand"
-      />
-      <span>{label}</span>
-    </label>
+    <div className="border border-med-line rounded-lg">
+      <button
+        className="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-50"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className="text-sm font-semibold text-med-ink">{title}</span>
+        <span className="text-med-sub text-xs">{open ? "▼" : "▶"}</span>
+      </button>
+      {open && <div className="px-3 pb-3 pt-1">{children}</div>}
+    </div>
   );
 }

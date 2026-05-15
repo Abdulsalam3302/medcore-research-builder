@@ -40,7 +40,207 @@ export type LLMRefineResponse = {
   confidence: "high" | "medium" | "low";
 };
 
-export type ResearchTypeAnswers = {
+/* ============================================================
+   v2 — Design registry
+   ============================================================ */
+
+export type DesignCategory =
+  | "interventional"
+  | "observational"
+  | "synthesis"
+  | "protocol"
+  | "diagnostic_prognostic_prediction"
+  | "case_reports"
+  | "guidelines_consensus"
+  | "qualitative_mixed"
+  | "preclinical"
+  | "quality_implementation"
+  | "economic"
+  | "genetics_omics";
+
+export type GuidelineRef = {
+  acronym: string;          // "CONSORT 2025"
+  fullName: string;
+  year?: string;
+  officialUrl: string;
+  equatorUrl?: string;
+  pdfUrl?: string;
+  citation?: string;
+  deprecated?: boolean;
+  successorAcronym?: string;
+};
+
+export type SupportingDocument = {
+  id: string;                // "consort-flow"
+  name: string;              // "CONSORT 2025 flow diagram"
+  description: string;
+  url?: string;              // official PDF / template
+  whenRequired?: string;     // "always for RCTs"
+};
+
+export type Extension = {
+  acronym: string;
+  fullName: string;
+  whenToUse: string;          // condition for triggering
+  officialUrl?: string;
+};
+
+export type DesignSpec = {
+  id: string;                 // "interv.rct.parallel"
+  category: DesignCategory;
+  name: string;               // user-facing
+  shortLabel: string;         // for pickers
+  primaryGuideline: GuidelineRef;
+  legacyGuidelines?: GuidelineRef[];   // older versions kept with deprecated:true
+  whenToUseChecklist: string[];        // criteria checklist — "is this really X?"
+  manuscriptSections: ManuscriptSection[];
+  reportingChecklist: Partial<Record<ManuscriptSection, string[]>>;
+  supportingDocuments: SupportingDocument[];
+  commonExtensions: Extension[];
+  pitfalls: string[];
+  appliesTo: string[];        // keywords for fuzzy matching
+};
+
+/* ============================================================
+   v2 — Journal / publisher registry
+   ============================================================ */
+
+export type ReferenceFormat =
+  | "vancouver-superscript"
+  | "vancouver-numbered-parens"
+  | "vancouver-numbered-brackets"
+  | "ama-numbered"
+  | "apa-7"
+  | "harvard"
+  | "nature-superscript"
+  | "elsevier-numbered";
+
+export type AbstractStructure =
+  | "background-methods-results-conclusions"
+  | "introduction-methods-results-discussion"
+  | "question-findings-meaning"        // JAMA Key Points
+  | "objective-design-setting-participants-outcomes-results-conclusions"
+  | "unstructured"
+  | "custom";
+
+export type ManuscriptType =
+  | "research_article"
+  | "original_investigation"
+  | "brief_report"
+  | "research_letter"
+  | "case_report"
+  | "review"
+  | "systematic_review"
+  | "meta_analysis"
+  | "protocol"
+  | "viewpoint"
+  | "editorial"
+  | "correspondence";
+
+export type ManuscriptTypeSpec = {
+  type: ManuscriptType;
+  mainTextWordLimit?: number;
+  abstractWordLimit?: number;
+  referencesMax?: number;
+  displayItemsMax?: number;       // figures + tables combined
+  keywordsMin?: number;
+  keywordsMax?: number;
+  keyPointsRequired?: boolean;
+};
+
+export type JournalSpec = {
+  id: string;                     // "bmj"
+  name: string;
+  publisher: string;
+  homepage: string;
+  authorGuideUrl: string;
+  reviewerGuideUrl?: string;
+  editorGuideUrl?: string;
+  impactFactor?: number;
+  scope?: string;
+  manuscriptTypes: ManuscriptTypeSpec[];
+  defaultManuscriptType: ManuscriptType;
+  abstractStructure: AbstractStructure;
+  abstractCustomSections?: string[];
+  referenceStyle: {
+    format: ReferenceFormat;
+    authorListing: "all-up-to-3-etal" | "all-up-to-6-etal" | "all-up-to-5-etal" | "first-author-etal" | "all";
+    journalAbbrev: "index-medicus" | "full-name" | "either";
+    doiRequired: boolean;
+    urlsAllowed: boolean;
+    notes?: string;
+  };
+  figures: {
+    format: "editable" | "redrawn-inhouse" | "high-res-image";
+    minDpi?: number;
+    allowedTypes: string[];        // ["TIFF","EPS","PDF"]
+    captionLocation: "below-figure" | "separate-page" | "end-of-manuscript";
+    notes?: string;
+  };
+  tables: {
+    format: "editable-word" | "image" | "either";
+    location: "in-text" | "end-of-manuscript" | "separate-file";
+    notes?: string;
+  };
+  required: {
+    icmjeAuthorship: boolean;
+    ppiStatement: boolean;
+    dataSharingStatement: boolean;
+    fundingStatement: boolean;
+    coiStatement: boolean;
+    creditTaxonomy: boolean;
+    registrationStatement: boolean;
+    aiDisclosure: boolean;          // ICMJE 2026
+    ethicsStatement: boolean;
+    consentStatement: boolean;
+  };
+  reviewerLens: string[];           // prompt fragments — "what would a reviewer for this journal flag?"
+  editorLens: string[];             // prompt fragments — "what would the editor desk-reject for?"
+  tier: "A" | "B" | "C";            // A=fully encoded, B=publisher template, C=fetched
+  notes?: string;
+};
+
+/* ============================================================
+   v2 — Feature registry
+   ============================================================ */
+
+export type FeatureCategory =
+  | "ai_ml"
+  | "population_equity"
+  | "specialty"
+  | "methods"
+  | "intervention_description"
+  | "patient_public"
+  | "open_science"
+  | "harms_safety"
+  | "implementation_qi"
+  | "decentralized_digital";
+
+export type FeatureSpec = {
+  id: string;                       // "ai.tripod-ai"
+  category: FeatureCategory;
+  name: string;
+  description: string;
+  addExtensions?: Extension[];      // guidelines this triggers
+  addChecklistItems?: Partial<Record<ManuscriptSection, string[]>>;
+  addSupportingDocs?: SupportingDocument[];
+  agentHints: string[];             // prompt fragments injected into LLM context
+  recommendedFor?: string[];        // design ids that this is most useful with
+};
+
+/* ============================================================
+   v2 — Research-type answers (new schema)
+   ============================================================ */
+
+export type ResearchTypeAnswersV2 = {
+  // v2 fields
+  designId?: string;                 // e.g. "interv.rct.parallel"
+  manuscriptType?: ManuscriptType;
+  journalId?: string;                // "bmj" or "other:My Journal Name"
+  featureIds?: string[];             // selected features
+  notes?: string;
+  expandedNotes?: ExpandedNotes;
+  // v1 compatibility — keep optional so old projects open
   designFamily?: string;
   isOriginalResearch?: boolean;
   isProtocol?: boolean;
@@ -57,17 +257,83 @@ export type ResearchTypeAnswers = {
   registrationRequired?: boolean;
   features?: string[];
   targetJournal?: string;
-  notes?: string;
 };
 
+export type ExpandedNotes = {
+  population?: string;
+  condition?: string;
+  intervention?: string;
+  exposure?: string;
+  comparator?: string;
+  primaryOutcome?: string;
+  secondaryOutcomes?: string[];
+  setting?: string;
+  country?: string;
+  timePeriod?: string;
+  sampleSize?: string;
+  dataSource?: string;
+  ethicsApproval?: string;
+  registration?: string;
+  funding?: string;
+  conflictsDetected?: string[];     // inconsistencies between design and notes
+  clarifyingQuestions?: string[];   // surfaced as chips
+  confidence: "high" | "medium" | "low";
+};
+
+/* ============================================================
+   v2 — Context Bundle (single source of truth for downstream LLM calls)
+   ============================================================ */
+
+export type ContextBundle = {
+  design?: {
+    id: string;
+    name: string;
+    primaryGuideline: GuidelineRef;
+    activeExtensions: Extension[];
+    pitfalls: string[];
+  };
+  journal?: {
+    id: string;
+    name: string;
+    referenceFormat: ReferenceFormat;
+    abstractStructure: AbstractStructure;
+    mainTextWordLimit?: number;
+    abstractWordLimit?: number;
+    keyPointsRequired?: boolean;
+    reviewerLens: string[];
+    editorLens: string[];
+    required: JournalSpec["required"];
+    manuscriptType?: ManuscriptType;
+    tier: "A" | "B" | "C";
+  };
+  features?: Array<{
+    id: string;
+    name: string;
+    agentHints: string[];
+  }>;
+  expandedNotes?: ExpandedNotes;
+  rawNotes?: string;
+};
+
+/* ============================================================
+   Existing v1 types — kept
+   ============================================================ */
+
+export type ResearchTypeAnswers = ResearchTypeAnswersV2;     // alias to keep v1 API surface
+
 export type ResearchTypeResult = {
-  primaryGuidelineId: string;
+  primaryGuidelineId: string;       // design id in v2 OR legacy guideline id
   primaryGuidelineName: string;
   possibleExtensionIds: string[];
   requiredSections: ManuscriptSection[];
   sectionChecklists: Partial<Record<ManuscriptSection, string[]>>;
   warnings: string[];
   notes: string;
+  // v2 enrichments
+  designId?: string;
+  supportingDocuments?: SupportingDocument[];
+  pitfalls?: string[];
+  whenToUseChecklist?: string[];
 };
 
 export type TitleInputs = {
@@ -169,7 +435,7 @@ export type ProjectState = {
   version: string;
   createdAt: string;
   updatedAt: string;
-  researchTypeAnswers: ResearchTypeAnswers;
+  researchTypeAnswers: ResearchTypeAnswersV2;
   researchTypeResult?: ResearchTypeResult;
   titleInputs: TitleInputs;
   titleFinal?: string;
@@ -193,10 +459,10 @@ export type ProjectState = {
 };
 
 export const emptyProject = (): ProjectState => ({
-  version: "1.0.0",
+  version: "2.0.0",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-  researchTypeAnswers: {},
+  researchTypeAnswers: { featureIds: [] },
   titleInputs: {},
   titleCandidates: [],
   sections: {

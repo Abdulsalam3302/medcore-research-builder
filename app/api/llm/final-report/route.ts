@@ -2,6 +2,7 @@ import { bad, handleError, ok, safeJson } from "../../_utils";
 import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
 import { GLOBAL_SYSTEM, finalReportPrompt } from "@/lib/prompts";
 import type { ProjectState } from "@/lib/types";
+import { buildContextBundle, bundleToPromptBlock } from "@/lib/agents/contextBundle";
 
 export const runtime = "nodejs";
 
@@ -60,9 +61,11 @@ export async function POST(req: Request) {
       });
     }
 
+    const bundle = buildContextBundle(body.project.researchTypeAnswers || {});
+    const contextBlock = bundleToPromptBlock(bundle);
     const text = await callLLM({
       system: GLOBAL_SYSTEM,
-      prompt: finalReportPrompt({ project: body.project }),
+      prompt: finalReportPrompt({ project: body.project, contextBlock }),
       maxTokens: 4000,
       temperature: 0.1,
       jsonOnly: true,
