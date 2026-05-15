@@ -29,6 +29,7 @@ export type ToolKey =
   | "appendix"
   | "references"
   | "stats"
+  | "quality"
   | "report"
   | "export";
 
@@ -45,7 +46,7 @@ const items: { key: ToolKey; label: string; Icon: IconCmp; group?: string }[] = 
   { key: "conclusion", label: "Conclusion", Icon: IconFlag, group: "Manuscript" },
   { key: "appendix", label: "Appendices", Icon: IconDocument, group: "Manuscript" },
   { key: "references", label: "Reference Verifier", Icon: IconBooks, group: "Quality" },
-  { key: "stats", label: "Stats & Figures", Icon: IconChart, group: "Quality" },
+  { key: "quality", label: "Quality Suite", Icon: IconShield, group: "Quality" },
   { key: "report", label: "Compliance Report", Icon: IconShield, group: "Quality" },
   { key: "export", label: "Export Center", Icon: IconUpload, group: "Quality" },
 ];

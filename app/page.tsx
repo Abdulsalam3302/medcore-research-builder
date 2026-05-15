@@ -10,6 +10,7 @@ import { SectionBuilder } from "@/components/SectionBuilder";
 import { AppendixBuilder } from "@/components/AppendixBuilder";
 import { ReferenceVerifier } from "@/components/ReferenceVerifier";
 import { StatsAndFigures } from "@/components/StatsAndFigures";
+import { QualitySuite } from "@/components/QualitySuite";
 import { ComplianceReport } from "@/components/ComplianceReport";
 import { ExportCenter } from "@/components/ExportCenter";
 import { useProject } from "@/components/useProject";
@@ -76,6 +77,8 @@ export default function Page() {
             <ReferenceVerifier project={project} update={update} />
           ) : active === "stats" ? (
             <StatsAndFigures />
+          ) : active === "quality" ? (
+            <QualitySuite project={project} />
           ) : active === "report" ? (
             <ComplianceReport project={project} />
           ) : active === "export" ? (
@@ -118,6 +121,7 @@ function MobileTabs({
     { key: "appendix", label: "Appendix" },
     { key: "references", label: "Refs" },
     { key: "stats", label: "Stats" },
+    { key: "quality", label: "Quality" },
     { key: "report", label: "Report" },
     { key: "export", label: "Export" },
   ];

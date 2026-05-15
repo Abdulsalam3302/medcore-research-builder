@@ -7,6 +7,7 @@ import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { Spinner } from "./ui/Spinner";
 import { CopyButton } from "./ui/CopyButton";
+import { StatsAndFigures } from "./StatsAndFigures";
 
 const SECTION_HELP: Record<
   string,
@@ -332,6 +333,30 @@ export function SectionBuilder({
             {err && <div className="text-sm text-med-bad">{err}</div>}
           </CardBody>
         </Card>
+
+        {section === "results" && (
+          <Card>
+            <CardHeader
+              title="Statistical analysis & figure specs"
+              subtitle="Lives under Results so the suggested tests & figure types are aware of your study design and outcome."
+              right={
+                <Badge kind="info">
+                  {project.researchTypeAnswers?.designId
+                    ? project.researchTypeAnswers.designId
+                    : "design-aware"}
+                </Badge>
+              }
+            />
+            <CardBody>
+              <StatsAndFigures
+                designId={project.researchTypeAnswers?.designId}
+                manuscriptType={project.researchTypeAnswers?.manuscriptType}
+                expandedNotes={project.researchTypeAnswers?.expandedNotes}
+                embedded
+              />
+            </CardBody>
+          </Card>
+        )}
 
         {feedback && (
           <Card>

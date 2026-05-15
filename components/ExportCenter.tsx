@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import type { ProjectState } from "@/lib/types";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { complianceToMarkdown, projectToMarkdown, referencesToCSV } from "@/lib/export";
+import { complianceToDocxBlob, downloadBlob, projectToDocxBlob } from "@/lib/docx";
 import { downloadAsFile } from "@/lib/store";
 
 export function ExportCenter({
@@ -20,32 +22,49 @@ export function ExportCenter({
     .slice(0, 60)
     .toLowerCase() || "manuscript";
 
+  const [busy, setBusy] = useState<string | null>(null);
+
+  async function exportDocx() {
+    setBusy("docx");
+    try {
+      const blob = await projectToDocxBlob(project);
+      downloadBlob(`${titleSlug}.docx`, blob);
+    } finally {
+      setBusy(null);
+    }
+  }
+  async function exportComplianceDocx() {
+    setBusy("compliance-docx");
+    try {
+      const blob = await complianceToDocxBlob(project);
+      downloadBlob(`${titleSlug}.compliance.docx`, blob);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <div className="grid gap-5">
       <Card>
         <CardHeader
           title="Export Center"
-          subtitle="Download your manuscript and verification artifacts. Nothing leaves your browser unless you export it."
+          subtitle="Download your manuscript and verification artifacts as Word (DOCX). Nothing leaves your browser unless you export it."
         />
         <CardBody className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
           <ExportBtn
-            title="Project JSON"
-            desc="Full project state — for backup, sharing, or import elsewhere."
-            onClick={() => downloadAsFile(`${titleSlug}.project.json`, JSON.stringify(project, null, 2), "application/json")}
+            title="Manuscript (DOCX)"
+            desc="Word file with title, sections, appendices, references, and reporting-guideline compliance table."
+            primary
+            onClick={exportDocx}
+            disabled={busy !== null}
+            badge={busy === "docx" ? "Working…" : "Recommended"}
           />
           <ExportBtn
-            title="Manuscript Markdown"
-            desc="Title, intro, methods, results, discussion, conclusion, references, compliance, novelty."
-            onClick={() =>
-              downloadAsFile(`${titleSlug}.md`, projectToMarkdown(project), "text/markdown")
-            }
-          />
-          <ExportBtn
-            title="Compliance report (.md)"
+            title="Compliance report (DOCX)"
             desc="Checklist coverage with missing-information notes by section."
-            onClick={() =>
-              downloadAsFile(`${titleSlug}.compliance.md`, complianceToMarkdown(project), "text/markdown")
-            }
+            onClick={exportComplianceDocx}
+            disabled={busy !== null}
+            badge={busy === "compliance-docx" ? "Working…" : undefined}
           />
           <ExportBtn
             title="References CSV"
@@ -59,7 +78,26 @@ export function ExportCenter({
             }
             disabled={project.references.verifications.length === 0}
           />
+          <ExportBtn
+            title="Project JSON"
+            desc="Full project state — for backup, sharing, or import elsewhere."
+            onClick={() => downloadAsFile(`${titleSlug}.project.json`, JSON.stringify(project, null, 2), "application/json")}
+          />
           <ImportBtn onImport={onImport} />
+          <ExportBtn
+            title="Manuscript Markdown (raw)"
+            desc="Plain markdown version — useful for git or pandoc post-processing."
+            onClick={() =>
+              downloadAsFile(`${titleSlug}.md`, projectToMarkdown(project), "text/markdown")
+            }
+          />
+          <ExportBtn
+            title="Compliance Markdown (raw)"
+            desc="Compliance checklist as plain markdown."
+            onClick={() =>
+              downloadAsFile(`${titleSlug}.compliance.md`, complianceToMarkdown(project), "text/markdown")
+            }
+          />
           <ExportBtn
             title="Reset project"
             desc="Wipe all local drafts. This cannot be undone."
@@ -93,12 +131,16 @@ function ExportBtn({
   onClick,
   disabled,
   danger,
+  primary,
+  badge,
 }: {
   title: string;
   desc: string;
   onClick: () => void;
   disabled?: boolean;
   danger?: boolean;
+  primary?: boolean;
+  badge?: string;
 }) {
   return (
     <button
@@ -107,10 +149,21 @@ function ExportBtn({
       className={`text-left rounded-lg border p-4 transition ${
         danger
           ? "border-rose-200 bg-rose-50 hover:bg-rose-100"
+          : primary
+          ? "border-med-brand bg-sky-50 hover:bg-sky-100"
           : "border-med-line bg-white hover:bg-slate-50"
       } disabled:opacity-50 disabled:cursor-not-allowed`}
     >
-      <div className={`font-medium ${danger ? "text-rose-700" : "text-med-ink"}`}>{title}</div>
+      <div className="flex items-start justify-between gap-2">
+        <div className={`font-medium ${danger ? "text-rose-700" : "text-med-ink"}`}>
+          {title}
+        </div>
+        {badge && (
+          <span className="text-[10px] uppercase tracking-wide font-semibold bg-med-brand text-white px-1.5 py-0.5 rounded-full">
+            {badge}
+          </span>
+        )}
+      </div>
       <div className="muted mt-1">{desc}</div>
     </button>
   );

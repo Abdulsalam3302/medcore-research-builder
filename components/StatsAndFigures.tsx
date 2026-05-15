@@ -1,22 +1,42 @@
 "use client";
 
 import { useState } from "react";
+import type { ExpandedNotes } from "@/lib/types";
 
 type Tab = "descriptive" | "twoSample" | "chi" | "correlation" | "recommend" | "figure";
 
-export function StatsAndFigures() {
-  const [tab, setTab] = useState<Tab>("descriptive");
+export function StatsAndFigures({
+  designId,
+  manuscriptType,
+  expandedNotes,
+  embedded,
+}: {
+  designId?: string;
+  manuscriptType?: string;
+  expandedNotes?: ExpandedNotes;
+  embedded?: boolean;
+} = {}) {
+  const [tab, setTab] = useState<Tab>(designId ? "recommend" : "descriptive");
   return (
     <div className="space-y-4">
-      <div>
-        <div className="eyebrow">Stats & figures</div>
-        <h1 className="display-title">Statistical analysis & figure specs</h1>
-        <p className="muted mt-1">
-          Run quick descriptives and classical tests, generate Plotly-compatible
-          figure specs, and get test recommendations from study design. For
-          confirmatory analyses, re-run in R/Stata/Python.
-        </p>
-      </div>
+      {!embedded && (
+        <div>
+          <div className="eyebrow">Stats & figures</div>
+          <h1 className="display-title">Statistical analysis & figure specs</h1>
+          <p className="muted mt-1">
+            Run quick descriptives and classical tests, generate Plotly-compatible
+            figure specs, and get test recommendations from study design. For
+            confirmatory analyses, re-run in R/Stata/Python.
+          </p>
+        </div>
+      )}
+      {embedded && (
+        <div className="text-xs text-med-sub">
+          Pre-populated with your study context — {designId || "no design selected"}
+          {manuscriptType ? ` · ${manuscriptType.replace(/_/g, " ")}` : ""}
+          {expandedNotes?.primaryOutcome ? ` · outcome: ${expandedNotes.primaryOutcome}` : ""}
+        </div>
+      )}
       <div className="flex gap-1 flex-wrap">
         {(
           [
@@ -41,7 +61,12 @@ export function StatsAndFigures() {
       {tab === "twoSample" && <TwoSample />}
       {tab === "chi" && <ChiSquare />}
       {tab === "correlation" && <Correlation />}
-      {tab === "recommend" && <Recommender />}
+      {tab === "recommend" && (
+        <Recommender
+          presetDesign={designId}
+          presetOutcome={expandedNotes?.primaryOutcome}
+        />
+      )}
       {tab === "figure" && <FigureSpec />}
     </div>
   );
@@ -304,10 +329,26 @@ const GROUPINGS = [
   "crossover",
 ] as const;
 
-function Recommender() {
+function Recommender({
+  presetDesign,
+  presetOutcome,
+}: {
+  presetDesign?: string;
+  presetOutcome?: string;
+} = {}) {
   const [outcome, setOutcome] = useState<(typeof OUTCOMES)[number]>("continuous");
-  const [grouping, setGrouping] = useState<(typeof GROUPINGS)[number]>("two_independent");
-  const [context, setContext] = useState("");
+  const [grouping, setGrouping] = useState<(typeof GROUPINGS)[number]>(
+    presetDesign?.startsWith("interv.rct")
+      ? "two_independent"
+      : presetDesign?.startsWith("obs.cohort")
+      ? "two_independent"
+      : "two_independent"
+  );
+  const [context, setContext] = useState(
+    [presetDesign && `Design: ${presetDesign}`, presetOutcome && `Primary outcome: ${presetOutcome}`]
+      .filter(Boolean)
+      .join(". ")
+  );
   const [enrich, setEnrich] = useState(false);
   const api = useApi();
   return (

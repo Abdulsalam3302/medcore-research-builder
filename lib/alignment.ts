@@ -11,7 +11,7 @@
  * step "sees" the others.
  */
 
-import type { DesignCategory, ManuscriptType } from "./types";
+import type { DesignCategory, FeatureSpec, ManuscriptType } from "./types";
 
 /**
  * Which manuscript types are valid for a given design category.
@@ -192,6 +192,216 @@ export function needsQuestionnaireAppendix(designId?: string): boolean {
  * Project-state → flattened "what the assistant should know about every other step"
  * Used in TitleLab/SectionBuilder so each step sees previous + future state.
  */
+/* ============================================================
+   Feature recommendation engine.
+   Given a design + manuscript-type + notes, score every feature
+   and surface the most relevant ones automatically. The user can
+   always add expert-only features manually.
+   ============================================================ */
+
+export type FeatureRecommendation = {
+  feature: FeatureSpec;
+  score: number;
+  reason: string;
+  tier: "core" | "recommended" | "expert";
+};
+
+const DESIGN_TO_CORE_FEATURES: Array<{
+  match: (id: string) => boolean;
+  ids: string[];
+  reasonByFeature?: Record<string, string>;
+}> = [
+  {
+    match: (id) => id.startsWith("interv.rct"),
+    ids: [
+      "intervention.tidier",
+      "harms.adverse",
+      "open.data-sharing",
+      "open.code",
+      "qual.preregistration",
+      "qual.ai-assistance",
+      "qual.integrity-coi",
+      "methods.subgroup",
+      "methods.sensitivity",
+    ],
+  },
+  {
+    match: (id) => id === "interv.rct.cluster",
+    ids: ["intervention.tidier", "methods.sensitivity"],
+  },
+  {
+    match: (id) => id.startsWith("obs.cohort"),
+    ids: [
+      "methods.causal-inference",
+      "methods.target-trial",
+      "methods.missing-data",
+      "methods.sensitivity",
+      "open.data-sharing",
+      "qual.ai-assistance",
+      "qual.integrity-coi",
+    ],
+  },
+  {
+    match: (id) => id === "obs.cross-sectional",
+    ids: [
+      "methods.missing-data",
+      "pp.diversity",
+      "open.data-sharing",
+      "qual.ai-assistance",
+      "qual.integrity-coi",
+      "pop.race-ethnicity",
+    ],
+  },
+  {
+    match: (id) => id === "obs.case-control",
+    ids: [
+      "methods.missing-data",
+      "methods.sensitivity",
+      "qual.integrity-coi",
+    ],
+  },
+  {
+    match: (id) => id.startsWith("syn."),
+    ids: [
+      "open.data-sharing",
+      "qual.preregistration",
+      "qual.reproducibility",
+      "qual.ai-assistance",
+    ],
+  },
+  {
+    match: (id) => id.startsWith("dx."),
+    ids: [
+      "ai.tripod-ai",
+      "ai.claim-imaging",
+      "methods.imbalance-handling",
+      "methods.sensitivity",
+      "open.code",
+      "qual.reproducibility",
+      "qual.ai-assistance",
+    ],
+  },
+  {
+    match: (id) => id === "case.care",
+    ids: ["qual.ai-assistance", "qual.integrity-coi"],
+  },
+  {
+    match: (id) => id.startsWith("qi."),
+    ids: [
+      "qi.proctor-implementation-outcomes",
+      "intv.complex-intervention",
+      "intervention.tidier",
+    ],
+  },
+  {
+    match: (id) => id.startsWith("preclin."),
+    ids: ["open.data-sharing", "qual.reproducibility", "qual.preregistration"],
+  },
+  {
+    match: (id) => id.startsWith("econ."),
+    ids: ["methods.economic-eval", "methods.sensitivity"],
+  },
+];
+
+const KEYWORD_HINTS: Array<{ pattern: RegExp; featureIds: string[]; reason: string }> = [
+  { pattern: /\b(ai|machine learning|ml|deep learning|neural network)\b/i, featureIds: ["ai.tripod-ai", "ai.consort-ai", "ai.decide-ai"], reason: "Notes mention AI/ML." },
+  { pattern: /\b(imaging|mri|ct|pet|ultrasound|x-ray)\b/i, featureIds: ["spec.imaging", "ai.claim-imaging"], reason: "Notes mention medical imaging." },
+  { pattern: /\b(llm|chatgpt|gpt|large language)\b/i, featureIds: ["ai.tripod-llm"], reason: "Notes mention LLMs." },
+  { pattern: /\b(surger|surgical|operative|peri-?operative)\b/i, featureIds: ["spec.surgery"], reason: "Notes mention surgery." },
+  { pattern: /\b(cardiac|cardiovascular|heart failure|stemi|mace)\b/i, featureIds: ["spec.cardiology"], reason: "Notes mention cardiology." },
+  { pattern: /\b(cancer|oncolog|tumour|tumor|chemotherapy|radiotherapy)\b/i, featureIds: ["spec.oncology"], reason: "Notes mention oncology." },
+  { pattern: /\b(depression|anxiety|psychiatr|mental health|schizo|bipolar)\b/i, featureIds: ["spec.mental-health"], reason: "Notes mention mental-health endpoints." },
+  { pattern: /\b(child|pediatric|paediatric|neonat|adolesc)\b/i, featureIds: ["pop.pediatric"], reason: "Notes mention paediatric population." },
+  { pattern: /\b(pregnan|gestational|perinatal|postpartum)\b/i, featureIds: ["pop.pregnancy"], reason: "Notes mention pregnancy / perinatal." },
+  { pattern: /\b(elder|geriatric|frailty|65\+)\b/i, featureIds: ["pop.older-adults"], reason: "Notes mention older-adult / frailty." },
+  { pattern: /\b(lmic|low-income|middle-income|sub-saharan|africa|south asia)\b/i, featureIds: ["pop.lmic"], reason: "Notes mention LMIC setting." },
+  { pattern: /\b(indigenous|aborigin|tribal|m[aā]ori|first nations)\b/i, featureIds: ["pop.indigenous"], reason: "Notes mention Indigenous community." },
+  { pattern: /\b(diet|nutrition|food frequency|ffq)\b/i, featureIds: ["spec.nutrition"], reason: "Notes mention nutrition." },
+  { pattern: /\b(rehab|physiotherap|occupational therapy)\b/i, featureIds: ["spec.rehabilitation"], reason: "Notes mention rehabilitation." },
+  { pattern: /\b(pharmacokinet|pharmacodynam|auc|cmax|drug-drug)\b/i, featureIds: ["spec.pharmacology"], reason: "Notes mention pharmacology." },
+  { pattern: /\b(wearable|sensor|smartwatch|activity tracker)\b/i, featureIds: ["dd.wearable"], reason: "Notes mention wearables/sensors." },
+  { pattern: /\b(digital|app|mhealth|ehealth)\b/i, featureIds: ["intv.digital-health"], reason: "Notes mention digital intervention." },
+  { pattern: /\b(equity|disparit|underserved|race|ethnicit|gender)\b/i, featureIds: ["methods.equity", "pop.race-ethnicity"], reason: "Notes mention equity / disparities." },
+  { pattern: /\b(missing data|imputation)\b/i, featureIds: ["methods.missing-data"], reason: "Notes mention missing data." },
+  { pattern: /\b(bayesian|posterior|prior distribution)\b/i, featureIds: ["methods.bayesian"], reason: "Notes mention Bayesian methods." },
+  { pattern: /\b(infect|outbreak|pandemic|covid|sars)\b/i, featureIds: ["spec.infectious-disease"], reason: "Notes mention infectious disease / outbreak." },
+  { pattern: /\b(cost.effective|qaly|icer|economic)\b/i, featureIds: ["methods.economic-eval"], reason: "Notes mention economic evaluation." },
+];
+
+const MANUSCRIPT_TYPE_HINTS: Record<string, string[]> = {
+  systematic_review: ["qual.preregistration", "qual.reproducibility", "open.data-sharing"],
+  meta_analysis: ["qual.preregistration", "qual.reproducibility", "open.data-sharing"],
+  protocol: ["qual.preregistration", "qual.ai-assistance"],
+  case_report: ["qual.ai-assistance", "qual.integrity-coi"],
+};
+
+export function recommendFeatures(args: {
+  designId?: string;
+  manuscriptType?: string;
+  notes?: string;
+  features: FeatureSpec[];
+}): FeatureRecommendation[] {
+  const scoreByFeature = new Map<string, { score: number; reasons: string[]; tier: "core" | "recommended" | "expert" }>();
+
+  function bump(id: string, score: number, reason: string, tier: "core" | "recommended" | "expert") {
+    const cur = scoreByFeature.get(id) || { score: 0, reasons: [], tier };
+    cur.score += score;
+    if (!cur.reasons.includes(reason)) cur.reasons.push(reason);
+    if (tier === "core" || (tier === "recommended" && cur.tier === "expert")) cur.tier = tier;
+    scoreByFeature.set(id, cur);
+  }
+
+  /* Pass 1 — design-driven core recommendations. */
+  if (args.designId) {
+    for (const rule of DESIGN_TO_CORE_FEATURES) {
+      if (!rule.match(args.designId)) continue;
+      for (const fid of rule.ids) {
+        const reason =
+          rule.reasonByFeature?.[fid] ||
+          `Standard expectation for ${args.designId.replace(/_/g, " ")}.`;
+        bump(fid, 10, reason, "core");
+      }
+    }
+    /* Pass 2 — features that declare recommendedFor matching this design. */
+    for (const f of args.features) {
+      if (f.recommendedFor?.some((d) => args.designId!.startsWith(d) || d === args.designId)) {
+        bump(f.id, 8, `Pre-mapped recommendation for ${args.designId}.`, "recommended");
+      }
+    }
+  }
+
+  /* Pass 3 — manuscript-type cues. */
+  if (args.manuscriptType && MANUSCRIPT_TYPE_HINTS[args.manuscriptType]) {
+    for (const fid of MANUSCRIPT_TYPE_HINTS[args.manuscriptType]) {
+      bump(fid, 6, `Common expectation for ${args.manuscriptType.replace(/_/g, " ")} manuscripts.`, "recommended");
+    }
+  }
+
+  /* Pass 4 — notes keyword matching. */
+  if (args.notes) {
+    for (const hint of KEYWORD_HINTS) {
+      if (hint.pattern.test(args.notes)) {
+        for (const fid of hint.featureIds) bump(fid, 5, hint.reason, "recommended");
+      }
+    }
+  }
+
+  /* Build the final list. */
+  const out: FeatureRecommendation[] = [];
+  for (const f of args.features) {
+    const s = scoreByFeature.get(f.id);
+    if (!s || s.score <= 0) continue;
+    out.push({
+      feature: f,
+      score: s.score,
+      reason: s.reasons.join(" "),
+      tier: s.tier,
+    });
+  }
+  out.sort((a, b) => b.score - a.score);
+  return out;
+}
+
 export function summarizePipelineState(p: {
   researchTypeAnswers?: { designId?: string; journalId?: string; manuscriptType?: string; notes?: string };
   researchTypeResult?: { primaryGuidelineName?: string };

@@ -13,6 +13,14 @@ import { Badge } from "./ui/Badge";
 import { CopyButton } from "./ui/CopyButton";
 import { detectTitleConflicts } from "@/lib/alignment";
 
+type TitleAssessment = {
+  scores?: Array<{ dimension: string; score: number | null; rationale: string }>;
+  overall?: number;
+  verdict?: "weak" | "moderate" | "strong" | "excellent";
+  topRefinements?: string[];
+  designConflictNotes?: string[];
+};
+
 const FIELD_DEFS: Array<[keyof TitleInputs, string, string]> = [
   ["draftTitle", "Draft title (or leave blank to generate)", ""],
   ["researchType", "Research type", "e.g. Original research, Systematic review"],
@@ -77,6 +85,7 @@ export function TitleLab({
   >(null);
   const [enhanceField, setEnhanceField] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [titleAssessment, setTitleAssessment] = useState<TitleAssessment | null>(null);
 
   const designId = project.researchTypeAnswers?.designId;
   const localConflicts = useMemo(
@@ -191,14 +200,23 @@ export function TitleLab({
     setBusy("novelty");
     setErr(null);
     try {
-      const r = await fetch("/api/title/novelty-check", {
+      const r = await fetch("/api/title/full-check", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ inputs }),
+        body: JSON.stringify({ inputs, answers: project.researchTypeAnswers }),
       });
-      const data = (await r.json()) as NoveltyReport & { error?: string };
+      const data = (await r.json()) as {
+        novelty?: NoveltyReport;
+        assessment?: TitleAssessment | null;
+        designConflicts?: Array<{ keyword: string; reason: string }>;
+        error?: string;
+      };
       if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
-      update((p) => ({ ...p, noveltyReport: data }));
+      update((p) => ({
+        ...p,
+        noveltyReport: data.novelty || p.noveltyReport,
+      }));
+      setTitleAssessment(data.assessment || null);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -327,7 +345,7 @@ export function TitleLab({
               onClick={runNovelty}
               disabled={!!busy || !inputs.draftTitle}
             >
-              {busy === "novelty" && <Spinner dark />} Check similarity
+              {busy === "novelty" && <Spinner dark />} Check title (novelty + validation + applicability …)
             </button>
             {err && <div className="text-sm text-med-bad">{err}</div>}
           </div>
@@ -400,8 +418,80 @@ export function TitleLab({
         </Card>
       )}
 
+      {titleAssessment && <TitleAssessmentCard a={titleAssessment} />}
+
       {project.noveltyReport && <NoveltyResult report={project.noveltyReport} />}
     </div>
+  );
+}
+
+function TitleAssessmentCard({ a }: { a: TitleAssessment }) {
+  const verdictKind: "good" | "info" | "warn" | "bad" =
+    a.verdict === "excellent" ? "good" : a.verdict === "strong" ? "info" : a.verdict === "moderate" ? "warn" : "bad";
+  return (
+    <Card>
+      <CardHeader
+        title="Title — multi-dimensional check"
+        subtitle="Validation, reliability, similarity, novelty, importance, applicability, contribution."
+        right={
+          <div className="flex items-center gap-2">
+            {typeof a.overall === "number" && (
+              <Badge
+                kind={a.overall >= 80 ? "good" : a.overall >= 60 ? "info" : a.overall >= 40 ? "warn" : "bad"}
+              >
+                {a.overall}/100
+              </Badge>
+            )}
+            {a.verdict && <Badge kind={verdictKind}>{a.verdict}</Badge>}
+          </div>
+        }
+      />
+      <CardBody className="grid gap-3">
+        {(a.scores || []).length > 0 && (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {(a.scores || []).map((s, i) => {
+              const score = s.score;
+              const kind: "good" | "info" | "warn" | "bad" | "neutral" =
+                score === null
+                  ? "neutral"
+                  : score >= 80
+                  ? "good"
+                  : score >= 60
+                  ? "info"
+                  : score >= 40
+                  ? "warn"
+                  : "bad";
+              const label = s.dimension.replace(/^./, (c) => c.toUpperCase());
+              return (
+                <div key={i} className="border border-med-line rounded p-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-med-ink">{label}</span>
+                    <Badge kind={kind}>{score === null ? "—" : `${score}/100`}</Badge>
+                  </div>
+                  <div className="text-xs text-med-sub mt-1">{s.rationale}</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {a.topRefinements && a.topRefinements.length > 0 && (
+          <section>
+            <div className="label">Top refinements</div>
+            <ul className="list-disc list-inside text-sm text-med-sub space-y-1">
+              {a.topRefinements.map((r, i) => <li key={i}>{r}</li>)}
+            </ul>
+          </section>
+        )}
+        {a.designConflictNotes && a.designConflictNotes.length > 0 && (
+          <section>
+            <div className="label text-rose-700">Design conflict notes</div>
+            <ul className="list-disc list-inside text-sm text-rose-700 space-y-1">
+              {a.designConflictNotes.map((r, i) => <li key={i}>{r}</li>)}
+            </ul>
+          </section>
+        )}
+      </CardBody>
+    </Card>
   );
 }
 

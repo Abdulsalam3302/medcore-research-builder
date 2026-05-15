@@ -19,6 +19,8 @@ import { Spinner } from "./ui/Spinner";
 import {
   isManuscriptTypeCompatible,
   manuscriptTypesAllowed,
+  recommendFeatures,
+  type FeatureRecommendation,
 } from "@/lib/alignment";
 
 type RegistryPayload = {
@@ -55,7 +57,7 @@ export function ResearchTypeWizard({
   const answers = project.researchTypeAnswers;
   const [registry, setRegistry] = useState<RegistryPayload | null>(null);
   const [loadingReg, setLoadingReg] = useState(true);
-  const [busy, setBusy] = useState<"recommend" | "expand" | null>(null);
+  const [busy, setBusy] = useState<"recommend" | "expand" | "generate-notes" | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [step, setStep] = useState(0);
 
@@ -112,6 +114,35 @@ export function ResearchTypeWizard({
       const data = (await r.json()) as { expandedNotes?: ExpandedNotes; error?: string };
       if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
       setAns({ expandedNotes: data.expandedNotes });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function aiGenerateNotes() {
+    setBusy("generate-notes");
+    setErr(null);
+    try {
+      const r = await fetch("/api/llm/enhance", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          field: "research-notes",
+          value: answers.notes || "",
+          answers,
+          hint:
+            "Draft a comprehensive 'notes for the assistant' paragraph for a medical research project. Cover PICO (population/intervention/comparator/outcome), setting, country, time period, sample size, data source, ethics, registration, and funding. Use the design and journal context. Where information is missing, write placeholder square-bracket prompts like [author: specify sample size] instead of inventing.",
+        }),
+      });
+      const data = (await r.json()) as {
+        value?: string;
+        note?: string;
+        error?: string;
+      };
+      if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+      if (data.value) setAns({ notes: data.value });
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -248,6 +279,10 @@ export function ResearchTypeWizard({
           onToggle={toggleFeature}
           onContinue={() => setStep(4)}
           onBack={() => setStep(2)}
+          designId={answers.designId}
+          manuscriptType={answers.manuscriptType}
+          notes={answers.notes}
+          onApplyAll={(ids) => setAns({ featureIds: Array.from(new Set([...(answers.featureIds || []), ...ids])) })}
         />
       )}
 
@@ -258,7 +293,9 @@ export function ResearchTypeWizard({
           onChange={(t) => setAns({ notes: t })}
           expanded={answers.expandedNotes}
           onExpand={expandNotes}
+          onAIGenerate={aiGenerateNotes}
           busy={busy === "expand"}
+          generating={busy === "generate-notes"}
           err={err}
           onContinue={() => setStep(5)}
           onBack={() => setStep(3)}
@@ -744,18 +781,63 @@ function FeaturesPicker({
   onToggle,
   onContinue,
   onBack,
+  designId,
+  manuscriptType,
+  notes,
+  onApplyAll,
 }: {
   registry: RegistryPayload;
   selectedIds: string[];
   onToggle: (id: string) => void;
   onContinue: () => void;
   onBack: () => void;
+  designId?: string;
+  manuscriptType?: string;
+  notes?: string;
+  onApplyAll: (ids: string[]) => void;
 }) {
+  const [mode, setMode] = useState<"recommended" | "expert">("recommended");
+  const [search, setSearch] = useState("");
+
+  const recommendations: FeatureRecommendation[] = useMemo(
+    () =>
+      recommendFeatures({
+        designId,
+        manuscriptType,
+        notes,
+        features: registry.features as unknown as FeatureSpec[],
+      }),
+    [registry.features, designId, manuscriptType, notes]
+  );
+  const core = recommendations.filter((r) => r.tier === "core");
+  const reco = recommendations.filter((r) => r.tier === "recommended");
+  const recommendedIds = new Set(recommendations.map((r) => r.feature.id));
+
+  const expertFeatures = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return (registry.features as FeatureSpec[]).filter(
+      (f) =>
+        !recommendedIds.has(f.id) &&
+        (!q ||
+          f.name.toLowerCase().includes(q) ||
+          f.description.toLowerCase().includes(q) ||
+          f.id.toLowerCase().includes(q) ||
+          (f.addExtensions || []).some((e) => e.acronym.toLowerCase().includes(q)))
+    );
+  }, [registry.features, recommendedIds, search]);
+
+  function applyAll() {
+    onApplyAll(recommendations.map((r) => r.feature.id));
+  }
+  function applyCoreOnly() {
+    onApplyAll(core.map((r) => r.feature.id));
+  }
+
   return (
     <Card>
       <CardHeader
-        title="Special features (optional)"
-        subtitle="Each toggled feature attaches its reporting guideline, supporting documents, and an agent-hint that's injected into every refinement."
+        title="Special features"
+        subtitle="Features attach reporting-guideline extensions, checklist items, supporting documents, and agent-hints. We auto-suggest the most suitable ones based on your design, manuscript type, and notes — expert add-ons live in the 'Expert add-ons' tab."
         right={
           <div className="flex gap-2">
             <button className="btn-ghost text-xs" onClick={onBack}>← Back</button>
@@ -763,48 +845,188 @@ function FeaturesPicker({
           </div>
         }
       />
-      <CardBody className="grid gap-5">
-        {registry.featureCategories.map((c) => {
-          const list = registry.features.filter((f) => f.category === c.id);
-          if (list.length === 0) return null;
-          return (
-            <section key={c.id}>
-              <div className="flex items-center gap-2 mb-2">
-                <span>{c.emoji}</span>
-                <div className="text-sm font-semibold text-med-ink">{c.label}</div>
+      <CardBody className="grid gap-4">
+        <div className="flex items-center gap-1 flex-wrap">
+          <button
+            onClick={() => setMode("recommended")}
+            className={`pill-tab text-xs ${mode === "recommended" ? "pill-tab-active" : ""}`}
+          >
+            ⭐ Suggested for you ({recommendations.length})
+          </button>
+          <button
+            onClick={() => setMode("expert")}
+            className={`pill-tab text-xs ${mode === "expert" ? "pill-tab-active" : ""}`}
+          >
+            🧪 Expert add-ons ({expertFeatures.length})
+          </button>
+          <div className="flex-1" />
+          {mode === "recommended" && recommendations.length > 0 && (
+            <div className="flex gap-1">
+              <button className="btn-ghost text-xs text-med-brand" onClick={applyCoreOnly}>
+                Apply core ({core.length})
+              </button>
+              <button className="btn-secondary text-xs" onClick={applyAll}>
+                Apply all suggested
+              </button>
+            </div>
+          )}
+        </div>
+
+        {mode === "recommended" ? (
+          <div className="grid gap-5">
+            {recommendations.length === 0 && (
+              <div className="border border-med-line rounded p-4 text-sm text-med-sub">
+                Pick a design (and optionally fill in notes) to see suggested features. You can
+                always switch to <strong>Expert add-ons</strong> to browse the full catalogue.
               </div>
-              <div className="grid md:grid-cols-2 gap-2">
-                {list.map((f) => {
-                  const on = selectedIds.includes(f.id);
-                  return (
-                    <button
-                      key={f.id}
-                      onClick={() => onToggle(f.id)}
-                      className={`text-left border rounded-lg p-3 transition ${
-                        on ? "border-med-brand bg-sky-50" : "border-med-line hover:bg-slate-50"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="font-medium text-med-ink text-sm">{f.name}</div>
-                        {on && <Badge kind="info">on</Badge>}
-                      </div>
-                      <div className="muted text-xs mt-1">{f.description}</div>
-                      {f.addExtensions && f.addExtensions.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {f.addExtensions.map((e, i) => (
-                            <Badge key={i} kind="neutral">+ {e.acronym}</Badge>
-                          ))}
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
+            )}
+            {core.length > 0 && (
+              <RecGroup
+                title="Core — strongly suggested for this design"
+                items={core}
+                selectedIds={selectedIds}
+                onToggle={onToggle}
+                tone="emerald"
+              />
+            )}
+            {reco.length > 0 && (
+              <RecGroup
+                title="Recommended — likely useful based on your manuscript / notes"
+                items={reco}
+                selectedIds={selectedIds}
+                onToggle={onToggle}
+                tone="sky"
+              />
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            <input
+              className="input"
+              placeholder="Search expert add-ons (e.g. 'CHEERS', 'imaging', 'Bayesian')…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {registry.featureCategories.map((c) => {
+              const list = expertFeatures.filter((f) => f.category === c.id);
+              if (list.length === 0) return null;
+              return (
+                <section key={c.id}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span>{c.emoji}</span>
+                    <div className="text-sm font-semibold text-med-ink">{c.label}</div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-2">
+                    {list.map((f) => (
+                      <FeatureCardSmall
+                        key={f.id}
+                        f={f}
+                        on={selectedIds.includes(f.id)}
+                        onToggle={() => onToggle(f.id)}
+                      />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+            {expertFeatures.length === 0 && (
+              <div className="muted text-sm">All features are already in the Suggested list.</div>
+            )}
+          </div>
+        )}
       </CardBody>
     </Card>
+  );
+}
+
+function RecGroup({
+  title,
+  items,
+  selectedIds,
+  onToggle,
+  tone,
+}: {
+  title: string;
+  items: FeatureRecommendation[];
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+  tone: "emerald" | "sky";
+}) {
+  const toneCls =
+    tone === "emerald"
+      ? "border-emerald-200 bg-emerald-50/40"
+      : "border-sky-200 bg-sky-50/40";
+  return (
+    <section>
+      <div className="text-sm font-semibold text-med-ink mb-2">{title}</div>
+      <div className="grid md:grid-cols-2 gap-2">
+        {items.map((rec) => {
+          const f = rec.feature;
+          const on = selectedIds.includes(f.id);
+          return (
+            <button
+              key={f.id}
+              onClick={() => onToggle(f.id)}
+              className={`text-left border rounded-lg p-3 transition ${
+                on ? "border-med-brand bg-sky-50" : `${toneCls} hover:bg-white`
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="font-medium text-med-ink text-sm">{f.name}</div>
+                {on ? (
+                  <Badge kind="info">on</Badge>
+                ) : (
+                  <Badge kind={tone === "emerald" ? "good" : "info"}>
+                    {tone === "emerald" ? "core" : "suggested"}
+                  </Badge>
+                )}
+              </div>
+              <div className="muted text-xs mt-1">{f.description}</div>
+              <div className="text-[11px] text-med-sub mt-1 italic">{rec.reason}</div>
+              {f.addExtensions && f.addExtensions.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {f.addExtensions.map((e, i) => (
+                    <Badge key={i} kind="neutral">+ {e.acronym}</Badge>
+                  ))}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function FeatureCardSmall({
+  f,
+  on,
+  onToggle,
+}: {
+  f: FeatureSpec;
+  on: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      className={`text-left border rounded-lg p-3 transition ${
+        on ? "border-med-brand bg-sky-50" : "border-med-line hover:bg-slate-50"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="font-medium text-med-ink text-sm">{f.name}</div>
+        {on && <Badge kind="info">on</Badge>}
+      </div>
+      <div className="muted text-xs mt-1">{f.description}</div>
+      {f.addExtensions && f.addExtensions.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {f.addExtensions.map((e, i) => (
+            <Badge key={i} kind="neutral">+ {e.acronym}</Badge>
+          ))}
+        </div>
+      )}
+    </button>
   );
 }
 
@@ -816,7 +1038,9 @@ function NotesEditor({
   onChange,
   expanded,
   onExpand,
+  onAIGenerate,
   busy,
+  generating,
   err,
   onContinue,
   onBack,
@@ -826,7 +1050,9 @@ function NotesEditor({
   onChange: (s: string) => void;
   expanded?: ExpandedNotes;
   onExpand: () => void;
+  onAIGenerate: () => void;
   busy: boolean;
+  generating: boolean;
   err: string | null;
   onContinue: () => void;
   onBack: () => void;
@@ -854,9 +1080,17 @@ function NotesEditor({
               value={notes}
               onChange={(e) => onChange(e.target.value)}
             />
-            <div className="flex items-center gap-2">
-              <button className="btn-secondary" onClick={onExpand} disabled={busy || !notes.trim()}>
-                {busy && <Spinner dark />} ✨ Expand notes
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                className="btn-primary"
+                onClick={onAIGenerate}
+                disabled={generating || busy}
+                title="Draft a comprehensive notes paragraph from your design + journal context. No fabrication — missing facts become [author: …] placeholders."
+              >
+                {generating && <Spinner />} 🤖 AI generate notes
+              </button>
+              <button className="btn-secondary" onClick={onExpand} disabled={busy || generating || !notes.trim()}>
+                {busy && <Spinner dark />} ✨ Expand notes (PICO + conflicts)
               </button>
               {err && <div className="text-sm text-med-bad">{err}</div>}
             </div>
