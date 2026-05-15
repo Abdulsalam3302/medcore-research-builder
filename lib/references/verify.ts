@@ -1,6 +1,10 @@
 import type { ParsedReference, ReferenceVerification } from "../types";
 import { pubmedCitationMatch, pubmedSummary, pubmedSearch } from "../scholarly/pubmed";
 import { crossrefByDOI, crossrefSearch } from "../scholarly/crossref";
+import { openalexSearch } from "../scholarly/openalex";
+import { europepmcSearch } from "../scholarly/europepmc";
+import { s2Paper, s2Search } from "../scholarly/semanticscholar";
+import { unpaywallConfigured, unpaywallLookup } from "../scholarly/unpaywall";
 import { formatVancouver } from "./parser";
 
 const stop = new Set([
@@ -286,9 +290,171 @@ export async function verifyReference(args: {
     v.problems.push("Provided DOI differs from PubMed-listed DOI.");
   }
 
-  // 8) Confidence
-  if (v.pubmed?.found && v.checks.metadataMatch === "match") v.confidence = "high";
+  // 7b) OpenAlex enrichment (best-effort).
+  try {
+    const oaQuery = v.pubmed?.doi || v.crossref?.doi || args.parsed.doi || args.parsed.title;
+    if (oaQuery) {
+      const oa = await openalexSearch({ query: oaQuery, perPage: 3 });
+      const best =
+        oa.find(
+          (w) => (w.doi || "").toLowerCase() === (v.pubmed?.doi || v.crossref?.doi || args.parsed.doi || "").toLowerCase()
+        ) ||
+        oa.find((w) => jaccard(w.title, args.parsed.title || v.pubmed?.title || v.crossref?.title || "") >= 0.6);
+      if (best) {
+        v.openalex = {
+          found: true,
+          id: best.id,
+          title: best.title,
+          journal: best.journal,
+          year: best.year,
+          doi: best.doi,
+          pmid: best.pmid,
+          url: best.url,
+        };
+        v.checks.inOpenAlex = true;
+      } else {
+        v.openalex = { found: false };
+        v.checks.inOpenAlex = false;
+      }
+    }
+  } catch {
+    /* best effort */
+  }
+
+  // 7c) Europe PMC — adds preprints (bioRxiv/medRxiv) and OA indicators.
+  try {
+    const eQuery = v.pubmed?.doi || v.crossref?.doi || args.parsed.doi
+      ? `DOI:"${(v.pubmed?.doi || v.crossref?.doi || args.parsed.doi)!.toLowerCase()}"`
+      : args.parsed.pmid
+      ? `EXT_ID:${args.parsed.pmid} AND SRC:MED`
+      : args.parsed.title;
+    if (eQuery) {
+      const hits = await europepmcSearch({ query: eQuery, pageSize: 3 });
+      const best =
+        hits.find(
+          (h) => (h.doi || "").toLowerCase() === (v.pubmed?.doi || v.crossref?.doi || args.parsed.doi || "").toLowerCase()
+        ) ||
+        hits.find((h) => jaccard(h.title, args.parsed.title || v.pubmed?.title || v.crossref?.title || "") >= 0.6);
+      if (best) {
+        v.europepmc = {
+          found: true,
+          source: best.source,
+          title: best.title,
+          journal: best.journal,
+          year: best.year,
+          doi: best.doi,
+          pmid: best.pmid,
+          pmcid: best.pmcid,
+          isPreprint: best.isPreprint,
+          isOpenAccess: best.isOpenAccess,
+          url: best.url,
+        };
+        v.checks.inEuropePMC = true;
+        if (best.isPreprint) v.checks.isPreprint = true;
+        if (best.isOpenAccess) v.checks.openAccess = true;
+      } else {
+        v.europepmc = { found: false };
+        v.checks.inEuropePMC = false;
+      }
+    }
+  } catch {
+    /* best effort */
+  }
+
+  // 7d) Semantic Scholar — citation influence + TLDR + OA PDF.
+  try {
+    const sId =
+      v.pubmed?.doi || v.crossref?.doi || args.parsed.doi
+        ? `DOI:${v.pubmed?.doi || v.crossref?.doi || args.parsed.doi}`
+        : args.parsed.pmid
+        ? `PMID:${args.parsed.pmid}`
+        : null;
+    if (sId) {
+      const s = await s2Paper(sId);
+      if (s) {
+        v.semanticscholar = {
+          found: true,
+          paperId: s.paperId,
+          title: s.title,
+          venue: s.venue,
+          year: s.year,
+          doi: s.doi,
+          pmid: s.pmid,
+          influentialCitationCount: s.influentialCitationCount,
+          citationCount: s.citationCount,
+          tldr: s.tldr,
+          openAccessPdfUrl: s.openAccessPdfUrl,
+          url: s.url,
+        };
+        v.checks.inSemanticScholar = true;
+        if (s.openAccessPdfUrl) v.checks.openAccess = true;
+      } else {
+        v.semanticscholar = { found: false };
+        v.checks.inSemanticScholar = false;
+      }
+    } else if (args.parsed.title) {
+      const results = await s2Search({ query: args.parsed.title, limit: 3 });
+      const best = results.find(
+        (r) => jaccard(r.title, args.parsed.title || "") >= 0.7
+      );
+      if (best) {
+        v.semanticscholar = {
+          found: true,
+          paperId: best.paperId,
+          title: best.title,
+          venue: best.venue,
+          year: best.year,
+          doi: best.doi,
+          pmid: best.pmid,
+          influentialCitationCount: best.influentialCitationCount,
+          citationCount: best.citationCount,
+          tldr: best.tldr,
+          openAccessPdfUrl: best.openAccessPdfUrl,
+          url: best.url,
+        };
+        v.checks.inSemanticScholar = true;
+      }
+    }
+  } catch {
+    /* best effort — S2 has stricter rate limits */
+  }
+
+  // 7e) Unpaywall — only if email configured; lookup by DOI.
+  if (unpaywallConfigured()) {
+    const doi = v.pubmed?.doi || v.crossref?.doi || args.parsed.doi;
+    if (doi) {
+      try {
+        const u = await unpaywallLookup(doi);
+        if (u) {
+          v.unpaywall = {
+            found: true,
+            isOA: u.isOA,
+            oaStatus: u.oaStatus,
+            bestOaPdfUrl: u.bestOaPdfUrl,
+            bestOaLandingUrl: u.bestOaLandingUrl,
+          };
+          if (u.isOA) v.checks.openAccess = true;
+        } else {
+          v.unpaywall = { found: false };
+        }
+      } catch {
+        /* best effort */
+      }
+    }
+  }
+
+  // 8) Confidence — now considers OpenAlex / EuropePMC corroboration.
+  const corroboratedCount =
+    (v.pubmed?.found ? 1 : 0) +
+    (v.crossref?.found ? 1 : 0) +
+    (v.openalex?.found ? 1 : 0) +
+    (v.europepmc?.found ? 1 : 0) +
+    (v.semanticscholar?.found ? 1 : 0);
+  if (v.pubmed?.found && v.checks.metadataMatch === "match" && corroboratedCount >= 2)
+    v.confidence = "high";
+  else if (v.pubmed?.found && v.checks.metadataMatch === "match") v.confidence = "high";
   else if (v.crossref?.found && v.checks.metadataMatch !== "mismatch") v.confidence = "medium";
+  else if (corroboratedCount >= 2 && v.checks.metadataMatch !== "mismatch") v.confidence = "medium";
   else if (v.checks.metadataMatch === "mismatch") v.confidence = "low";
   else v.confidence = "low";
 

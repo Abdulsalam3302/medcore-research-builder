@@ -14,21 +14,37 @@ type Report = {
   extensions?: string[];
   titleQualityScore?: "low" | "medium" | "high";
   titleNotes?: string[];
+  titleConflictsWithDesign?: string[];
   noveltyRisk?: string;
-  sectionScores?: Array<{ section: string; coverage: "low" | "medium" | "high"; missing: string[] }>;
+  sectionScores?: Array<{
+    section: string;
+    coverage: "low" | "medium" | "high";
+    missing: string[];
+    checklistCovered?: number;
+    checklistTotal?: number;
+  }>;
   criticalIssues?: string[];
   overstatementWarnings?: string[];
   ethicsRegistrationWarnings?: string[];
+  appendixWarnings?: string[];
+  manuscriptDesignAlignment?: "aligned" | "partial" | "conflict" | "unknown";
+  alignmentNotes?: string[];
   referenceSummary?: {
     total: number;
     pubmedIndexed: number;
     doiVerified: number;
+    openAlex?: number;
+    europePMC?: number;
+    semanticScholar?: number;
+    openAccess?: number;
+    preprints?: number;
     mismatches: number;
     duplicates: number;
     notFound: number;
     possibleRetractionOrConcern: number;
   };
   finalRecommendations?: string[];
+  overallReadiness?: "draft" | "near_submission" | "submission_ready";
   _source?: string;
 };
 
@@ -44,7 +60,7 @@ export function ComplianceReport({ project }: { project: ProjectState }) {
       const r = await fetch("/api/llm/final-report", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ project }),
+        body: JSON.stringify({ project, multiCheck: true }),
       });
       const data = (await r.json()) as Report & { error?: string };
       if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
@@ -101,11 +117,46 @@ export function ComplianceReport({ project }: { project: ProjectState }) {
           )}
 
           <Card>
-            <CardHeader title="Overview" />
+            <CardHeader
+              title="Overview"
+              right={
+                report.overallReadiness ? (
+                  <Badge
+                    kind={
+                      report.overallReadiness === "submission_ready"
+                        ? "good"
+                        : report.overallReadiness === "near_submission"
+                        ? "info"
+                        : "warn"
+                    }
+                  >
+                    {report.overallReadiness.replace("_", " ")}
+                  </Badge>
+                ) : null
+              }
+            />
             <CardBody className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
               <KV label="Research type" val={report.researchType} />
               <KV label="Primary guideline" val={report.primaryGuideline} />
               <KV label="Extensions" val={(report.extensions || []).join(", ") || "—"} />
+              <KV
+                label="Design ↔ manuscript alignment"
+                val={
+                  <Badge
+                    kind={
+                      report.manuscriptDesignAlignment === "aligned"
+                        ? "good"
+                        : report.manuscriptDesignAlignment === "partial"
+                        ? "warn"
+                        : report.manuscriptDesignAlignment === "conflict"
+                        ? "bad"
+                        : "neutral"
+                    }
+                  >
+                    {report.manuscriptDesignAlignment || "unknown"}
+                  </Badge>
+                }
+              />
               <KV
                 label="Title quality"
                 val={
@@ -171,11 +222,26 @@ export function ComplianceReport({ project }: { project: ProjectState }) {
 
           {report.referenceSummary && (
             <Card>
-              <CardHeader title="Reference summary" />
+              <CardHeader title="Reference summary (multi-database)" />
               <CardBody className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <Stat label="Total" value={report.referenceSummary.total} />
                 <Stat label="PubMed indexed" value={report.referenceSummary.pubmedIndexed} kind="good" />
                 <Stat label="DOI verified" value={report.referenceSummary.doiVerified} kind="info" />
+                {typeof report.referenceSummary.openAlex === "number" && (
+                  <Stat label="OpenAlex" value={report.referenceSummary.openAlex} kind="info" />
+                )}
+                {typeof report.referenceSummary.europePMC === "number" && (
+                  <Stat label="Europe PMC" value={report.referenceSummary.europePMC} kind="info" />
+                )}
+                {typeof report.referenceSummary.semanticScholar === "number" && (
+                  <Stat label="Semantic Scholar" value={report.referenceSummary.semanticScholar} kind="info" />
+                )}
+                {typeof report.referenceSummary.openAccess === "number" && (
+                  <Stat label="Open access" value={report.referenceSummary.openAccess} kind="good" />
+                )}
+                {typeof report.referenceSummary.preprints === "number" && (
+                  <Stat label="Preprints" value={report.referenceSummary.preprints} kind="warn" />
+                )}
                 <Stat label="Mismatches" value={report.referenceSummary.mismatches} kind="warn" />
                 <Stat label="Duplicates" value={report.referenceSummary.duplicates} kind="warn" />
                 <Stat label="Not found" value={report.referenceSummary.notFound} kind="neutral" />
@@ -186,6 +252,48 @@ export function ComplianceReport({ project }: { project: ProjectState }) {
                 />
               </CardBody>
             </Card>
+          )}
+
+          {(report.titleConflictsWithDesign && report.titleConflictsWithDesign.length > 0) ||
+          (report.alignmentNotes && report.alignmentNotes.length > 0) ? (
+            <Card>
+              <CardHeader
+                title="Pipeline alignment"
+                right={
+                  <Badge
+                    kind={
+                      report.manuscriptDesignAlignment === "aligned"
+                        ? "good"
+                        : report.manuscriptDesignAlignment === "partial"
+                        ? "warn"
+                        : "bad"
+                    }
+                  >
+                    {report.manuscriptDesignAlignment || "—"}
+                  </Badge>
+                }
+              />
+              <CardBody className="grid gap-2 text-sm">
+                {report.titleConflictsWithDesign?.map((c, i) => (
+                  <div key={i} className="border border-rose-200 bg-rose-50 text-rose-800 rounded p-2">
+                    {c}
+                  </div>
+                ))}
+                {report.alignmentNotes?.map((c, i) => (
+                  <div key={i} className="border border-amber-200 bg-amber-50 text-amber-800 rounded p-2">
+                    {c}
+                  </div>
+                ))}
+              </CardBody>
+            </Card>
+          ) : null}
+
+          {report.appendixWarnings && report.appendixWarnings.length > 0 && (
+            <WarnCard
+              title="Appendix / supplementary material"
+              items={report.appendixWarnings}
+              kind="warn"
+            />
           )}
 
           {report.criticalIssues && report.criticalIssues.length > 0 && (

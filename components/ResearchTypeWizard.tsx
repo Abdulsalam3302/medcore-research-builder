@@ -16,6 +16,10 @@ import type {
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { Spinner } from "./ui/Spinner";
+import {
+  isManuscriptTypeCompatible,
+  manuscriptTypesAllowed,
+} from "@/lib/alignment";
 
 type RegistryPayload = {
   designs: Array<
@@ -196,7 +200,13 @@ export function ResearchTypeWizard({
           registry={registry}
           selectedId={answers.designId}
           onSelect={(id) => {
-            setAns({ designId: id });
+            const newDesign = registry.designs.find((d) => d.id === id);
+            const newCat = newDesign?.category;
+            const stillCompatible = isManuscriptTypeCompatible(newCat, answers.manuscriptType);
+            setAns({
+              designId: id,
+              ...(stillCompatible ? {} : { manuscriptType: undefined }),
+            });
             setStep(1);
           }}
           selected={selectedDesign}
@@ -207,6 +217,7 @@ export function ResearchTypeWizard({
       {step === 1 && (
         <ManuscriptTypePicker
           journal={selectedJournal}
+          design={selectedDesign}
           selected={answers.manuscriptType}
           onSelect={(t) => {
             setAns({ manuscriptType: t });
@@ -513,11 +524,13 @@ function DesignDetail({ design }: { design: RegistryPayload["designs"][number] }
    ============================================================ */
 function ManuscriptTypePicker({
   journal,
+  design,
   selected,
   onSelect,
   onBack,
 }: {
   journal?: JournalSpec;
+  design?: RegistryPayload["designs"][number];
   selected?: ManuscriptType;
   onSelect: (t: ManuscriptType) => void;
   onBack: () => void;
@@ -532,35 +545,71 @@ function ManuscriptTypePicker({
     { id: "viewpoint", label: "Viewpoint / commentary", desc: "Opinion or perspective piece." },
     { id: "correspondence", label: "Correspondence", desc: "Letter to the editor." },
   ];
+
+  const designCategory = design?.category;
+  const allowed = manuscriptTypesAllowed(designCategory);
+  const compatible = (id: ManuscriptType) => isManuscriptTypeCompatible(designCategory, id);
+  const compatibleTypes = types.filter((t) => compatible(t.id));
+  const incompatibleTypes = types.filter((t) => !compatible(t.id));
+  const banner =
+    designCategory && allowed !== "any" ? (
+      <div className="rounded-md border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs p-2">
+        <span className="font-semibold">Aligned with your design</span> · only manuscript types compatible
+        with <strong>{design?.name}</strong> ({design?.primaryGuideline.acronym}) are enabled. Others are
+        hidden to prevent conflicts (e.g., choosing "systematic review" for an observational study).
+      </div>
+    ) : null;
+
   return (
     <Card>
-      <CardHeader title="Manuscript type" subtitle="Drives word limits, abstract structure, and figure caps." right={<button className="btn-ghost text-xs" onClick={onBack}>← Back</button>} />
-      <CardBody className="grid sm:grid-cols-2 gap-3">
-        {types.map((t) => {
-          const active = selected === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => onSelect(t.id)}
-              className={`text-left border rounded-lg p-3 ${
-                active ? "border-med-brand bg-sky-50" : "border-med-line hover:bg-slate-50"
-              }`}
-            >
-              <div className="font-medium text-med-ink">{t.label}</div>
-              <div className="muted mt-1">{t.desc}</div>
-              {journal &&
-                journal.manuscriptTypes.find((m) => m.type === t.id) && (
-                  <div className="text-xs mt-2 text-med-sub">
-                    {journal.name}: {journal.manuscriptTypes.find((m) => m.type === t.id)?.mainTextWordLimit || "—"} words ·
-                    {" "}
-                    {journal.manuscriptTypes.find((m) => m.type === t.id)?.referencesMax || "—"} refs ·
-                    {" "}
-                    {journal.manuscriptTypes.find((m) => m.type === t.id)?.displayItemsMax || "—"} display items
-                  </div>
-                )}
-            </button>
-          );
-        })}
+      <CardHeader
+        title="Manuscript type"
+        subtitle="Drives word limits, abstract structure, figure caps, and which guideline applies."
+        right={<button className="btn-ghost text-xs" onClick={onBack}>← Back</button>}
+      />
+      <CardBody className="grid gap-3">
+        {banner}
+        <div className="grid sm:grid-cols-2 gap-3">
+          {compatibleTypes.map((t) => {
+            const active = selected === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => onSelect(t.id)}
+                className={`text-left border rounded-lg p-3 ${
+                  active ? "border-med-brand bg-sky-50" : "border-med-line hover:bg-slate-50"
+                }`}
+              >
+                <div className="font-medium text-med-ink">{t.label}</div>
+                <div className="muted mt-1">{t.desc}</div>
+                {journal &&
+                  journal.manuscriptTypes.find((m) => m.type === t.id) && (
+                    <div className="text-xs mt-2 text-med-sub">
+                      {journal.name}: {journal.manuscriptTypes.find((m) => m.type === t.id)?.mainTextWordLimit || "—"} words ·
+                      {" "}
+                      {journal.manuscriptTypes.find((m) => m.type === t.id)?.referencesMax || "—"} refs ·
+                      {" "}
+                      {journal.manuscriptTypes.find((m) => m.type === t.id)?.displayItemsMax || "—"} display items
+                    </div>
+                  )}
+              </button>
+            );
+          })}
+        </div>
+        {incompatibleTypes.length > 0 && designCategory && (
+          <details className="mt-1 text-xs">
+            <summary className="cursor-pointer text-med-sub">
+              {incompatibleTypes.length} manuscript type(s) hidden because they conflict with your design
+            </summary>
+            <ul className="mt-2 grid gap-1 text-med-sub">
+              {incompatibleTypes.map((t) => (
+                <li key={t.id} className="border border-med-line rounded p-2 opacity-70">
+                  <span className="line-through">{t.label}</span> — incompatible with {design?.name}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </CardBody>
     </Card>
   );

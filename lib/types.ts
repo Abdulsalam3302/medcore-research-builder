@@ -419,16 +419,72 @@ export type ReferenceVerification = {
     score?: number;
     url?: string;
   };
+  openalex?: {
+    found: boolean;
+    id?: string;
+    title?: string;
+    journal?: string;
+    year?: string;
+    doi?: string;
+    pmid?: string;
+    url?: string;
+  };
+  europepmc?: {
+    found: boolean;
+    source?: string;
+    title?: string;
+    journal?: string;
+    year?: string;
+    doi?: string;
+    pmid?: string;
+    pmcid?: string;
+    isPreprint?: boolean;
+    isOpenAccess?: boolean;
+    url?: string;
+  };
+  semanticscholar?: {
+    found: boolean;
+    paperId?: string;
+    title?: string;
+    venue?: string;
+    year?: string;
+    doi?: string;
+    pmid?: string;
+    influentialCitationCount?: number;
+    citationCount?: number;
+    tldr?: string;
+    openAccessPdfUrl?: string;
+    url?: string;
+  };
+  unpaywall?: {
+    found: boolean;
+    isOA?: boolean;
+    oaStatus?: string;
+    bestOaPdfUrl?: string;
+    bestOaLandingUrl?: string;
+  };
   checks: {
     pubmedIndexed: boolean | "unknown";
     doiResolved: boolean | "unknown";
     metadataMatch: "match" | "partial" | "mismatch" | "unknown";
     duplicate: boolean;
     possibleRetractionOrConcern: boolean | "unknown";
+    openAccess?: boolean | "unknown";
+    inOpenAlex?: boolean | "unknown";
+    inEuropePMC?: boolean | "unknown";
+    inSemanticScholar?: boolean | "unknown";
+    isPreprint?: boolean | "unknown";
   };
   confidence: "high" | "medium" | "low";
   problems: string[];
   correctedCitationVancouver?: string;
+};
+
+export type AppendixSection = {
+  id: string;
+  kind: "questionnaire" | "instrument" | "supplementary" | "other";
+  title: string;
+  content: string;
 };
 
 export type ProjectState = {
@@ -456,10 +512,11 @@ export type ProjectState = {
     raw: string;
     verifications: ReferenceVerification[];
   };
+  appendices?: AppendixSection[];
 };
 
 export const emptyProject = (): ProjectState => ({
-  version: "2.0.0",
+  version: "2.1.0",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   researchTypeAnswers: { featureIds: [] },
@@ -474,4 +531,5 @@ export const emptyProject = (): ProjectState => ({
   },
   sectionFeedback: {},
   references: { raw: "", verifications: [] },
+  appendices: [],
 });

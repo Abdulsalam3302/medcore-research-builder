@@ -170,37 +170,84 @@ Return ONLY this JSON:
 export function finalReportPrompt(args: {
   project: unknown;
   contextBlock?: string;
+  /** Pass 1 (analyse) vs Pass 2 (validate previous). When omitted, a single-pass prompt is generated. */
+  pass?: "analyse" | "validate";
+  previousReport?: unknown;
 }) {
   const ctx = args.contextBlock ? `\n\n${args.contextBlock}\n` : "";
-  return `Produce a final compliance report for the manuscript project below. Use only data present in the project — do not invent results or references.${ctx}
 
-Project (JSON):
-${JSON.stringify(args.project, null, 2)}
+  const baseRules = `RULES — NEVER VIOLATE:
+- Do NOT fabricate any statistic, sample size, p-value, CI, PMID, DOI, citation, or outcome.
+- Every claim must be traceable to a field in the project JSON. If unknown, output "unknown".
+- Be conservative: if section coverage is unclear, mark "low"; if novelty risk is unclear, mark "unknown".
+- Use the reporting-guideline checklist that the project actually selected; never substitute a different one.
+- Flag conflicts between research-type, manuscript-type, title, and sections explicitly.`;
 
-Return ONLY this JSON:
+  const schema = `Return ONLY this JSON (no prose, no markdown):
 {
-  "summary": "string (2-4 sentence overview)",
+  "summary": "string (3-5 sentence overview — what is the manuscript about, what design, what state is it in, what blockers)",
   "researchType": "string",
   "primaryGuideline": "string",
   "extensions": ["string"],
   "titleQualityScore": "low|medium|high",
   "titleNotes": ["string"],
+  "titleConflictsWithDesign": ["string"],
   "noveltyRisk": "low_duplicate_risk|moderate_similarity_risk|high_duplicate_risk|exact_or_near_exact_match|unknown",
   "sectionScores": [
-    {"section": "introduction|methods|results|discussion|conclusion", "coverage": "low|medium|high", "missing": ["string"]}
+    {"section": "introduction|methods|results|discussion|conclusion", "coverage": "low|medium|high", "missing": ["string"], "checklistCovered": 0, "checklistTotal": 0}
   ],
   "criticalIssues": ["string"],
   "overstatementWarnings": ["string"],
   "ethicsRegistrationWarnings": ["string"],
+  "appendixWarnings": ["string"],
+  "manuscriptDesignAlignment": "aligned|partial|conflict|unknown",
+  "alignmentNotes": ["string"],
   "referenceSummary": {
     "total": 0,
     "pubmedIndexed": 0,
     "doiVerified": 0,
+    "openAlex": 0,
+    "europePMC": 0,
+    "semanticScholar": 0,
+    "openAccess": 0,
+    "preprints": 0,
     "mismatches": 0,
     "duplicates": 0,
     "notFound": 0,
     "possibleRetractionOrConcern": 0
   },
-  "finalRecommendations": ["string"]
+  "finalRecommendations": ["string"],
+  "overallReadiness": "draft|near_submission|submission_ready"
 }`;
+
+  if (args.pass === "validate" && args.previousReport) {
+    return `You are auditing a previously-generated compliance report against the raw project JSON. Your job: catch any hallucinations, missed conflicts, or inflated scores. Be skeptical.${ctx}
+
+Project (JSON):
+${JSON.stringify(args.project, null, 2)}
+
+Previous report under audit:
+${JSON.stringify(args.previousReport, null, 2)}
+
+${baseRules}
+
+Audit tasks:
+1. Verify every number, statistic, or count in the report against the project JSON. Correct any discrepancy.
+2. Re-check section coverage scores by re-reading the section text. Be strict — if a section is short or missing key items, downgrade.
+3. Re-check title for conflicts with the selected design (e.g., "retrospective" in cross-sectional, "RCT" in observational).
+4. Confirm manuscript type is compatible with the chosen design family.
+5. Re-tally reference statistics from project.references.verifications.
+6. Re-rate overall readiness conservatively.
+
+${schema}`;
+  }
+
+  return `Produce a final compliance report for the manuscript project below. Use only data present in the project — do not invent results or references.${ctx}
+
+Project (JSON):
+${JSON.stringify(args.project, null, 2)}
+
+${baseRules}
+
+${schema}`;
 }

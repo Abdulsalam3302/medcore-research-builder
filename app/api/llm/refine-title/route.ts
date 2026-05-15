@@ -5,6 +5,7 @@ import type { ResearchTypeAnswersV2 } from "@/lib/types";
 import { buildContextBundle, bundleToPromptBlock } from "@/lib/agents/contextBundle";
 import { bundleJournalHints, journalStyleHints } from "@/lib/agents/journalStyle";
 import { allJournalSpecs, icmjeGenericFallback } from "@/lib/registry/journals";
+import { detectTitleConflicts } from "@/lib/alignment";
 
 export const runtime = "nodejs";
 
@@ -17,7 +18,10 @@ type Body = {
 export async function POST(req: Request) {
   try {
     if (!isLLMConfigured())
-      return bad("LLM not configured — set MINIMAX_API_KEY (default), ANTHROPIC_API_KEY, or OPENAI_API_KEY", 503);
+      return bad(
+        "LLM not configured — set MINIMAX_API_KEY (default), ANTHROPIC_API_KEY, or OPENAI_API_KEY",
+        503
+      );
     const body = await safeJson<Body>(req);
     if (!body?.inputs) return bad("Missing inputs");
 
@@ -32,14 +36,40 @@ export async function POST(req: Request) {
       ...(bundle ? bundleJournalHints(bundle) : []),
     ];
 
+    /* Deterministic cross-step conflict detection *before* the LLM call. */
+    const designId = body.answers?.designId;
+    const draftConflicts = detectTitleConflicts(
+      designId,
+      (body.inputs as Record<string, string>).draftTitle || ""
+    );
+
+    const conflictNote = draftConflicts.length
+      ? `\n\nIMPORTANT — DESIGN-vs-TITLE CONFLICTS DETECTED:\n${draftConflicts
+          .map(
+            (c) => `- The title contains "${c.keyword}" which conflicts with the chosen design. ${c.reason}`
+          )
+          .join("\n")}\nYou MUST: (a) explicitly flag this in the rationale and warnings of each candidate; (b) propose corrected titles that REMOVE or RECONCILE the conflicting term while preserving the author's intent; (c) ask the author to confirm whether they meant to change the design OR the title.\n`
+      : "";
+
+    const basePrompt = refineTitlePrompt({
+      mode: body.mode || "refine",
+      inputs: body.inputs,
+      contextBlock,
+      journalHints,
+    });
+
+    const validationRules = `
+SCIENTIFIC ALIGNMENT — multi-check the entire pipeline:
+- The title's study-design phrase MUST match the selected design.
+- The title's population/intervention/outcome MUST be consistent with the project context above.
+- If anything in the inputs contradicts the chosen design (e.g. "retrospective" in a cross-sectional study), emit a warning AND propose a corrected title.
+- Do not use "novel", "first", "unique", "unprecedented", "groundbreaking" without supplied evidence.
+- Stay within the journal's title length and style hints.
+`;
+
     const text = await callLLM({
       system: GLOBAL_SYSTEM,
-      prompt: refineTitlePrompt({
-        mode: body.mode || "refine",
-        inputs: body.inputs,
-        contextBlock,
-        journalHints,
-      }),
+      prompt: basePrompt + validationRules + conflictNote,
       maxTokens: 1800,
       temperature: 0.4,
       jsonOnly: true,
@@ -47,7 +77,24 @@ export async function POST(req: Request) {
     const parsed = extractJSON<{
       candidates: Array<{ text: string; rationale: string; warnings: string[] }>;
     }>(text);
-    return ok(parsed);
+
+    /* Post-flight: enrich each candidate's warnings with deterministic checks. */
+    const enriched = (parsed.candidates || []).map((c) => {
+      const issues = detectTitleConflicts(designId, c.text);
+      if (issues.length === 0) return c;
+      return {
+        ...c,
+        warnings: [
+          ...(c.warnings || []),
+          ...issues.map((i) => `Design conflict: "${i.keyword}" — ${i.reason}`),
+        ],
+      };
+    });
+
+    return ok({
+      candidates: enriched,
+      designConflicts: draftConflicts,
+    });
   } catch (e) {
     return handleError(e);
   }

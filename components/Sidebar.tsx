@@ -1,6 +1,21 @@
 "use client";
 
 import type { ProjectState } from "@/lib/types";
+import type { ComponentType } from "react";
+import { LogoWordmark } from "./ui/Logo";
+import {
+  IconOverview,
+  IconCompass,
+  IconPen,
+  IconDocument,
+  IconFlask,
+  IconChart,
+  IconChat,
+  IconFlag,
+  IconBooks,
+  IconShield,
+  IconUpload,
+} from "./ui/Icon";
 
 export type ToolKey =
   | "overview"
@@ -11,22 +26,28 @@ export type ToolKey =
   | "results"
   | "discussion"
   | "conclusion"
+  | "appendix"
   | "references"
+  | "stats"
   | "report"
   | "export";
 
-const items: { key: ToolKey; label: string; emoji: string }[] = [
-  { key: "overview", label: "Project overview", emoji: "🗂" },
-  { key: "type", label: "Research type", emoji: "🧭" },
-  { key: "title", label: "Title Lab", emoji: "✒️" },
-  { key: "introduction", label: "Introduction", emoji: "📝" },
-  { key: "methods", label: "Methods", emoji: "🧪" },
-  { key: "results", label: "Results", emoji: "📊" },
-  { key: "discussion", label: "Discussion", emoji: "💬" },
-  { key: "conclusion", label: "Conclusion", emoji: "🏁" },
-  { key: "references", label: "Reference Verifier", emoji: "📚" },
-  { key: "report", label: "Compliance Report", emoji: "✅" },
-  { key: "export", label: "Export Center", emoji: "📤" },
+type IconCmp = ComponentType<{ size?: number; className?: string }>;
+
+const items: { key: ToolKey; label: string; Icon: IconCmp; group?: string }[] = [
+  { key: "overview", label: "Project overview", Icon: IconOverview, group: "Workspace" },
+  { key: "type", label: "Research type", Icon: IconCompass, group: "Workspace" },
+  { key: "title", label: "Title Lab", Icon: IconPen, group: "Workspace" },
+  { key: "introduction", label: "Introduction", Icon: IconDocument, group: "Manuscript" },
+  { key: "methods", label: "Methods", Icon: IconFlask, group: "Manuscript" },
+  { key: "results", label: "Results", Icon: IconChart, group: "Manuscript" },
+  { key: "discussion", label: "Discussion", Icon: IconChat, group: "Manuscript" },
+  { key: "conclusion", label: "Conclusion", Icon: IconFlag, group: "Manuscript" },
+  { key: "appendix", label: "Appendices", Icon: IconDocument, group: "Manuscript" },
+  { key: "references", label: "Reference Verifier", Icon: IconBooks, group: "Quality" },
+  { key: "stats", label: "Stats & Figures", Icon: IconChart, group: "Quality" },
+  { key: "report", label: "Compliance Report", Icon: IconShield, group: "Quality" },
+  { key: "export", label: "Export Center", Icon: IconUpload, group: "Quality" },
 ];
 
 export function Sidebar({
@@ -39,66 +60,84 @@ export function Sidebar({
   project: ProjectState;
 }) {
   const progress = computeProgress(project);
+  const groups = items.reduce<Record<string, typeof items>>((acc, it) => {
+    const g = it.group || "Other";
+    (acc[g] ||= []).push(it);
+    return acc;
+  }, {});
+
   return (
-    <aside className="w-64 shrink-0 h-screen sticky top-0 border-r border-med-line bg-white hidden md:flex md:flex-col">
+    <aside className="w-[260px] shrink-0 h-screen sticky top-0 border-r border-med-line bg-white hidden md:flex md:flex-col">
       <div className="px-5 py-4 border-b border-med-line">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-med-brand text-white flex items-center justify-center font-bold">
-            M
-          </div>
-          <div>
-            <div className="font-semibold text-med-ink">MedCore</div>
-            <div className="text-xs text-med-sub -mt-0.5">Research Builder</div>
-          </div>
-        </div>
+        <LogoWordmark />
       </div>
-      <nav className="px-2 py-2 flex-1 overflow-y-auto">
-        {items.map((it) => {
-          const isActive = it.key === active;
-          const status = sectionStatus(it.key, project);
-          return (
-            <button
-              key={it.key}
-              onClick={() => onSelect(it.key)}
-              className={`w-full text-left flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm ${
-                isActive
-                  ? "bg-med-brand text-white"
-                  : "text-med-ink hover:bg-slate-100"
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <span aria-hidden>{it.emoji}</span>
-                <span>{it.label}</span>
-              </span>
-              {status && (
-                <span
-                  className={`text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full ${
-                    isActive
-                      ? "bg-white/20 text-white"
-                      : status.color === "good"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : status.color === "warn"
-                      ? "bg-amber-100 text-amber-700"
-                      : "bg-slate-100 text-slate-500"
-                  }`}
-                >
-                  {status.label}
-                </span>
-              )}
-            </button>
-          );
-        })}
+
+      <nav className="px-3 py-3 flex-1 overflow-y-auto space-y-4">
+        {Object.entries(groups).map(([group, list]) => (
+          <div key={group}>
+            <div className="px-2.5 mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-med-subtle">
+              {group}
+            </div>
+            <div className="space-y-0.5">
+              {list.map((it) => {
+                const isActive = it.key === active;
+                const status = sectionStatus(it.key, project);
+                const Icon = it.Icon;
+                return (
+                  <button
+                    key={it.key}
+                    onClick={() => onSelect(it.key)}
+                    className={`nav-item group ${
+                      isActive
+                        ? "bg-brand-gradient text-white shadow-soft"
+                        : "text-med-inkSoft hover:bg-slate-50"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5 min-w-0">
+                      <span
+                        className={`nav-item-icon ${
+                          isActive
+                            ? "bg-white/15 text-white"
+                            : "bg-slate-50 text-med-sub group-hover:bg-white group-hover:text-med-brand"
+                        }`}
+                      >
+                        <Icon size={15} />
+                      </span>
+                      <span className="truncate">{it.label}</span>
+                    </span>
+                    {status && (
+                      <span
+                        className={`text-[9.5px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded-full ${
+                          isActive
+                            ? "bg-white/20 text-white"
+                            : status.color === "good"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : status.color === "warn"
+                            ? "bg-amber-50 text-amber-700 border border-amber-200"
+                            : "bg-slate-50 text-slate-500 border border-slate-200"
+                        }`}
+                      >
+                        {status.label}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
-      <div className="p-4 border-t border-med-line">
-        <div className="text-xs text-med-sub mb-1.5 flex items-center justify-between">
+
+      <div className="p-4 border-t border-med-line bg-gradient-to-b from-white to-slate-50">
+        <div className="text-[11px] text-med-sub mb-1.5 flex items-center justify-between font-medium">
           <span>Project progress</span>
-          <span>{progress}%</span>
+          <span className="text-med-ink tabular-nums">{progress}%</span>
         </div>
         <div className="progress">
           <div style={{ width: `${progress}%` }} />
         </div>
-        <div className="text-[11px] text-med-sub mt-3 leading-relaxed">
-          No login. All draft data is stored only in your browser.
+        <div className="text-[10.5px] text-med-subtle mt-3 leading-relaxed">
+          No login required. Draft data is stored only in your browser.
         </div>
       </div>
     </aside>
@@ -130,6 +169,10 @@ function sectionStatus(
       return p.references.verifications.length > 0
         ? { color: "good", label: `${p.references.verifications.length}` }
         : { color: "warn", label: "todo" };
+    case "appendix":
+      return (p.appendices || []).length > 0
+        ? { color: "good", label: `${(p.appendices || []).length}` }
+        : { color: "neutral", label: "opt" };
     default:
       return null;
   }

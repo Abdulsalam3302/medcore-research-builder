@@ -7,7 +7,9 @@ import { Overview } from "@/components/Overview";
 import { ResearchTypeWizard } from "@/components/ResearchTypeWizard";
 import { TitleLab } from "@/components/TitleLab";
 import { SectionBuilder } from "@/components/SectionBuilder";
+import { AppendixBuilder } from "@/components/AppendixBuilder";
 import { ReferenceVerifier } from "@/components/ReferenceVerifier";
+import { StatsAndFigures } from "@/components/StatsAndFigures";
 import { ComplianceReport } from "@/components/ComplianceReport";
 import { ExportCenter } from "@/components/ExportCenter";
 import { useProject } from "@/components/useProject";
@@ -39,7 +41,7 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-med-bg">
       <Sidebar active={active} onSelect={setActive} project={project} />
       <div className="flex-1 min-w-0 flex flex-col">
         <TopBar
@@ -49,7 +51,7 @@ export default function Page() {
           onImport={importProject}
         />
         <MobileTabs active={active} onSelect={setActive} />
-        <main className="p-4 md:p-6 flex-1">
+        <main className="p-4 md:p-6 lg:p-8 flex-1 max-w-[1400px] w-full mx-auto">
           {!ready ? (
             <div className="muted">Loading…</div>
           ) : active === "overview" ? (
@@ -68,19 +70,29 @@ export default function Page() {
             <SectionBuilder section="discussion" project={project} update={update} />
           ) : active === "conclusion" ? (
             <SectionBuilder section="conclusion" project={project} update={update} />
+          ) : active === "appendix" ? (
+            <AppendixBuilder project={project} update={update} />
           ) : active === "references" ? (
             <ReferenceVerifier project={project} update={update} />
+          ) : active === "stats" ? (
+            <StatsAndFigures />
           ) : active === "report" ? (
             <ComplianceReport project={project} />
           ) : active === "export" ? (
             <ExportCenter project={project} onImport={importProject} onReset={resetProject} />
           ) : null}
         </main>
-        <footer className="px-6 py-4 text-xs text-med-sub border-t border-med-line bg-white">
-          This tool supports research writing and reporting-guideline compliance.
-          It does not replace expert scientific, statistical, ethical, or journal review.
-          Data is processed via your configured API keys server-side; drafts are stored
-          only in your browser.
+        <footer className="px-5 md:px-6 py-4 text-[11.5px] text-med-sub border-t border-med-line bg-white">
+          <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <p className="leading-relaxed">
+              MedCore supports research writing and reporting-guideline
+              compliance. It does not replace expert scientific, statistical,
+              ethical, or journal review.
+            </p>
+            <p className="text-med-subtle whitespace-nowrap">
+              Drafts stored in your browser · API calls processed server-side
+            </p>
+          </div>
         </footer>
       </div>
     </div>
@@ -103,18 +115,22 @@ function MobileTabs({
     { key: "results", label: "Results" },
     { key: "discussion", label: "Discussion" },
     { key: "conclusion", label: "Conclusion" },
+    { key: "appendix", label: "Appendix" },
     { key: "references", label: "Refs" },
+    { key: "stats", label: "Stats" },
     { key: "report", label: "Report" },
     { key: "export", label: "Export" },
   ];
   return (
-    <div className="md:hidden border-b border-med-line bg-white px-2 py-2 overflow-x-auto">
+    <div className="md:hidden border-b border-med-line bg-white/85 backdrop-blur px-2 py-2 overflow-x-auto sticky top-[57px] z-10">
       <div className="flex gap-1 min-w-max">
         {items.map((it) => (
           <button
             key={it.key}
             onClick={() => onSelect(it.key)}
-            className={`pill-tab ${active === it.key ? "pill-tab-active" : ""}`}
+            className={`pill-tab whitespace-nowrap ${
+              active === it.key ? "pill-tab-active" : ""
+            }`}
           >
             {it.label}
           </button>

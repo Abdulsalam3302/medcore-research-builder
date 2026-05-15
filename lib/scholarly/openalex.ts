@@ -27,6 +27,7 @@ export async function openalexSearch(args: {
   p.set("per_page", String(args.perPage ?? 20));
   const mailto = process.env.OPENALEX_MAILTO;
   if (mailto) p.set("mailto", mailto);
+  if (process.env.OPENALEX_API_KEY) p.set("api_key", process.env.OPENALEX_API_KEY);
   const res = await fetch(`${BASE}/works?${p.toString()}`, {
     headers: { accept: "application/json" },
   });
