@@ -420,6 +420,25 @@ export function TitleLab({
 
       {titleAssessment && <TitleAssessmentCard a={titleAssessment} />}
 
+      {project.noveltyReport &&
+        (project.noveltyReport.risk === "exact_or_near_exact_match" ||
+          project.noveltyReport.risk === "high_duplicate_risk" ||
+          project.noveltyReport.risk === "moderate_similarity_risk") ? (
+        <DifferentiatorPanel
+          report={project.noveltyReport}
+          onAppendNote={(text) =>
+            update((p) => ({
+              ...p,
+              researchTypeAnswers: {
+                ...p.researchTypeAnswers,
+                notes: p.researchTypeAnswers.notes
+                  ? `${p.researchTypeAnswers.notes}\n${text}`
+                  : text,
+              },
+            }))
+          }
+        />
+      ) : null}
       {project.noveltyReport && <NoveltyResult report={project.noveltyReport} />}
     </div>
   );
@@ -552,6 +571,66 @@ function PipelineBanner({ project }: { project: ProjectState }) {
             Title Lab can validate against your design.
           </div>
         )}
+      </CardBody>
+    </Card>
+  );
+}
+
+function DifferentiatorPanel({
+  report,
+  onAppendNote,
+}: {
+  report: NoveltyReport;
+  onAppendNote: (text: string) => void;
+}) {
+  const [text, setText] = useState("");
+  const exampleQs = [
+    "What population / setting is different?",
+    "What outcome / measurement is different?",
+    "What time window / sample size is different?",
+    "What method / model / analysis approach is different?",
+  ];
+  const top = report.exactMatches[0] || report.similar[0];
+  if (!top) return null;
+  return (
+    <Card>
+      <CardHeader
+        title="What makes yours different?"
+        subtitle="Near-match found. Articulate the differentiator before drafting — it will save reviewer pushback."
+        right={<Badge kind="bad">Action recommended</Badge>}
+      />
+      <CardBody className="grid gap-3">
+        <div className="text-[12.5px] text-med-sub">
+          Closest existing work: <span className="font-medium text-med-ink">{top.title}</span>
+          {top.year ? ` (${top.year})` : ""}
+          {top.journal ? ` · ${top.journal}` : ""}
+        </div>
+        <ul className="grid sm:grid-cols-2 gap-1.5 text-[12.5px] text-med-inkSoft">
+          {exampleQs.map((q) => (
+            <li key={q} className="flex gap-1.5">
+              <span className="text-med-brand">•</span>
+              <span>{q}</span>
+            </li>
+          ))}
+        </ul>
+        <textarea
+          className="textarea min-h-[110px]"
+          placeholder="Write 2–3 sentences that an editor could quote in the cover letter."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
+        <div className="flex justify-end gap-2">
+          <button
+            className="btn-secondary"
+            disabled={!text.trim()}
+            onClick={() => {
+              onAppendNote(`Differentiator vs prior work: ${text.trim()}`);
+              setText("");
+            }}
+          >
+            Save into project notes
+          </button>
+        </div>
       </CardBody>
     </Card>
   );

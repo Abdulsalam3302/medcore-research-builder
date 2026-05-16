@@ -2,6 +2,7 @@
 
 import type { ProjectState } from "@/lib/types";
 import type { ComponentType } from "react";
+import { scoreLaunch } from "@/lib/launchReadiness";
 import { Badge } from "./ui/Badge";
 import { LogoMark } from "./ui/Logo";
 import {
@@ -14,10 +15,12 @@ import {
   IconArrowRight,
   IconCheck,
   IconSpark,
+  IconBolt,
 } from "./ui/Icon";
 
 type IconCmp = ComponentType<{ size?: number; className?: string }>;
 type Target =
+  | "launch"
   | "type"
   | "title"
   | "introduction"
@@ -40,6 +43,10 @@ export function Overview({
     (s) => s.length > 60,
   ).length;
 
+  const launchScore = project.researchLaunch
+    ? scoreLaunch(project.researchLaunch).totalScore
+    : 0;
+
   const cards: Array<{
     step: string;
     title: string;
@@ -50,6 +57,19 @@ export function Overview({
     Icon: IconCmp;
     tone: "teal" | "blue" | "indigo" | "sky" | "amber" | "violet";
   }> = [
+    {
+      step: "00",
+      title: "Research launch",
+      desc:
+        "Pre-research preparation: team, PI, first author, budget, IRB, data, target journal — and a duration → design recommender.",
+      target: "launch",
+      status: launchScore >= 75 ? "good" : launchScore >= 30 ? "warn" : "warn",
+      statusLabel: project.researchLaunch
+        ? `Readiness ${launchScore}%`
+        : "Not started",
+      Icon: IconBolt,
+      tone: "amber",
+    },
     {
       step: "01",
       title: "Research type",
@@ -133,6 +153,7 @@ export function Overview({
         hasType={!!project.researchTypeResult}
         hasTitle={!!(project.titleFinal || project.titleInputs.draftTitle)}
         refCount={project.references.verifications.length}
+        launchScore={launchScore}
         onJump={onJump}
       />
 
@@ -163,15 +184,19 @@ function HeroCard({
   hasType,
   hasTitle,
   refCount,
+  launchScore,
   onJump,
 }: {
   draftedSections: number;
   hasType: boolean;
   hasTitle: boolean;
   refCount: number;
+  launchScore: number;
   onJump: (k: Target) => void;
 }) {
-  const nextStep: { label: string; target: Target } = !hasType
+  const nextStep: { label: string; target: Target } = launchScore < 60
+    ? { label: "Run pre-research launch checklist", target: "launch" }
+    : !hasType
     ? { label: "Start with research type", target: "type" }
     : !hasTitle
     ? { label: "Draft the title", target: "title" }
@@ -182,6 +207,11 @@ function HeroCard({
     : { label: "View compliance report", target: "report" };
 
   const stats = [
+    {
+      label: "Launch readiness",
+      value: launchScore ? `${launchScore}%` : "Not run",
+      good: launchScore >= 60,
+    },
     { label: "Research type", value: hasType ? "Set" : "Pending", good: hasType },
     { label: "Title", value: hasTitle ? "Drafted" : "Pending", good: hasTitle },
     { label: "Sections", value: `${draftedSections}/5`, good: draftedSections >= 3 },

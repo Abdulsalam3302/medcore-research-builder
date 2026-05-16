@@ -1,20 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ProjectState } from "@/lib/types";
+import { scoreLaunch } from "@/lib/launchReadiness";
+import type { AutosaveStatus } from "./useProject";
 import { LogoMark } from "./ui/Logo";
-import { IconDownload, IconUpload, IconReset } from "./ui/Icon";
+import { IconDownload, IconUpload, IconReset, IconCheck } from "./ui/Icon";
 
 export function TopBar({
   project,
   onExport,
   onReset,
   onImport,
+  autosave,
 }: {
   project: ProjectState;
   onExport: () => void;
   onReset: () => void;
   onImport: (p: ProjectState) => void;
+  autosave?: AutosaveStatus;
 }) {
   const [status, setStatus] = useState<{
     llm: { configured: boolean; provider: string | null };
@@ -42,6 +46,19 @@ export function TopBar({
     project.titleInputs.draftTitle ||
     "Untitled manuscript";
 
+  const progress = useMemo(() => computeProgress(project), [project]);
+  const [savedTick, setSavedTick] = useState(0);
+  useEffect(() => {
+    if (!autosave?.savedAt) return;
+    const id = window.setInterval(() => setSavedTick((t) => t + 1), 5000);
+    return () => window.clearInterval(id);
+  }, [autosave?.savedAt]);
+  const savedAgo = autosave?.savedAt
+    ? formatAgo(Date.now() - autosave.savedAt)
+    : null;
+  // ensure savedTick triggers re-render of timer text
+  void savedTick;
+
   return (
     <header className="sticky top-0 z-20 bg-white/85 backdrop-blur-md border-b border-med-line">
       <div className="px-5 md:px-6 py-3 flex items-center justify-between gap-4">
@@ -68,6 +85,28 @@ export function TopBar({
           <span className="hidden lg:inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-medium text-sky-700">
             <span className="status-dot bg-sky-500 animate-pulse-soft" />
             No login · Local draft only
+          </span>
+          {autosave ? (
+            <span
+              className="hidden md:inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700"
+              title="Drafts persist to this browser only — export regularly to share or back up."
+            >
+              <IconCheck size={11} />
+              {autosave.saving ? "Saving…" : savedAgo ? `Saved ${savedAgo} · only on this device` : "Saved · only on this device"}
+            </span>
+          ) : null}
+          <span
+            className="hidden xl:inline-flex items-center gap-2 rounded-full border border-med-line bg-white px-2.5 py-1 text-[11px] font-medium text-med-inkSoft"
+            title={`Project completion: ${progress}%`}
+          >
+            <span className="text-med-sub">Progress</span>
+            <span className="h-1.5 w-24 rounded-full bg-slate-100 overflow-hidden">
+              <span
+                className="block h-full bg-brand-gradient transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </span>
+            <span className="tabular-nums text-med-ink">{progress}%</span>
           </span>
         </div>
 
@@ -131,6 +170,35 @@ export function TopBar({
       </div>
     </header>
   );
+}
+
+function computeProgress(p: ProjectState): number {
+  let score = 0;
+  let total = 0;
+  total += 1;
+  if (p.researchLaunch && scoreLaunch(p.researchLaunch).totalScore >= 60) score += 1;
+  total += 1;
+  if (p.researchTypeResult) score += 1;
+  total += 1;
+  if (p.titleFinal || p.titleInputs.draftTitle) score += 1;
+  for (const s of ["introduction", "methods", "results", "discussion", "conclusion"] as const) {
+    total += 1;
+    if ((p.sections[s] || "").length > 60) score += 1;
+  }
+  total += 1;
+  if (p.references.verifications.length > 0) score += 1;
+  return Math.round((score / total) * 100);
+}
+
+function formatAgo(ms: number): string {
+  if (ms < 1500) return "just now";
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
 
 function StatusPill({ ok, label, tip }: { ok: boolean; label: string; tip?: string }) {

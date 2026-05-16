@@ -487,10 +487,110 @@ export type AppendixSection = {
   content: string;
 };
 
+/* ============================================================
+   v2.2 — Research launch (pre-research preparation)
+   ============================================================ */
+
+export type YesNoMaybe = "yes" | "no" | "partial";
+export type DurationBucket = "lt1m" | "1to3m" | "3to6m" | "6to12m" | "gt12m";
+
+export type ResearchLaunchAnswers = {
+  // Team & leadership
+  hasTeam?: YesNoMaybe;
+  teamSize?: number;
+  hasPI?: YesNoMaybe;
+  piName?: string;
+  hasSeniorResearcher?: YesNoMaybe;
+  hasLeader?: YesNoMaybe;
+  leaderRole?: "PI" | "senior" | "first-author" | "consultant" | "other";
+  rolesAssigned?: boolean;
+
+  // Authorship
+  firstAuthorDecided?: boolean;
+  firstAuthorName?: string;
+  authorshipOrderAgreed?: boolean;
+  icmjeReviewed?: boolean;
+  correspondingAuthorDecided?: boolean;
+
+  // Research type & pre-requirements
+  researchTypeKnown?: boolean;
+  researchTypeNote?: string;
+  irbStatus?: "approved" | "submitted" | "not-required" | "not-started";
+  irbNumber?: string;
+  dataStatus?: "collected-clean" | "collected-raw" | "in-collection" | "secondary-available" | "not-started";
+  questionnaireStatus?: "validated" | "draft" | "not-needed" | "not-started";
+  registrationStatus?: "registered" | "in-progress" | "not-required" | "not-started";
+  registrationId?: string;
+  consentStatus?: "obtained" | "in-progress" | "not-required" | "not-started";
+
+  // Budget & funding
+  budgetPlanned?: boolean;
+  estimatedBudgetUSD?: number;
+  fundingSecured?: YesNoMaybe;
+  budgetItems?: {
+    apc?: boolean;              // article processing charge / open access
+    submissionFees?: boolean;
+    languageEdit?: boolean;     // English editing
+    statisticsConsult?: boolean;
+    figureDesign?: boolean;
+    plagiarismCheck?: boolean;
+    referenceManager?: boolean;
+    softwareLicenses?: boolean; // SPSS, REDCap, etc
+    transcription?: boolean;    // qualitative
+    travelConferences?: boolean;
+    irbFees?: boolean;
+    reprints?: boolean;
+  };
+
+  // Journal & format
+  targetJournalKnown?: boolean;
+  targetJournalName?: string;
+  manuscriptTypeKnown?: boolean;
+
+  // Methodology readiness
+  statisticianAvailable?: YesNoMaybe | "external";
+  analysisPlanReady?: boolean;
+  outcomeMeasuresDefined?: boolean;
+  sampleSizeJustified?: boolean;
+
+  // Tools & compliance
+  referenceManagerReady?: boolean;
+  coiDisclosed?: boolean;
+  aiUsePolicyReviewed?: boolean;
+  dataSharingPlanned?: boolean;
+
+  // Timeline
+  durationTarget?: DurationBucket;
+  hasHardDeadline?: boolean;
+  deadlineDate?: string;
+
+  // Additional context
+  notes?: string;
+  completedAt?: string;
+};
+
+export type LaunchReadinessSummary = {
+  totalScore: number;             // 0–100
+  pillarScores: {
+    team: number;
+    authorship: number;
+    prereqs: number;
+    budget: number;
+    methodology: number;
+    journalAndTimeline: number;
+  };
+  acceleratingFactors: string[];
+  deceleratingFactors: string[];
+  recommendedDesigns: string[];
+  recommendationRationale: string;
+  blockers: string[];
+};
+
 export type ProjectState = {
   version: string;
   createdAt: string;
   updatedAt: string;
+  researchLaunch?: ResearchLaunchAnswers;
   researchTypeAnswers: ResearchTypeAnswersV2;
   researchTypeResult?: ResearchTypeResult;
   titleInputs: TitleInputs;

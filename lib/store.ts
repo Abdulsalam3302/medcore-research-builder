@@ -4,6 +4,16 @@ import type { ProjectState } from "./types";
 import { emptyProject } from "./types";
 
 const KEY = "medcore.project.v1";
+const SNAPSHOTS_KEY = "medcore.snapshots.v1";
+const LAUNCH_BASELINE_KEY = "medcore.launchBaseline.v1";
+
+export type ProjectSnapshot = {
+  id: string;
+  label: string;
+  createdAt: string;
+  auto: boolean;
+  state: ProjectState;
+};
 
 export function loadProject(): ProjectState {
   if (typeof window === "undefined") return emptyProject();
@@ -27,6 +37,65 @@ export function saveProject(p: ProjectState) {
 export function resetProject() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(KEY);
+}
+
+export function loadSnapshots(): ProjectSnapshot[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(SNAPSHOTS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveSnapshots(s: ProjectSnapshot[]) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(s));
+}
+
+export function addSnapshot(p: ProjectState, label: string, auto = false): ProjectSnapshot {
+  const snap: ProjectSnapshot = {
+    id: `snap-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    label,
+    createdAt: new Date().toISOString(),
+    auto,
+    state: JSON.parse(JSON.stringify(p)),
+  };
+  const list = loadSnapshots();
+  // keep at most 30 snapshots; auto snapshots no more than 1 per hour
+  const recentAuto = list.find(
+    (x) => x.auto && Date.now() - new Date(x.createdAt).getTime() < 1000 * 60 * 60,
+  );
+  if (auto && recentAuto) return recentAuto;
+  const next = [snap, ...list].slice(0, 30);
+  saveSnapshots(next);
+  return snap;
+}
+
+export function deleteSnapshot(id: string) {
+  saveSnapshots(loadSnapshots().filter((x) => x.id !== id));
+}
+
+export function getLaunchBaseline(): { score: number; capturedAt: string } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(LAUNCH_BASELINE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function setLaunchBaseline(score: number) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(
+    LAUNCH_BASELINE_KEY,
+    JSON.stringify({ score, capturedAt: new Date().toISOString() }),
+  );
 }
 
 export function downloadAsFile(filename: string, content: string, mime = "text/plain") {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ExpandedNotes } from "@/lib/types";
+import { PlotlyPreview } from "./PlotlyPreview";
 
 type Tab = "descriptive" | "twoSample" | "chi" | "correlation" | "recommend" | "figure";
 
@@ -502,9 +503,11 @@ function FigureSpec() {
         {error && <div className="badge-bad">{error}</div>}
         {spec != null && (
           <>
+            <div className="grid gap-3">
+              <PlotlyPreview spec={spec as { data?: unknown; layout?: unknown }} />
+            </div>
             <div className="muted text-xs">
-              Paste this JSON into any Plotly renderer
-              (Plotly Studio, plotly.js, Python plotly.io.from_json) to draw the figure.
+              Live preview above renders Plotly client-side. Paste the JSON below into any Plotly renderer for downstream use.
             </div>
             <ResultBlock data={spec} />
           </>

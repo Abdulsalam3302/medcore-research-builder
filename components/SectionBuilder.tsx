@@ -3,9 +3,12 @@
 import { useMemo, useState } from "react";
 import type { LLMRefineResponse, ProjectState } from "@/lib/types";
 import { guidelineById } from "@/lib/guidelines";
+import { buildContextBundle } from "@/lib/agents/contextBundle";
+import { diffStrings, applyResolutions, changeCount, wordCount } from "@/lib/textDiff";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { Spinner } from "./ui/Spinner";
+import { SkeletonLines } from "./ui/Skeleton";
 import { CopyButton } from "./ui/CopyButton";
 import { StatsAndFigures } from "./StatsAndFigures";
 
@@ -65,6 +68,34 @@ export function SectionBuilder({
   const [busy, setBusy] = useState<
     null | "refine" | "generate" | "enhance" | "complete"
   >(null);
+  const ctx = useMemo(
+    () => buildContextBundle(project.researchTypeAnswers || {}),
+    [project.researchTypeAnswers],
+  );
+  const journalLimit = ctx.journal?.mainTextWordLimit;
+  const sectionWords = useMemo(
+    () => wordCount(project.sections[section] || ""),
+    [project.sections, section],
+  );
+  const totalWords = useMemo(
+    () =>
+      Object.values(project.sections).reduce(
+        (sum, s) => sum + wordCount(s || ""),
+        0,
+      ),
+    [project.sections],
+  );
+  // Per-section soft budget (rough): intro 15%, methods 25%, results 30%, discussion 25%, conclusion 5%.
+  const sectionBudgetPct: Record<typeof section, number> = {
+    introduction: 0.15,
+    methods: 0.25,
+    results: 0.3,
+    discussion: 0.25,
+    conclusion: 0.05,
+  };
+  const sectionBudget = journalLimit
+    ? Math.round(journalLimit * sectionBudgetPct[section])
+    : null;
   const [completingIndex, setCompletingIndex] = useState<number | null>(null);
   const [completeResp, setCompleteResp] = useState<Record<
     number,
@@ -284,7 +315,16 @@ export function SectionBuilder({
             }
           />
           <CardBody className="grid gap-3">
-            <label className="label">Draft</label>
+            <div className="flex items-center justify-between">
+              <label className="label">Draft</label>
+              <WordBudgetBadge
+                section={sectionWords}
+                sectionBudget={sectionBudget}
+                total={totalWords}
+                journalLimit={journalLimit}
+                journalName={ctx.journal?.name}
+              />
+            </div>
             <textarea
               className="textarea min-h-[260px]"
               placeholder={meta.placeholder}
@@ -359,34 +399,29 @@ export function SectionBuilder({
         )}
 
         {feedback && (
+          <RefinementDiffCard
+            original={project.sections[section] || ""}
+            refined={feedback.refinedText}
+            confidence={feedback.confidence}
+            onApply={(text) =>
+              update((p) => ({
+                ...p,
+                sections: { ...p.sections, [section]: text },
+              }))
+            }
+          />
+        )}
+        {busy === "refine" || busy === "generate" || busy === "enhance" ? (
           <Card>
-            <CardHeader
-              title="Refined draft"
-              right={
-                <div className="flex items-center gap-2">
-                  <Badge
-                    kind={
-                      feedback.confidence === "high"
-                        ? "good"
-                        : feedback.confidence === "medium"
-                        ? "info"
-                        : "warn"
-                    }
-                  >
-                    confidence: {feedback.confidence}
-                  </Badge>
-                  <CopyButton text={feedback.refinedText} label="Copy refined" />
-                  <button className="btn-primary" onClick={applyRefined}>
-                    Use as my draft
-                  </button>
-                </div>
-              }
-            />
+            <CardHeader title="Working — keeping it honest…" />
             <CardBody>
-              <div className="prose-output text-sm">{feedback.refinedText}</div>
+              <SkeletonLines rows={5} />
+              <div className="text-[11.5px] text-med-sub mt-3">
+                Calls to PubMed/Crossref + the LLM can take 5–10s. We never invent numbers, citations, or claims while we wait.
+              </div>
             </CardBody>
           </Card>
-        )}
+        ) : null}
       </div>
 
       <div className="grid gap-5">
@@ -615,5 +650,187 @@ export function SectionBuilder({
         )}
       </div>
     </div>
+  );
+}
+
+function WordBudgetBadge({
+  section,
+  sectionBudget,
+  total,
+  journalLimit,
+  journalName,
+}: {
+  section: number;
+  sectionBudget: number | null;
+  total: number;
+  journalLimit?: number;
+  journalName?: string;
+}) {
+  if (!journalLimit) {
+    return (
+      <span className="text-[11.5px] text-med-sub tabular-nums">
+        {section} words · {total} total
+      </span>
+    );
+  }
+  const pct = Math.round((total / journalLimit) * 100);
+  const tone =
+    pct < 75 ? "good" : pct < 100 ? "warn" : "bad";
+  const sectionPct = sectionBudget
+    ? Math.round((section / sectionBudget) * 100)
+    : 0;
+  const sectionTone =
+    sectionBudget == null
+      ? null
+      : sectionPct < 90
+      ? "good"
+      : sectionPct <= 110
+      ? "warn"
+      : "bad";
+  return (
+    <div
+      className="flex items-center gap-1.5 text-[11.5px]"
+      title={`${journalName || "Journal"} main-text limit ≈ ${journalLimit} words`}
+    >
+      {sectionBudget ? (
+        <Badge kind={sectionTone || "neutral"}>
+          section {section}/{sectionBudget}
+        </Badge>
+      ) : null}
+      <Badge kind={tone}>
+        total {total}/{journalLimit} ({pct}%)
+      </Badge>
+    </div>
+  );
+}
+
+function RefinementDiffCard({
+  original,
+  refined,
+  confidence,
+  onApply,
+}: {
+  original: string;
+  refined: string;
+  confidence: "high" | "medium" | "low";
+  onApply: (text: string) => void;
+}) {
+  const hunks = useMemo(() => diffStrings(original, refined), [original, refined]);
+  const total = changeCount(hunks);
+  // Default to accept all changes.
+  const [accept, setAccept] = useState<boolean[]>(() =>
+    hunks.map((h) => h.op === "change"),
+  );
+  // Reset when hunks change (new refinement run).
+  useMemo(() => {
+    setAccept(hunks.map((h) => h.op === "change"));
+  }, [hunks]);
+
+  const previewText = useMemo(() => applyResolutions(hunks, accept), [hunks, accept]);
+  const acceptedCount = accept.reduce(
+    (n, v, i) => (hunks[i].op === "change" && v ? n + 1 : n),
+    0,
+  );
+
+  return (
+    <Card>
+      <CardHeader
+        title="Refinement diff"
+        subtitle={`${total} change${total === 1 ? "" : "s"} — accept or reject each one. Nothing is auto-applied.`}
+        right={
+          <div className="flex items-center gap-2">
+            <Badge
+              kind={
+                confidence === "high"
+                  ? "good"
+                  : confidence === "medium"
+                  ? "info"
+                  : "warn"
+              }
+            >
+              confidence: {confidence}
+            </Badge>
+            <button
+              className="btn-ghost text-[11.5px]"
+              onClick={() => setAccept(hunks.map((h) => h.op === "change"))}
+            >
+              Accept all
+            </button>
+            <button
+              className="btn-ghost text-[11.5px]"
+              onClick={() => setAccept(hunks.map(() => false))}
+            >
+              Reject all
+            </button>
+            <CopyButton text={previewText} label="Copy result" />
+            <button className="btn-primary" onClick={() => onApply(previewText)}>
+              Apply ({acceptedCount}/{total})
+            </button>
+          </div>
+        }
+      />
+      <CardBody className="grid gap-3">
+        <div className="rounded-lg border border-med-line bg-white p-3 text-sm leading-relaxed">
+          {hunks.map((h, i) => {
+            if (h.op === "eq") {
+              return (
+                <span key={i} className="text-med-ink">
+                  {h.text}
+                </span>
+              );
+            }
+            const accepted = accept[i];
+            return (
+              <span key={i} className="inline">
+                {h.before ? (
+                  <span
+                    className={`px-0.5 rounded ${
+                      accepted
+                        ? "bg-rose-50 text-rose-500 line-through opacity-70"
+                        : "bg-rose-100 text-rose-700"
+                    }`}
+                    title={accepted ? "Will be removed" : "Will stay (rejected change)"}
+                  >
+                    {h.before}
+                  </span>
+                ) : null}
+                {h.after ? (
+                  <span
+                    className={`px-0.5 rounded ${
+                      accepted
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-emerald-50 text-emerald-500 line-through opacity-70"
+                    }`}
+                    title={accepted ? "Will be inserted" : "Will be skipped"}
+                  >
+                    {h.after}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAccept((prev) => {
+                      const next = [...prev];
+                      next[i] = !next[i];
+                      return next;
+                    })
+                  }
+                  className="text-[10px] align-super ml-0.5 px-1 rounded border border-med-line text-med-sub hover:bg-slate-50"
+                  title="Toggle this change"
+                >
+                  {accepted ? "✓" : "✗"}
+                </button>
+              </span>
+            );
+          })}
+        </div>
+        <details className="text-[12px] text-med-sub">
+          <summary className="cursor-pointer">Final preview</summary>
+          <div className="mt-2 prose-output text-[13.5px] whitespace-pre-wrap">
+            {previewText}
+          </div>
+        </details>
+      </CardBody>
+    </Card>
   );
 }

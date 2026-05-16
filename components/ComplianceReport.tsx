@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { ProjectState } from "@/lib/types";
+import { buildContextBundle } from "@/lib/agents/contextBundle";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { Spinner } from "./ui/Spinner";
@@ -48,10 +49,17 @@ type Report = {
   _source?: string;
 };
 
-export function ComplianceReport({ project }: { project: ProjectState }) {
+export function ComplianceReport({
+  project,
+  onJump,
+}: {
+  project: ProjectState;
+  onJump?: (k: string) => void;
+}) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [report, setReport] = useState<Report | null>(null);
+  const stoplight = useMemo(() => computeSubmissionStoplight(project), [project]);
 
   async function generate() {
     setBusy(true);
@@ -94,6 +102,8 @@ export function ComplianceReport({ project }: { project: ProjectState }) {
           )}
         </CardBody>
       </Card>
+
+      <SubmissionStoplight items={stoplight} onJump={onJump} />
 
       {report && (
         <>
@@ -361,6 +371,260 @@ function WarnCard({ title, items, kind }: { title: string; items: string[]; kind
       <CardBody>
         <ul className={`list-disc list-inside text-sm space-y-1 ${kind === "bad" ? "text-rose-700" : "text-amber-800"}`}>
           {items.map((m, i) => <li key={i}>{m}</li>)}
+        </ul>
+      </CardBody>
+    </Card>
+  );
+}
+
+type StoplightItem = {
+  label: string;
+  status: "go" | "warn" | "stop" | "na";
+  detail: string;
+  fixTarget?: string;
+};
+
+function computeSubmissionStoplight(project: ProjectState): StoplightItem[] {
+  const ctx = buildContextBundle(project.researchTypeAnswers || {});
+  const launch = project.researchLaunch;
+  const req = ctx.journal?.required;
+  const items: StoplightItem[] = [];
+
+  const yn = (b: boolean | undefined, ok: string, miss: string): "go" | "stop" =>
+    b ? "go" : "stop";
+
+  // 1. Reporting guideline picked
+  items.push({
+    label: "Reporting guideline selected",
+    status: project.researchTypeResult ? "go" : "stop",
+    detail: project.researchTypeResult
+      ? `Primary: ${project.researchTypeResult.primaryGuidelineName}`
+      : "Pick a research type to lock the EQUATOR guideline.",
+    fixTarget: "type",
+  });
+
+  // 2. Title finalised
+  items.push({
+    label: "Title finalised",
+    status: project.titleFinal
+      ? "go"
+      : project.titleInputs.draftTitle
+      ? "warn"
+      : "stop",
+    detail: project.titleFinal
+      ? project.titleFinal
+      : project.titleInputs.draftTitle
+      ? "Draft title only — finalise in Title Lab."
+      : "No title yet.",
+    fixTarget: "title",
+  });
+
+  // 3. Novelty risk
+  const novRisk = project.noveltyReport?.risk;
+  items.push({
+    label: "Novelty / similarity risk",
+    status:
+      !novRisk
+        ? "warn"
+        : novRisk === "low_duplicate_risk"
+        ? "go"
+        : novRisk === "moderate_similarity_risk"
+        ? "warn"
+        : "stop",
+    detail: novRisk
+      ? `Risk: ${novRisk.replaceAll("_", " ")}.`
+      : "Run novelty scan in Title Lab.",
+    fixTarget: "title",
+  });
+
+  // 4. Sections drafted
+  const drafted = (["introduction", "methods", "results", "discussion", "conclusion"] as const).filter(
+    (s) => (project.sections[s] || "").length > 60,
+  ).length;
+  items.push({
+    label: "Sections drafted (5)",
+    status: drafted === 5 ? "go" : drafted >= 3 ? "warn" : "stop",
+    detail: `${drafted}/5 sections have substantive drafts.`,
+    fixTarget: "introduction",
+  });
+
+  // 5. Reference verification
+  const verifs = project.references.verifications;
+  const verified = verifs.filter((v) => v.confidence !== "low").length;
+  items.push({
+    label: "References verified",
+    status:
+      verifs.length === 0
+        ? "stop"
+        : verified === verifs.length
+        ? "go"
+        : "warn",
+    detail:
+      verifs.length === 0
+        ? "No references verified."
+        : `${verified}/${verifs.length} confidently verified.`,
+    fixTarget: "references",
+  });
+
+  // 6. Word limit
+  const limit = ctx.journal?.mainTextWordLimit;
+  const total = Object.values(project.sections).reduce(
+    (n, s) => n + (s || "").trim().split(/\s+/).filter(Boolean).length,
+    0,
+  );
+  if (limit) {
+    const pct = (total / limit) * 100;
+    items.push({
+      label: `Word limit (${ctx.journal?.name || "journal"})`,
+      status: pct < 90 ? "go" : pct < 105 ? "warn" : "stop",
+      detail: `${total}/${limit} (${Math.round(pct)}%)`,
+      fixTarget: "introduction",
+    });
+  }
+
+  // 7. ICMJE authorship + COI
+  if (launch) {
+    items.push({
+      label: "ICMJE authorship reviewed",
+      status: launch.icmjeReviewed ? "go" : "stop",
+      detail: launch.icmjeReviewed
+        ? "Team has reviewed ICMJE authorship criteria."
+        : "Confirm in Research Launch.",
+      fixTarget: "launch",
+    });
+    items.push({
+      label: "COI disclosed (all authors)",
+      status: launch.coiDisclosed ? "go" : "stop",
+      detail: launch.coiDisclosed ? "Yes." : "Collect COI for every author.",
+      fixTarget: "launch",
+    });
+  }
+
+  // 8. Journal-required items
+  if (req) {
+    if (req.dataSharingStatement) {
+      items.push({
+        label: "Data-sharing statement",
+        status: launch?.dataSharingPlanned ? "go" : "stop",
+        detail: launch?.dataSharingPlanned
+          ? "Planned."
+          : `Required by ${ctx.journal?.name || "this journal"}.`,
+        fixTarget: "launch",
+      });
+    }
+    if (req.aiDisclosure) {
+      items.push({
+        label: "AI-use disclosure (ICMJE 2026)",
+        status: launch?.aiUsePolicyReviewed ? "go" : "warn",
+        detail: launch?.aiUsePolicyReviewed
+          ? "Policy reviewed."
+          : "Disclose any AI assistance in acknowledgements.",
+        fixTarget: "launch",
+      });
+    }
+    if (req.registrationStatement) {
+      const ok =
+        launch?.registrationStatus === "registered" ||
+        launch?.registrationStatus === "not-required";
+      items.push({
+        label: "Registration statement",
+        status: ok ? "go" : "stop",
+        detail: ok
+          ? `Status: ${launch?.registrationStatus}.`
+          : "Required for trials / SR by most journals.",
+        fixTarget: "launch",
+      });
+    }
+    if (req.ethicsStatement) {
+      const ok =
+        launch?.irbStatus === "approved" ||
+        launch?.irbStatus === "not-required";
+      items.push({
+        label: "Ethics / IRB",
+        status: ok ? "go" : "stop",
+        detail: ok ? `Status: ${launch?.irbStatus}.` : "IRB approval not in place.",
+        fixTarget: "launch",
+      });
+    }
+    if (req.fundingStatement) {
+      items.push({
+        label: "Funding statement",
+        status: launch?.fundingSecured ? "go" : "warn",
+        detail: launch?.fundingSecured
+          ? `Funding ${launch.fundingSecured}.`
+          : "Disclose funding (or 'none').",
+        fixTarget: "launch",
+      });
+    }
+  }
+
+  void yn;
+  return items;
+}
+
+function SubmissionStoplight({
+  items,
+  onJump,
+}: {
+  items: StoplightItem[];
+  onJump?: (k: string) => void;
+}) {
+  const go = items.filter((i) => i.status === "go").length;
+  const warn = items.filter((i) => i.status === "warn").length;
+  const stop = items.filter((i) => i.status === "stop").length;
+  return (
+    <Card>
+      <CardHeader
+        title="Submission readiness — stoplight"
+        subtitle="One row per required item. Tap a red item to fix it."
+        right={
+          <div className="flex items-center gap-2">
+            <Badge kind="good">{go} go</Badge>
+            <Badge kind="warn">{warn} warn</Badge>
+            <Badge kind="bad">{stop} stop</Badge>
+          </div>
+        }
+      />
+      <CardBody>
+        <ul className="grid sm:grid-cols-2 gap-2">
+          {items.map((it, i) => (
+            <li
+              key={i}
+              className={`flex items-start gap-2.5 rounded-lg border p-2.5 ${
+                it.status === "go"
+                  ? "border-emerald-200 bg-emerald-50/40"
+                  : it.status === "warn"
+                  ? "border-amber-200 bg-amber-50/40"
+                  : it.status === "stop"
+                  ? "border-rose-200 bg-rose-50/40"
+                  : "border-med-line bg-white"
+              }`}
+            >
+              <span
+                className={`mt-1 inline-block h-2.5 w-2.5 rounded-full shrink-0 ${
+                  it.status === "go"
+                    ? "bg-emerald-500"
+                    : it.status === "warn"
+                    ? "bg-amber-400"
+                    : it.status === "stop"
+                    ? "bg-rose-500"
+                    : "bg-slate-300"
+                }`}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-med-ink text-[13px]">{it.label}</div>
+                <div className="text-[12px] text-med-sub leading-snug">{it.detail}</div>
+                {it.fixTarget && it.status !== "go" && onJump ? (
+                  <button
+                    className="text-[11px] text-med-brand hover:underline mt-1"
+                    onClick={() => onJump(it.fixTarget!)}
+                  >
+                    Fix →
+                  </button>
+                ) : null}
+              </div>
+            </li>
+          ))}
         </ul>
       </CardBody>
     </Card>

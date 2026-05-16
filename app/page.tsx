@@ -1,25 +1,104 @@
 "use client";
 
-import { useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 import { Sidebar, type ToolKey } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
 import { Overview } from "@/components/Overview";
-import { ResearchTypeWizard } from "@/components/ResearchTypeWizard";
-import { TitleLab } from "@/components/TitleLab";
-import { SectionBuilder } from "@/components/SectionBuilder";
-import { AppendixBuilder } from "@/components/AppendixBuilder";
-import { ReferenceVerifier } from "@/components/ReferenceVerifier";
-import { StatsAndFigures } from "@/components/StatsAndFigures";
-import { QualitySuite } from "@/components/QualitySuite";
-import { ComplianceReport } from "@/components/ComplianceReport";
-import { ExportCenter } from "@/components/ExportCenter";
+import { ResearchLaunch } from "@/components/ResearchLaunch";
+import { FounderContact } from "@/components/FounderContact";
 import { useProject } from "@/components/useProject";
-import { emptyProject } from "@/lib/types";
+import { emptyProject, type ProjectState } from "@/lib/types";
 import { downloadAsFile } from "@/lib/store";
+import { tryParseSharedHash } from "@/lib/share";
+import { SkeletonLines } from "@/components/ui/Skeleton";
+
+const RouteSkeleton = () => (
+  <div className="card-elevated p-6">
+    <SkeletonLines rows={6} />
+  </div>
+);
+
+// Code-split per route. The first three (Launch / Overview / Sidebar) are eager
+// because they're entry-point. Everything else loads on demand.
+const ResearchTypeWizard = dynamic(
+  () => import("@/components/ResearchTypeWizard").then((m) => m.ResearchTypeWizard),
+  { loading: RouteSkeleton, ssr: false },
+);
+const TitleLab = dynamic(() => import("@/components/TitleLab").then((m) => m.TitleLab), {
+  loading: RouteSkeleton,
+  ssr: false,
+});
+const SectionBuilder = dynamic(
+  () => import("@/components/SectionBuilder").then((m) => m.SectionBuilder),
+  { loading: RouteSkeleton, ssr: false },
+);
+const AppendixBuilder = dynamic(
+  () => import("@/components/AppendixBuilder").then((m) => m.AppendixBuilder),
+  { loading: RouteSkeleton, ssr: false },
+);
+const ReferenceVerifier = dynamic(
+  () => import("@/components/ReferenceVerifier").then((m) => m.ReferenceVerifier),
+  { loading: RouteSkeleton, ssr: false },
+);
+const StatsAndFigures = dynamic(
+  () => import("@/components/StatsAndFigures").then((m) => m.StatsAndFigures),
+  { loading: RouteSkeleton, ssr: false },
+);
+const QualitySuite = dynamic(
+  () => import("@/components/QualitySuite").then((m) => m.QualitySuite),
+  { loading: RouteSkeleton, ssr: false },
+);
+const ComplianceReport = dynamic(
+  () => import("@/components/ComplianceReport").then((m) => m.ComplianceReport),
+  { loading: RouteSkeleton, ssr: false },
+);
+const ExportCenter = dynamic(
+  () => import("@/components/ExportCenter").then((m) => m.ExportCenter),
+  { loading: RouteSkeleton, ssr: false },
+);
+const VersionHistory = dynamic(
+  () => import("@/components/VersionHistory").then((m) => m.VersionHistory),
+  { loading: RouteSkeleton, ssr: false },
+);
+const CoverLetter = dynamic(
+  () => import("@/components/CoverLetter").then((m) => m.CoverLetter),
+  { loading: RouteSkeleton, ssr: false },
+);
+const FlowDiagramBuilder = dynamic(
+  () => import("@/components/FlowDiagramBuilder").then((m) => m.FlowDiagramBuilder),
+  { loading: RouteSkeleton, ssr: false },
+);
+const StatisticianCopilot = dynamic(
+  () => import("@/components/StatisticianCopilot").then((m) => m.StatisticianCopilot),
+  { loading: RouteSkeleton, ssr: false },
+);
+const ReviewerSimulator = dynamic(
+  () => import("@/components/ReviewerSimulator").then((m) => m.ReviewerSimulator),
+  { loading: RouteSkeleton, ssr: false },
+);
+const Collaboration = dynamic(
+  () => import("@/components/Collaboration").then((m) => m.Collaboration),
+  { loading: RouteSkeleton, ssr: false },
+);
 
 export default function Page() {
-  const { project, setProject, update, ready } = useProject();
+  const { project, setProject, update, ready, autosave } = useProject();
   const [active, setActive] = useState<ToolKey>("overview");
+
+  // If a co-author shared a #shared=… link, prompt to merge on first load.
+  useEffect(() => {
+    if (!ready) return;
+    const incoming = tryParseSharedHash();
+    if (incoming) {
+      setActive("collaboration");
+      // strip the hash so refresh doesn't re-prompt
+      if (typeof window !== "undefined") {
+        history.replaceState(null, "", window.location.pathname);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
 
   function exportProject() {
     const slug =
@@ -36,7 +115,7 @@ export default function Page() {
     setActive("overview");
   }
 
-  function importProject(p: import("@/lib/types").ProjectState) {
+  function importProject(p: ProjectState) {
     setProject({ ...emptyProject(), ...p });
     setActive("overview");
   }
@@ -50,11 +129,18 @@ export default function Page() {
           onExport={exportProject}
           onReset={resetProject}
           onImport={importProject}
+          autosave={autosave}
         />
         <MobileTabs active={active} onSelect={setActive} />
         <main className="p-4 md:p-6 lg:p-8 flex-1 max-w-[1400px] w-full mx-auto">
           {!ready ? (
             <div className="muted">Loading…</div>
+          ) : active === "launch" ? (
+            <ResearchLaunch
+              project={project}
+              update={update}
+              onJump={(k) => setActive(k as ToolKey)}
+            />
           ) : active === "overview" ? (
             <Overview project={project} onJump={(k) => setActive(k as ToolKey)} />
           ) : active === "type" ? (
@@ -77,14 +163,30 @@ export default function Page() {
             <ReferenceVerifier project={project} update={update} />
           ) : active === "stats" ? (
             <StatsAndFigures />
+          ) : active === "copilot" ? (
+            <StatisticianCopilot />
+          ) : active === "flow" ? (
+            <FlowDiagramBuilder />
+          ) : active === "coverLetter" ? (
+            <CoverLetter project={project} />
+          ) : active === "reviewer" ? (
+            <ReviewerSimulator project={project} />
+          ) : active === "history" ? (
+            <VersionHistory project={project} onRestore={(s) => setProject(s)} />
+          ) : active === "collaboration" ? (
+            <Collaboration project={project} onApplyMerged={(s) => setProject(s)} />
           ) : active === "quality" ? (
             <QualitySuite project={project} />
           ) : active === "report" ? (
-            <ComplianceReport project={project} />
+            <ComplianceReport
+              project={project}
+              onJump={(k) => setActive(k as ToolKey)}
+            />
           ) : active === "export" ? (
             <ExportCenter project={project} onImport={importProject} onReset={resetProject} />
           ) : null}
         </main>
+        <FounderContact />
         <footer className="px-5 md:px-6 py-4 text-[11.5px] text-med-sub border-t border-med-line bg-white">
           <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <p className="leading-relaxed">
@@ -110,6 +212,7 @@ function MobileTabs({
   onSelect: (k: ToolKey) => void;
 }) {
   const items: { key: ToolKey; label: string }[] = [
+    { key: "launch", label: "Launch" },
     { key: "overview", label: "Overview" },
     { key: "type", label: "Type" },
     { key: "title", label: "Title" },
@@ -121,6 +224,12 @@ function MobileTabs({
     { key: "appendix", label: "Appendix" },
     { key: "references", label: "Refs" },
     { key: "stats", label: "Stats" },
+    { key: "copilot", label: "Stats copilot" },
+    { key: "flow", label: "Flow diagram" },
+    { key: "coverLetter", label: "Cover letter" },
+    { key: "reviewer", label: "Reviewer" },
+    { key: "history", label: "History" },
+    { key: "collaboration", label: "Share" },
     { key: "quality", label: "Quality" },
     { key: "report", label: "Report" },
     { key: "export", label: "Export" },

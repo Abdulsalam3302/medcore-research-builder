@@ -2,6 +2,7 @@
 
 import type { ProjectState } from "@/lib/types";
 import type { ComponentType } from "react";
+import { scoreLaunch } from "@/lib/launchReadiness";
 import { LogoWordmark } from "./ui/Logo";
 import {
   IconOverview,
@@ -15,9 +16,13 @@ import {
   IconBooks,
   IconShield,
   IconUpload,
+  IconBolt,
+  IconSpark,
+  IconReset,
 } from "./ui/Icon";
 
 export type ToolKey =
+  | "launch"
   | "overview"
   | "type"
   | "title"
@@ -29,6 +34,12 @@ export type ToolKey =
   | "appendix"
   | "references"
   | "stats"
+  | "copilot"
+  | "flow"
+  | "coverLetter"
+  | "reviewer"
+  | "history"
+  | "collaboration"
   | "quality"
   | "report"
   | "export";
@@ -36,6 +47,7 @@ export type ToolKey =
 type IconCmp = ComponentType<{ size?: number; className?: string }>;
 
 const items: { key: ToolKey; label: string; Icon: IconCmp; group?: string }[] = [
+  { key: "launch", label: "Research launch", Icon: IconBolt, group: "Workspace" },
   { key: "overview", label: "Project overview", Icon: IconOverview, group: "Workspace" },
   { key: "type", label: "Research type", Icon: IconCompass, group: "Workspace" },
   { key: "title", label: "Title Lab", Icon: IconPen, group: "Workspace" },
@@ -45,10 +57,17 @@ const items: { key: ToolKey; label: string; Icon: IconCmp; group?: string }[] = 
   { key: "discussion", label: "Discussion", Icon: IconChat, group: "Manuscript" },
   { key: "conclusion", label: "Conclusion", Icon: IconFlag, group: "Manuscript" },
   { key: "appendix", label: "Appendices", Icon: IconDocument, group: "Manuscript" },
+  { key: "stats", label: "Stats & figures", Icon: IconChart, group: "Analysis" },
+  { key: "copilot", label: "Stats copilot", Icon: IconSpark, group: "Analysis" },
+  { key: "flow", label: "Flow diagram", Icon: IconCompass, group: "Analysis" },
   { key: "references", label: "Reference Verifier", Icon: IconBooks, group: "Quality" },
   { key: "quality", label: "Quality Suite", Icon: IconShield, group: "Quality" },
+  { key: "reviewer", label: "Reviewer simulator", Icon: IconChat, group: "Quality" },
   { key: "report", label: "Compliance Report", Icon: IconShield, group: "Quality" },
-  { key: "export", label: "Export Center", Icon: IconUpload, group: "Quality" },
+  { key: "coverLetter", label: "Cover letter", Icon: IconPen, group: "Submission" },
+  { key: "history", label: "Version history", Icon: IconReset, group: "Submission" },
+  { key: "collaboration", label: "Share / merge", Icon: IconUpload, group: "Submission" },
+  { key: "export", label: "Export Center", Icon: IconUpload, group: "Submission" },
 ];
 
 export function Sidebar({
@@ -150,6 +169,13 @@ function sectionStatus(
   p: ProjectState
 ): { color: "good" | "warn" | "neutral"; label: string } | null {
   switch (key) {
+    case "launch": {
+      if (!p.researchLaunch) return { color: "warn", label: "todo" };
+      const score = scoreLaunch(p.researchLaunch).totalScore;
+      if (score >= 75) return { color: "good", label: `${score}%` };
+      if (score >= 30) return { color: "warn", label: `${score}%` };
+      return { color: "warn", label: "todo" };
+    }
     case "type":
       return p.researchTypeResult
         ? { color: "good", label: "set" }
@@ -182,6 +208,8 @@ function sectionStatus(
 function computeProgress(p: ProjectState): number {
   let score = 0;
   let total = 0;
+  total += 1;
+  if (p.researchLaunch && scoreLaunch(p.researchLaunch).totalScore >= 60) score += 1;
   total += 1; if (p.researchTypeResult) score += 1;
   total += 1; if (p.titleFinal || p.titleInputs.draftTitle) score += 1;
   for (const s of ["introduction", "methods", "results", "discussion", "conclusion"] as const) {
