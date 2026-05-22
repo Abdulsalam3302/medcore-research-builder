@@ -616,7 +616,7 @@ export type ProjectState = {
 };
 
 export const emptyProject = (): ProjectState => ({
-  version: "2.1.0",
+  version: "2.2.0",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   researchTypeAnswers: { featureIds: [] },

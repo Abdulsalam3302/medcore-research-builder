@@ -1,13 +1,14 @@
 {
   "name": "medcore-research-builder",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:smoke": "node scripts/smoke-test.mjs"
   },
   "dependencies": {
     "docx": "^9.6.1",

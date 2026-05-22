@@ -4,7 +4,8 @@ import type { ProjectState } from "@/lib/types";
 import type { ComponentType } from "react";
 import { scoreLaunch } from "@/lib/launchReadiness";
 import { Badge } from "./ui/Badge";
-import { LogoMark } from "./ui/Logo";
+import { SystemStatus } from "./SystemStatus";
+import { ProgressRing } from "./ui/ProgressRing";
 import {
   IconCompass,
   IconPen,
@@ -29,6 +30,7 @@ type Target =
   | "discussion"
   | "conclusion"
   | "references"
+  | "quality"
   | "report"
   | "export";
 
@@ -175,6 +177,7 @@ export function Overview({
       </div>
 
       <PrinciplesCard />
+      <SystemStatus />
     </div>
   );
 }
@@ -197,98 +200,122 @@ function HeroCard({
   const nextStep: { label: string; target: Target } = launchScore < 60
     ? { label: "Run pre-research launch checklist", target: "launch" }
     : !hasType
-    ? { label: "Start with research type", target: "type" }
-    : !hasTitle
-    ? { label: "Draft the title", target: "title" }
-    : draftedSections < 3
-    ? { label: "Continue manuscript sections", target: "introduction" }
-    : refCount === 0
-    ? { label: "Verify references", target: "references" }
-    : { label: "View compliance report", target: "report" };
+      ? { label: "Continue in Research Type", target: "type" }
+      : !hasTitle
+        ? { label: "Continue in Title Lab", target: "title" }
+        : draftedSections < 3
+          ? { label: "Continue manuscript sections", target: "introduction" }
+          : refCount === 0
+            ? { label: "Verify references", target: "references" }
+            : { label: "View compliance report", target: "report" };
 
-  const stats = [
-    {
-      label: "Launch readiness",
-      value: launchScore ? `${launchScore}%` : "Not run",
-      good: launchScore >= 60,
-    },
-    { label: "Research type", value: hasType ? "Set" : "Pending", good: hasType },
-    { label: "Title", value: hasTitle ? "Drafted" : "Pending", good: hasTitle },
-    { label: "Sections", value: `${draftedSections}/5`, good: draftedSections >= 3 },
-    { label: "References", value: refCount ? `${refCount}` : "0", good: refCount > 0 },
-  ];
+  const progress = computeHeroProgress({
+    launchScore,
+    hasType,
+    hasTitle,
+    draftedSections,
+    refCount,
+  });
+  const sectionsDone = draftedSections + (hasType ? 1 : 0) + (hasTitle ? 1 : 0);
+  const refIssues = 0;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-med-line bg-hero-mesh shadow-soft">
-      <div className="absolute -top-12 -right-12 h-56 w-56 rounded-full bg-brand-gradient opacity-10 blur-2xl" />
-      <div className="absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-brand-gradient opacity-10 blur-2xl" />
+    <div
+      className="rounded-[var(--mc-r-xl)] border border-[var(--mc-line)] p-7 md:p-8 shadow-[var(--mc-shadow-sm)]"
+      style={{
+        background: "linear-gradient(180deg, #FFFFFF 0%, #F8FAFE 100%)",
+      }}
+    >
+      <div className="grid lg:grid-cols-[200px_1fr_auto] gap-8 items-center">
+        <ProgressRing
+          value={progress}
+          size={168}
+          label="Manuscript readiness"
+          sublabel={`${draftedSections}/5 sections drafted`}
+          accent={progress >= 75 ? "var(--mc-teal-500)" : "var(--mc-blue-500)"}
+        />
 
-      <div className="relative p-6 md:p-8 grid md:grid-cols-[1fr_auto] gap-6 items-center">
-        <div className="max-w-2xl">
-          <div className="flex items-center gap-2 mb-3">
-            <LogoMark size={36} />
-            <span className="badge-brand">EQUATOR-aware</span>
-            <span className="hidden sm:inline-flex badge-info">
-              <IconSpark size={11} /> Evidence-first
+        <div className="min-w-0">
+          <div className="mc-eyebrow text-[var(--mc-teal-700)]">Pick up where you left off</div>
+          <h1
+            className="mt-2 mb-2.5 text-[28px] md:text-[30px] leading-tight text-[var(--mc-ink-900)]"
+            style={{ fontFamily: "var(--font-serif)", fontWeight: 500, letterSpacing: "-0.015em" }}
+          >
+            Your draft is{" "}
+            <span className="text-[var(--mc-blue-500)]">
+              {progress >= 80 ? "nearly ready" : "building well"}
             </span>
-          </div>
-          <h1 className="display-title">
-            A research-grade workspace for{" "}
-            <span className="text-transparent bg-clip-text bg-brand-gradient">
-              medical manuscripts
-            </span>
+            .
           </h1>
-          <p className="muted mt-2 leading-relaxed">
-            MedCore refines your draft against EQUATOR-Network reporting
-            guidelines (CONSORT, STROBE, PRISMA, STARD, TRIPOD, CARE, SPIRIT,
-            ARRIVE, SQUIRE, CHEERS, SRQR/COREQ, AGREE/RIGHT and more), runs
-            evidence-based novelty checks, and verifies references against
-            PubMed, Crossref, and OpenAlex. We never invent studies, PMIDs,
-            DOIs, results, statistics, or claims.
+          <p className="text-sm text-[var(--mc-ink-500)] leading-relaxed max-w-xl">
+            {nextStep.label}. Everything stays on your device until you choose to export.
+            MedCore never invents studies, statistics, or citations.
           </p>
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            <button
-              className="btn-primary"
-              onClick={() => onJump(nextStep.target)}
-            >
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button className="btn-primary" onClick={() => onJump(nextStep.target)}>
               {nextStep.label}
               <IconArrowRight size={15} />
             </button>
-            <button
-              className="btn-secondary"
-              onClick={() => onJump("export")}
-            >
-              <IconUpload size={15} />
-              Export center
+            <button className="btn-secondary" onClick={() => onJump("quality")}>
+              <IconSpark size={15} />
+              Quality Suite
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 md:gap-3 min-w-[260px]">
-          {stats.map((s) => (
-            <div
-              key={s.label}
-              className="rounded-xl border border-med-line bg-white/80 backdrop-blur px-3.5 py-3"
-            >
-              <div className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-med-sub">
-                {s.label}
-              </div>
-              <div className="mt-1 flex items-center gap-1.5">
-                <span
-                  className={`status-dot ${
-                    s.good ? "bg-emerald-500 ring-2 ring-emerald-100" : "bg-amber-400 ring-2 ring-amber-100"
-                  }`}
-                />
-                <span className="font-display font-semibold text-med-ink text-sm truncate">
-                  {s.value}
-                </span>
-              </div>
-            </div>
-          ))}
+        <div className="hidden xl:flex flex-col gap-2 min-w-[150px]">
+          <KeyMetric value={String(sectionsDone)} unit="steps" label="workflow" />
+          <KeyMetric value={String(refCount)} unit="refs" label="verified" />
+          {refIssues > 0 && (
+            <KeyMetric value={String(refIssues)} unit="flags" label="integrity" tone="warn" />
+          )}
         </div>
       </div>
     </div>
   );
+}
+
+function KeyMetric({
+  value,
+  unit,
+  label,
+  tone = "neutral",
+}: {
+  value: string;
+  unit: string;
+  label: string;
+  tone?: "neutral" | "warn";
+}) {
+  const color =
+    tone === "warn" ? "var(--mc-draft)" : "var(--mc-ink-900)";
+  return (
+    <div className="flex items-baseline gap-2 py-1">
+      <div className="flex-1 text-right">
+        <div className="mc-eyebrow text-[9.5px]">{label}</div>
+      </div>
+      <div className="mc-numeral text-[26px] leading-none" style={{ color }}>
+        {value}
+      </div>
+      <div className="mc-mono text-[10.5px] text-[var(--mc-ink-400)] w-10">{unit}</div>
+    </div>
+  );
+}
+
+function computeHeroProgress(args: {
+  launchScore: number;
+  hasType: boolean;
+  hasTitle: boolean;
+  draftedSections: number;
+  refCount: number;
+}): number {
+  let score = 0;
+  if (args.launchScore >= 60) score += 15;
+  else score += Math.round((args.launchScore / 100) * 15);
+  if (args.hasType) score += 15;
+  if (args.hasTitle) score += 10;
+  score += Math.round((args.draftedSections / 5) * 40);
+  if (args.refCount > 0) score += 20;
+  return Math.min(100, score);
 }
 
 const TONE_STYLES: Record<

@@ -176,3 +176,13 @@ export function IconReset(p: IconProps) {
     </svg>
   );
 }
+
+export function IconWarn(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <path d="M12 3 22 21H2z" />
+      <path d="M12 10v5" />
+      <path d="M12 18.5v.01" />
+    </svg>
+  );
+}

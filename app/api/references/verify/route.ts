@@ -1,4 +1,4 @@
-import { bad, handleError, ok, safeJson } from "../../_utils";
+import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import type { ParsedReference, ReferenceVerification } from "@/lib/types";
 import { markDuplicates, verifyReference } from "@/lib/references/verify";
 import { parseReferenceBlock } from "@/lib/references/parser";
@@ -11,7 +11,9 @@ type Body =
 
 export async function POST(req: Request) {
   try {
-    const body = await safeJson<Body>(req);
+    const limited = enforceRateLimit(req, "verify");
+    if (limited) return limited;
+    const body = await safeJson<Body>(req, "references");
     let items: Array<{ originalText: string; parsed: ParsedReference }> = [];
     if ("items" in body) {
       items = body.items;

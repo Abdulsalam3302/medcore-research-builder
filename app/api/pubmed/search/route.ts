@@ -1,10 +1,12 @@
-import { bad, handleError, ok } from "../../_utils";
+import { bad, handleError, ok, enforceRateLimit } from "../../_utils";
 import { pubmedSearchAndSummarize } from "@/lib/scholarly/pubmed";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
   try {
+    const limited = enforceRateLimit(req, "search");
+    if (limited) return limited;
     const u = new URL(req.url);
     const q = u.searchParams.get("q") || "";
     const retmax = Number(u.searchParams.get("retmax") || "20");

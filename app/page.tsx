@@ -11,6 +11,7 @@ import { useProject } from "@/components/useProject";
 import { emptyProject, type ProjectState } from "@/lib/types";
 import { downloadAsFile } from "@/lib/store";
 import { tryParseSharedHash } from "@/lib/share";
+import { projectStudyContext } from "@/lib/projectContext";
 import { SkeletonLines } from "@/components/ui/Skeleton";
 
 const RouteSkeleton = () => (
@@ -120,6 +121,8 @@ export default function Page() {
     setActive("overview");
   }
 
+  const study = projectStudyContext(project);
+
   return (
     <div className="min-h-screen flex bg-med-bg">
       <Sidebar active={active} onSelect={setActive} project={project} />
@@ -162,11 +165,15 @@ export default function Page() {
           ) : active === "references" ? (
             <ReferenceVerifier project={project} update={update} />
           ) : active === "stats" ? (
-            <StatsAndFigures />
+            <StatsAndFigures
+              designId={study.designId}
+              manuscriptType={study.manuscriptType}
+              expandedNotes={study.expandedNotes}
+            />
           ) : active === "copilot" ? (
-            <StatisticianCopilot />
+            <StatisticianCopilot designId={study.designId} expandedNotes={study.expandedNotes} />
           ) : active === "flow" ? (
-            <FlowDiagramBuilder />
+            <FlowDiagramBuilder defaultAcronym={study.guidelineAcronym} />
           ) : active === "coverLetter" ? (
             <CoverLetter project={project} />
           ) : active === "reviewer" ? (

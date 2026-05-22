@@ -4,6 +4,7 @@ import type { ProjectState } from "@/lib/types";
 import type { ComponentType } from "react";
 import { scoreLaunch } from "@/lib/launchReadiness";
 import { LogoWordmark } from "./ui/Logo";
+import { APP_VERSION } from "@/lib/constants";
 import {
   IconOverview,
   IconCompass,
@@ -87,15 +88,15 @@ export function Sidebar({
   }, {});
 
   return (
-    <aside className="w-[260px] shrink-0 h-screen sticky top-0 border-r border-med-line bg-white hidden md:flex md:flex-col">
-      <div className="px-5 py-4 border-b border-med-line">
+    <aside className="w-[260px] shrink-0 h-screen sticky top-0 border-r border-[var(--mc-line)] bg-[var(--mc-surface)] hidden md:flex md:flex-col">
+      <div className="px-5 py-5 border-b border-[var(--mc-line-soft)]">
         <LogoWordmark />
       </div>
 
-      <nav className="px-3 py-3 flex-1 overflow-y-auto space-y-4">
+      <nav className="px-2.5 py-3.5 flex-1 overflow-y-auto space-y-5">
         {Object.entries(groups).map(([group, list]) => (
           <div key={group}>
-            <div className="px-2.5 mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-med-subtle">
+            <div className="mc-eyebrow px-2.5 pb-1.5 text-[10.5px] text-[var(--mc-ink-400)]">
               {group}
             </div>
             <div className="space-y-0.5">
@@ -107,39 +108,27 @@ export function Sidebar({
                   <button
                     key={it.key}
                     onClick={() => onSelect(it.key)}
-                    className={`nav-item group ${
+                    className={`relative w-full text-left flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium transition ${
                       isActive
-                        ? "bg-brand-gradient text-white shadow-soft"
-                        : "text-med-inkSoft hover:bg-slate-50"
+                        ? "bg-[var(--mc-blue-50)] text-[var(--mc-blue-700)]"
+                        : "text-[var(--mc-ink-700)] hover:bg-slate-50"
                     }`}
                   >
-                    <span className="flex items-center gap-2.5 min-w-0">
+                    {isActive && (
                       <span
-                        className={`nav-item-icon ${
-                          isActive
-                            ? "bg-white/15 text-white"
-                            : "bg-slate-50 text-med-sub group-hover:bg-white group-hover:text-med-brand"
-                        }`}
-                      >
-                        <Icon size={15} />
-                      </span>
-                      <span className="truncate">{it.label}</span>
-                    </span>
-                    {status && (
-                      <span
-                        className={`text-[9.5px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded-full ${
-                          isActive
-                            ? "bg-white/20 text-white"
-                            : status.color === "good"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : status.color === "warn"
-                            ? "bg-amber-50 text-amber-700 border border-amber-200"
-                            : "bg-slate-50 text-slate-500 border border-slate-200"
-                        }`}
-                      >
-                        {status.label}
-                      </span>
+                        className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r bg-[var(--mc-blue-500)]"
+                        aria-hidden
+                      />
                     )}
+                    <span
+                      className={`inline-flex items-center justify-center shrink-0 ${
+                        isActive ? "text-[var(--mc-blue-500)]" : "text-[var(--mc-ink-400)]"
+                      }`}
+                    >
+                      <Icon size={15} />
+                    </span>
+                    <span className="truncate flex-1">{it.label}</span>
+                    {status && <NavStatusDot color={status.color} />}
                   </button>
                 );
               })}
@@ -148,19 +137,39 @@ export function Sidebar({
         ))}
       </nav>
 
-      <div className="p-4 border-t border-med-line bg-gradient-to-b from-white to-slate-50">
-        <div className="text-[11px] text-med-sub mb-1.5 flex items-center justify-between font-medium">
-          <span>Project progress</span>
-          <span className="text-med-ink tabular-nums">{progress}%</span>
+      <div className="px-4 py-4 border-t border-[var(--mc-line-soft)] space-y-2">
+        <div className="flex items-center gap-2 text-[11.5px] text-[var(--mc-ink-500)]">
+          <IconShield size={13} className="text-[var(--mc-teal-500)]" />
+          <span>Local-only · No login</span>
         </div>
-        <div className="progress">
-          <div style={{ width: `${progress}%` }} />
-        </div>
-        <div className="text-[10.5px] text-med-subtle mt-3 leading-relaxed">
-          No login required. Draft data is stored only in your browser.
+        <div className="text-[11px] text-[var(--mc-ink-400)] mc-mono">v{APP_VERSION} · open-source</div>
+        <div className="pt-1">
+          <div className="text-[11px] text-[var(--mc-ink-500)] mb-1 flex justify-between font-medium">
+            <span>Progress</span>
+            <span className="tabular-nums text-[var(--mc-ink-900)]">{progress}%</span>
+          </div>
+          <div className="progress">
+            <div style={{ width: `${progress}%` }} />
+          </div>
         </div>
       </div>
     </aside>
+  );
+}
+
+function NavStatusDot({ color }: { color: "good" | "warn" | "neutral" }) {
+  const bg =
+    color === "good"
+      ? "var(--mc-verified)"
+      : color === "warn"
+        ? "var(--mc-draft)"
+        : "var(--mc-ink-300)";
+  return (
+    <span
+      className="shrink-0 rounded-full"
+      style={{ width: 6, height: 6, background: bg }}
+      aria-hidden
+    />
   );
 }
 

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# API routes are for the app — not intended for bulk scraping.
+Disallow: /api/

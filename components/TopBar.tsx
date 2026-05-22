@@ -5,7 +5,7 @@ import type { ProjectState } from "@/lib/types";
 import { scoreLaunch } from "@/lib/launchReadiness";
 import type { AutosaveStatus } from "./useProject";
 import { LogoMark } from "./ui/Logo";
-import { IconDownload, IconUpload, IconReset, IconCheck } from "./ui/Icon";
+import { IconDownload, IconUpload, IconReset } from "./ui/Icon";
 
 export function TopBar({
   project,
@@ -88,11 +88,23 @@ export function TopBar({
           </span>
           {autosave ? (
             <span
-              className="hidden md:inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700"
+              className="hidden md:inline-flex items-center gap-1.5 text-[11.5px] text-[var(--mc-ink-500)]"
               title="Drafts persist to this browser only — export regularly to share or back up."
             >
-              <IconCheck size={11} />
-              {autosave.saving ? "Saving…" : savedAgo ? `Saved ${savedAgo} · only on this device` : "Saved · only on this device"}
+              <span
+                className="rounded-full"
+                style={{
+                  width: 6,
+                  height: 6,
+                  background: "var(--mc-verified)",
+                  boxShadow: "0 0 0 3px rgba(4,120,87,0.16)",
+                }}
+              />
+              {autosave.saving
+                ? "Saving…"
+                : savedAgo
+                  ? `Your draft is saved locally · ${savedAgo}`
+                  : "Your draft is saved locally"}
             </span>
           ) : null}
           <span

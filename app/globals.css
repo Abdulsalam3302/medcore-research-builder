@@ -8,6 +8,42 @@
     Roboto, sans-serif;
   --font-display: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui,
     sans-serif;
+  --font-serif: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-mono: "IBM Plex Mono", "SF Mono", Menlo, monospace;
+
+  /* MedCore v2 design tokens */
+  --mc-blue-50: #eef5fb;
+  --mc-blue-100: #d8e7f4;
+  --mc-blue-500: #0e6ba8;
+  --mc-blue-600: #0a5687;
+  --mc-blue-700: #084367;
+  --mc-teal-50: #ecfaf7;
+  --mc-teal-100: #cff1e9;
+  --mc-teal-500: #0d9488;
+  --mc-teal-700: #0a6e66;
+  --mc-paper: #f4f2ec;
+  --mc-canvas: #f4f7fb;
+  --mc-surface: #ffffff;
+  --mc-ink-900: #0f1b2a;
+  --mc-ink-700: #2c3848;
+  --mc-ink-500: #5a6878;
+  --mc-ink-400: #8593a3;
+  --mc-ink-300: #b4bfcc;
+  --mc-line: #e2e8f0;
+  --mc-line-soft: #edf1f6;
+  --mc-verified: #047857;
+  --mc-verified-bg: #e7f4ec;
+  --mc-draft: #b45309;
+  --mc-draft-bg: #fbf1dc;
+  --mc-user: #0e6ba8;
+  --mc-user-bg: #e5eff8;
+  --mc-risk: #be123c;
+  --mc-risk-bg: #fbe7ec;
+  --mc-neutral: #5a6878;
+  --mc-neutral-bg: #edf1f6;
+  --mc-r-xl: 20px;
+  --mc-shadow-sm: 0 1px 2px rgba(15, 27, 42, 0.05), 0 1px 1px rgba(15, 27, 42, 0.03);
+  --mc-shadow-md: 0 4px 14px -2px rgba(15, 27, 42, 0.08), 0 2px 4px -2px rgba(15, 27, 42, 0.04);
 }
 
 html,
@@ -135,6 +171,24 @@ body {
   }
   .eyebrow {
     @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-med-brand;
+  }
+  .mc-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--mc-ink-500);
+  }
+  .mc-numeral {
+    font-family: var(--font-serif);
+    font-feature-settings: "lnum" 1, "tnum" 1;
+    letter-spacing: -0.04em;
+    font-weight: 400;
+  }
+  .mc-mono {
+    font-family: var(--font-mono);
+    font-feature-settings: "zero" 1;
   }
   .muted {
     @apply text-sm text-med-sub;

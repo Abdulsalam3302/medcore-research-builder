@@ -8,3 +8,5 @@ out
 *.log
 .vercel
 tsconfig.tsbuildinfo
+.design-import/
+step by step.zip

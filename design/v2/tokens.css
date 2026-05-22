@@ -1,0 +1,109 @@
+/* MedCore Research Builder v2 — design tokens
+   Editorial medical-tech: serif for hero moments, sans for product surfaces,
+   mono for data/citations. Cool paper neutrals warmed slightly so the UI
+   doesn't read as clinical.
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ── Color ── medical blue + teal, paper neutrals, integrity scale ── */
+  --mc-blue-50:  #EEF5FB;
+  --mc-blue-100: #D8E7F4;
+  --mc-blue-200: #B3CFE8;
+  --mc-blue-300: #7DAED5;
+  --mc-blue-400: #3F89BF;
+  --mc-blue-500: #0E6BA8;  /* primary */
+  --mc-blue-600: #0A5687;
+  --mc-blue-700: #084367;
+  --mc-blue-800: #06324C;
+  --mc-blue-900: #042234;
+
+  --mc-teal-50:  #ECFAF7;
+  --mc-teal-100: #CFF1E9;
+  --mc-teal-300: #5BC2A8;
+  --mc-teal-500: #0D9488;  /* accent */
+  --mc-teal-700: #0A6E66;
+
+  /* paper neutrals — warm gray-blue, not cold slate */
+  --mc-paper:    #F4F2EC;  /* warm cream — section dividers / hero washes */
+  --mc-canvas:   #F4F7FB;  /* primary canvas — gray-blue */
+  --mc-surface:  #FFFFFF;
+  --mc-ink-900:  #0F1B2A;  /* primary text */
+  --mc-ink-700:  #2C3848;
+  --mc-ink-500:  #5A6878;
+  --mc-ink-400:  #8593A3;
+  --mc-ink-300:  #B4BFCC;
+  --mc-line:     #E2E8F0;
+  --mc-line-soft:#EDF1F6;
+
+  /* integrity / provenance — semantic */
+  --mc-verified: #047857;   /* emerald, slightly muted */
+  --mc-verified-bg:#E7F4EC;
+  --mc-draft:    #B45309;   /* amber — AI-drafted */
+  --mc-draft-bg: #FBF1DC;
+  --mc-user:     #0E6BA8;   /* user-entered = primary */
+  --mc-user-bg:  #E5EFF8;
+  --mc-risk:     #BE123C;   /* rose — fabrication risk / missing data */
+  --mc-risk-bg:  #FBE7EC;
+  --mc-neutral:  #5A6878;
+  --mc-neutral-bg:#EDF1F6;
+
+  /* ── Type ── */
+  --mc-font-sans:    'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --mc-font-display: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  --mc-font-serif:   'Newsreader', 'Iowan Old Style', Georgia, serif;
+  --mc-font-mono:    'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+
+  /* ── Spacing / radius / elevation ── */
+  --mc-r-sm: 6px;
+  --mc-r-md: 10px;
+  --mc-r-lg: 14px;
+  --mc-r-xl: 20px;       /* card default — rounded-2xl */
+  --mc-r-2xl: 28px;
+
+  --mc-shadow-xs: 0 1px 1px rgba(15,27,42,0.04);
+  --mc-shadow-sm: 0 1px 2px rgba(15,27,42,0.05), 0 1px 1px rgba(15,27,42,0.03);
+  --mc-shadow-md: 0 4px 14px -2px rgba(15,27,42,0.08), 0 2px 4px -2px rgba(15,27,42,0.04);
+  --mc-shadow-lg: 0 20px 40px -16px rgba(15,27,42,0.18), 0 8px 16px -8px rgba(15,27,42,0.08);
+}
+
+/* artboard reset */
+.mc {
+  font-family: var(--mc-font-sans);
+  color: var(--mc-ink-900);
+  background: var(--mc-canvas);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.mc *, .mc *::before, .mc *::after { box-sizing: border-box; }
+.mc h1, .mc h2, .mc h3, .mc h4 { font-family: var(--mc-font-display); letter-spacing: -0.015em; margin: 0; font-weight: 600; color: var(--mc-ink-900); }
+.mc h1 { font-size: 32px; line-height: 1.15; letter-spacing: -0.025em; }
+.mc h2 { font-size: 22px; line-height: 1.2; letter-spacing: -0.02em; }
+.mc h3 { font-size: 16px; line-height: 1.3; }
+.mc p { margin: 0; }
+.mc button { font-family: inherit; cursor: pointer; }
+
+/* serif numerals — only on .mc-numeral element */
+.mc-numeral { font-family: var(--mc-font-serif); font-feature-settings: 'lnum' 1, 'tnum' 1; letter-spacing: -0.04em; font-weight: 400; }
+
+/* monospace text */
+.mc-mono { font-family: var(--mc-font-mono); font-feature-settings: 'zero' 1; }
+
+/* eyebrow — small caps mono label */
+.mc-eyebrow {
+  font-family: var(--mc-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mc-ink-500);
+}
+
+/* focus ring (WCAG AA) */
+.mc :focus-visible, .mc *:focus-visible { outline: 2px solid var(--mc-blue-500); outline-offset: 2px; border-radius: 4px; }
+
+/* scrollbar hidden inside artboards (they're static design frames) */
+.mc::-webkit-scrollbar, .mc *::-webkit-scrollbar { display: none; }

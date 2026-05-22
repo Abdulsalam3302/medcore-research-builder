@@ -1,157 +1,141 @@
-# MedCore Research Builder
+# MedCore Research Builder v2
 
-A polished, no-login, reporting-guideline-driven workspace for building the core of a medical research manuscript.
+A free, no-login, reporting-guideline-driven workspace for building the core of a **medical research manuscript**. Built for clinicians and researchers worldwide — drafts stay in your browser; scholarly lookups run server-side.
 
-- ✍️ **Section builders** for Introduction, Methods, Results, Discussion, and Conclusion — checklist-driven against EQUATOR Network reporting guidelines (CONSORT, STROBE, PRISMA, SPIRIT, PRISMA-P, STARD, TRIPOD, CARE, AGREE/RIGHT, SRQR/COREQ, ARRIVE, SQUIRE, CHEERS, GRAMMS).
-- 🔎 **Title Lab** with evidence-based novelty / similarity scan across PubMed, Crossref, OpenAlex (and optional web search). We never promise absolute uniqueness — we surface evidence.
-- 📚 **Reference Verifier** that parses pasted references in mixed formats, looks them up in PubMed (via E-utilities + citation matcher) and Crossref, flags mismatches, duplicates, and possible retractions.
-- 🛡️ **Research-integrity safe** — we refine and critique your draft, but **never** invent studies, PMIDs, DOIs, results, statistics, or claims. Missing data is flagged, not filled in.
-- 🔐 **Direct use** — no registration, no login, no account system. All API calls go through server-side Next.js routes; your keys never reach the browser.
+## What’s new in v2
+
+- **63 study designs**, **34 journals**, **84 feature flags** via the design registry
+- **Research Launch** readiness scoring before you write
+- **Title Lab** with 7-dimension rubric + PubMed/Crossref/OpenAlex similarity scan
+- **Reference Verifier** across PubMed, Crossref, OpenAlex, Europe PMC, Semantic Scholar, Unpaywall
+- **Quality Suite**, **Reviewer Simulator**, **Statistician Copilot**, **Flow Diagram Builder**
+- **Version history**, **URL hash sharing**, **DOCX export**
+- **System status panel** — live integration health on Overview
+- **Rate limiting & security headers** for public deployment
+- **Smoke tests** — `npm run test:smoke`
+
+## Core principles
+
+- **Never fabricate** PMIDs, DOIs, statistics, or citations
+- **Checklist-driven** against EQUATOR reporting guidelines (CONSORT, STROBE, PRISMA, SPIRIT, STARD, TRIPOD, CARE, etc.)
+- **Transparent LLM outputs** — missing data is flagged, not invented
+- **Privacy-first** — no accounts, no server-side draft storage
 
 ## Tech stack
 
-- Next.js 14 (App Router) · TypeScript · Tailwind CSS
-- No database — drafts live in browser `localStorage` only
-- Export/import as **JSON**, manuscript Markdown, compliance Markdown, references CSV
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 14 (App Router) |
+| UI | React 18, TypeScript, Tailwind CSS |
+| State | Browser `localStorage` only |
+| Export | DOCX, Markdown, CSV, JSON |
+| Charts | Plotly (CDN) |
+| Deploy | `output: "standalone"` — Vercel, Railway, or any Node host |
 
 ## Getting started
 
 ```bash
-# 1. Install dependencies
 npm install
-
-# 2. Configure API keys
 cp .env.example .env.local
-# Edit .env.local: paste your ANTHROPIC_API_KEY (or OPENAI_API_KEY)
-
-# 3. Run the dev server
+# Edit .env.local — at minimum set one LLM key (see below)
 npm run dev
 # Open http://localhost:3000
 ```
 
-The dashboard loads immediately — no login.
+If port 3000 is stuck with a stale process (API 404, broken CSS), kill old Node processes and restart:
+
+```bash
+lsof -ti :3000 | xargs kill -9 2>/dev/null; npm run dev
+```
 
 ## Environment variables
 
 See `.env.example`. The app degrades gracefully when optional keys are missing.
 
 | Variable | Required | Purpose |
-|---|---|---|
-| `ANTHROPIC_API_KEY` | recommended | LLM refinement, parsing, final report |
-| `OPENAI_API_KEY` | optional | Fallback LLM provider |
-| `LLM_PROVIDER` | optional | `anthropic` (default) or `openai` |
-| `NCBI_API_KEY` | optional | Raises PubMed rate limit from 3 → 10 req/s |
-| `NCBI_EMAIL` · `NCBI_TOOL` | recommended | Polite identification with NCBI |
-| `CROSSREF_MAILTO` | recommended | Polite pool with Crossref |
-| `OPENALEX_MAILTO` | recommended | Polite pool with OpenAlex |
-| `TAVILY_API_KEY` *or* `SERPAPI_API_KEY` | optional | Adds web search to novelty scan |
+|----------|----------|---------|
+| `LLM_PROVIDER` | optional | `minimax` (default), `anthropic`, or `openai` |
+| `MINIMAX_API_KEY` | recommended | Default LLM provider |
+| `ANTHROPIC_API_KEY` | optional | Anthropic LLM |
+| `OPENAI_API_KEY` | optional | OpenAI fallback |
+| `NCBI_API_KEY` | optional | PubMed rate limit 3→10 req/s |
+| `NCBI_EMAIL` · `NCBI_TOOL` | recommended | NCBI polite identification |
+| `CROSSREF_MAILTO` | recommended | Crossref polite pool |
+| `OPENALEX_MAILTO` | recommended | OpenAlex polite pool |
+| `OPENALEX_API_KEY` | optional | OpenAlex premium limits |
+| `SEMANTIC_SCHOLAR_API_KEY` | optional | S2 higher rate limits |
+| `UNPAYWALL_EMAIL` | optional | Open-access PDF links in reference verifier |
+| `TAVILY_API_KEY` or `SERPAPI_API_KEY` | optional | Web search in Title Lab novelty scan |
+| `ELICIT_API_KEY` | optional | Elicit AI search (paid) |
 
-Without an LLM key:
-- Research-type wizard still works (heuristic).
-- PubMed/Crossref/OpenAlex search and reference verification still work.
-- Title generation, section refinement, and the final compliance report show a "configure LLM" message.
+Without an LLM key: scholarly APIs, reference verification, stats engine, and heuristic parsers still work. Drafting features show a “configure LLM” message.
 
-## How to test
+## Testing
 
-### Health-check
+```bash
+# Type check
+npm run typecheck
+
+# Production build
+npm run build
+
+# API smoke tests (dev server must be running)
+npm run test:smoke
+# Or against a specific port:
+BASE_URL=http://localhost:3006 npm run test:smoke
+```
+
+### Manual checks
+
 ```bash
 curl http://localhost:3000/api/status
-```
-You should see flags for `llm.configured`, `pubmed`, `crossref`, `openalex`, `webSearch`.
-
-### PubMed search
-```bash
-curl 'http://localhost:3000/api/pubmed/search?q=heart+failure+discharge+education&retmax=5'
+curl 'http://localhost:3000/api/pubmed/search?q=heart+failure&retmax=3'
 ```
 
-### Reference verifier
-The Reference Verifier card has a **Load demo** button that pastes four real guideline references. Click **Verify references** to run them through PubMed + Crossref.
+In the UI: **Reference Verifier → Load demo → Verify** and **Title Lab → Load demo → Check similarity**.
 
-### Demo title (safe sample input)
-> *Effect of structured discharge education on 30-day readmission among adults with heart failure: a randomized controlled trial*
+## Workflow
 
-The Title Lab card has a **Load demo** button that pre-fills this title with PICO inputs. Click **Check similarity** to run the novelty scan.
+1. **Research Launch** — team, IRB, budget, readiness score  
+2. **Research Type** — pick design, journal, features → guideline recommendation  
+3. **Title Lab** — PICO, novelty scan, refinement  
+4. **Manuscript sections** — Introduction → Methods → Results → Discussion → Conclusion  
+5. **References** — parse & verify across scholarly APIs  
+6. **Quality / Compliance / Export** — review, report, DOCX  
 
 ## Project layout
 
 ```
 app/
-  api/                 # Server-side routes — all external API calls live here
-    llm/{refine-title, refine-section, research-type, parse-references, final-report}
-    pubmed/{search, details, citation-match}
-    crossref/{search, works}
-    openalex/search
-    references/verify
-    title/novelty-check
-    web-search
-    status
-  page.tsx             # Dashboard shell
-components/
-  Sidebar.tsx · TopBar.tsx
-  Overview.tsx · ResearchTypeWizard.tsx · TitleLab.tsx
-  SectionBuilder.tsx · ReferenceVerifier.tsx
-  ComplianceReport.tsx · ExportCenter.tsx
+  api/           # 40 server routes (LLM, scholarly, agents, registry)
+  page.tsx       # Dashboard shell
+components/      # Feature UI (20+ panels)
 lib/
-  types.ts             # Shared TypeScript types
-  guidelines.ts        # Curated EQUATOR guideline registry
-  prompts.ts           # LLM system + per-route prompt templates
-  llm.ts               # Anthropic / OpenAI client + JSON extraction
-  novelty.ts           # PubMed + Crossref + OpenAlex similarity scan
-  store.ts             # localStorage helpers (project state)
-  export.ts            # Markdown + CSV exporters
-  scholarly/
-    pubmed.ts · crossref.ts · openalex.ts · websearch.ts
-  references/
-    parser.ts          # Reference text parser
-    verify.ts          # Per-reference verifier with metadata-match scoring
+  registry/      # Designs, journals, features (v2)
+  scholarly/     # PubMed, Crossref, OpenAlex, etc.
+  agents/        # Stats, evidence, retraction, figures
+  store.ts       # localStorage persistence
+scripts/
+  smoke-test.mjs # API smoke tests
+middleware.ts    # Security headers
 ```
 
-## Reporting-guideline coverage
+## Deployment (public)
 
-Guideline registry seeded from the [EQUATOR Network](https://www.equator-network.org/reporting-guidelines/):
+Recommended: **Vercel** (zero-config for Next.js) or any Node host with `npm run build && npm start`.
 
-| Family | Primary | Extensions (selected) |
-|---|---|---|
-| Randomized trials | CONSORT | Cluster · Non-inferiority · Pragmatic · Pilot · Abstracts · Harms · NPT · AI · eHealth |
-| Observational | STROBE | RECORD · RECORD-PE · STROBE-ME · STROBE-nut · STROBE-equity |
-| Systematic reviews | PRISMA 2020 | PRISMA-P · PRISMA-ScR · PRISMA-DTA · PRISMA-NMA · PRISMA-IPD · Harms · Overviews |
-| Trial protocols | SPIRIT | — |
-| SR protocols | PRISMA-P | — |
-| Diagnostic accuracy | STARD | — |
-| Prediction models | TRIPOD | TRIPOD+AI |
-| Case reports | CARE | — |
-| Guidelines | AGREE / RIGHT | — |
-| Qualitative | SRQR / COREQ | — |
-| Mixed-methods | GRAMMS | — |
-| Animal / preclinical | ARRIVE | — |
-| Quality improvement | SQUIRE | — |
-| Economic evaluations | CHEERS | — |
-| Other | Custom | — |
+Before going public:
 
-Checklist prompts are paraphrased compliance reminders for the UI and the LLM. Always cross-check against the official source linked from each guideline.
+1. Set all env vars in the host dashboard (never commit `.env.local`)
+2. Run `npm run build && npm run test:smoke` against the deployed URL
+3. Set `CROSSREF_MAILTO`, `OPENALEX_MAILTO`, `NCBI_EMAIL` for polite API pools
+4. Consider adding `TAVILY_API_KEY` for Title Lab web search
+5. Monitor rate limits — defaults are ~24 LLM req/min/IP, 12 verify/min/IP
 
-## Deployment
+## License & attribution
 
-### Vercel (recommended)
-1. Push to GitHub.
-2. Import the repo into Vercel.
-3. Add the environment variables in **Settings → Environment Variables**.
-4. Deploy — `next build` runs automatically.
+MedCore is independent of EQUATOR Network, NCBI, Crossref, and OpenAlex. Checklists are paraphrased prompts for author guidance, not official copies. Always verify against the official guideline PDF before submission.
 
-### Hostinger Node hosting
-Hostinger's Node-capable plans can host Next.js as a standalone server:
-1. Build: `npm install && npm run build`.
-2. Upload the project. The `next.config.mjs` is set to `output: "standalone"`, so you only need `.next/standalone/`, `.next/static/`, and `public/` (if any).
-3. Start: `node .next/standalone/server.js` with `PORT` set by the host.
-4. Set the same environment variables in the Hostinger control panel.
+## Contact
 
-## Research-integrity guarantees
-
-- **No fabricated data.** The LLM is instructed never to invent PMIDs, DOIs, citations, p-values, confidence intervals, sample sizes, effect estimates, or clinical claims. The Results module reinforces this with an extra system rule.
-- **No promised novelty.** Title Lab labels novelty risk on a 4-level scale (low / moderate / high / exact match) with the underlying evidence and queries used. It never claims absolute uniqueness.
-- **Transparency.** Each refined section returns a structured response with checklist coverage, missing-information list, risk warnings, claims-needing-citation, and the queries you should run to find evidence.
-- **Local-only drafts.** Your manuscript lives in `localStorage`. No cookies, no telemetry, no account.
-
-## License notice
-
-MedCore Research Builder is independent of EQUATOR, NCBI, Crossref, and OpenAlex. It uses their public APIs respectfully (polite-pool identifiers, rate-limit-aware concurrency). The reporting-guideline checklist prompts are paraphrased compliance reminders, not verbatim copies of copyrighted checklists. Always refer to the linked official sources for full guideline text.
+Founder: Abdulsalam Aleid — feedback via the in-app contact links or GitHub issues.

@@ -1,4 +1,4 @@
-import { bad, handleError, ok, safeJson } from "../../_utils";
+import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import type { ResearchTypeAnswersV2, TitleInputs } from "@/lib/types";
 import { runNoveltyCheck } from "@/lib/novelty";
 import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
@@ -26,7 +26,9 @@ type Body = { inputs: TitleInputs; answers?: ResearchTypeAnswersV2 };
 
 export async function POST(req: Request) {
   try {
-    const body = await safeJson<Body>(req);
+    const limited = enforceRateLimit(req, "llm");
+    if (limited) return limited;
+    const body = await safeJson<Body>(req, "llm");
     if (!body?.inputs) return bad("inputs is required");
     if (!body.inputs.draftTitle?.trim()) return bad("inputs.draftTitle is required");
 

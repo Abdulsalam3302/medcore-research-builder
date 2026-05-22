@@ -1,6 +1,6 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans, Newsreader, IBM_Plex_Mono } from "next/font/google";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -13,6 +13,20 @@ const display = Plus_Jakarta_Sans({
   variable: "--font-display",
   display: "swap",
   weight: ["500", "600", "700"],
+});
+
+const serif = Newsreader({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  display: "swap",
+  weight: ["400", "500", "600"],
+});
+
+const mono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -47,7 +61,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${display.variable}`}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${display.variable} ${serif.variable} ${mono.variable}`}
+    >
       <body className="antialiased">{children}</body>
     </html>
   );

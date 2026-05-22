@@ -1,4 +1,4 @@
-import { bad, handleError, ok, safeJson } from "../../_utils";
+import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
 import { GLOBAL_SYSTEM, parseReferencesPrompt } from "@/lib/prompts";
 import { parseReferenceBlock } from "@/lib/references/parser";
@@ -9,7 +9,9 @@ type Body = { raw: string };
 
 export async function POST(req: Request) {
   try {
-    const body = await safeJson<Body>(req);
+    const limited = enforceRateLimit(req, "llm");
+    if (limited) return limited;
+    const body = await safeJson<Body>(req, "references");
     if (!body?.raw || !body.raw.trim()) return bad("raw text is required");
 
     if (!isLLMConfigured()) {

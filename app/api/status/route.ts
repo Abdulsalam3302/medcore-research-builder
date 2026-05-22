@@ -1,4 +1,5 @@
 import { ok } from "../_utils";
+import { APP_VERSION } from "@/lib/constants";
 import { isLLMConfigured, getActiveProvider } from "@/lib/llm";
 import { webSearchConfigured } from "@/lib/scholarly/websearch";
 import { s2Configured } from "@/lib/scholarly/semanticscholar";
@@ -9,6 +10,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
   return ok({
+    version: APP_VERSION,
     llm: {
       configured: isLLMConfigured(),
       provider: getActiveProvider(),

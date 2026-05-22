@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { ExpandedNotes } from "@/lib/types";
 import {
   descriptive,
   generateSnippets,
@@ -18,10 +19,22 @@ import { CopyButton } from "./ui/CopyButton";
 
 type Tab = "assumptions" | "power" | "snippets";
 
-export function StatisticianCopilot() {
+export function StatisticianCopilot({
+  designId,
+  expandedNotes,
+}: {
+  designId?: string;
+  expandedNotes?: ExpandedNotes;
+} = {}) {
   const [tab, setTab] = useState<Tab>("assumptions");
   return (
     <div className="grid gap-5">
+      {(designId || expandedNotes?.primaryOutcome) && (
+        <div className="text-xs text-med-sub rounded-lg border border-med-line bg-med-bg/50 px-3 py-2">
+          Study context: {designId || "no design selected"}
+          {expandedNotes?.primaryOutcome ? ` · outcome: ${expandedNotes.primaryOutcome}` : ""}
+        </div>
+      )}
       <Card>
         <CardHeader
           title="Statistician copilot"

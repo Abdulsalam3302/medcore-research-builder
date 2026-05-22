@@ -76,8 +76,16 @@ const TEMPLATES: FlowTemplate[] = [
   },
 ];
 
-export function FlowDiagramBuilder() {
-  const [tplId, setTplId] = useState<string>(TEMPLATES[0].id);
+function defaultTemplateId(acronym?: string): string {
+  if (!acronym) return TEMPLATES[0].id;
+  const upper = acronym.toUpperCase();
+  const hit = TEMPLATES.find((t) => upper.includes(t.acronym));
+  return hit?.id || TEMPLATES[0].id;
+}
+
+export function FlowDiagramBuilder({ defaultAcronym }: { defaultAcronym?: string } = {}) {
+  const initialId = defaultTemplateId(defaultAcronym);
+  const [tplId, setTplId] = useState<string>(initialId);
   const tpl = TEMPLATES.find((t) => t.id === tplId)!;
   const [nodes, setNodes] = useState<FlowNode[]>(() => clone(tpl.nodes));
 
