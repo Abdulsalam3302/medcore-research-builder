@@ -1,6 +1,10 @@
 # MedCore Research Builder v2
 
+[![CI](https://github.com/Abdulsalam3302/medcore-research-builder/actions/workflows/ci.yml/badge.svg)](https://github.com/Abdulsalam3302/medcore-research-builder/actions/workflows/ci.yml)
+
 A free, no-login, reporting-guideline-driven workspace for building the core of a **medical research manuscript**. Built for clinicians and researchers worldwide — drafts stay in your browser; scholarly lookups run server-side.
+
+**Repository:** https://github.com/Abdulsalam3302/medcore-research-builder
 
 ## What’s new in v2
 
@@ -132,9 +136,9 @@ Before going public:
 4. Consider adding `TAVILY_API_KEY` for Title Lab web search
 5. Monitor rate limits — defaults are ~24 LLM req/min/IP, 12 verify/min/IP
 
-## License & attribution
+## License
 
-MedCore is independent of EQUATOR Network, NCBI, Crossref, and OpenAlex. Checklists are paraphrased prompts for author guidance, not official copies. Always verify against the official guideline PDF before submission.
+MIT — see [LICENSE](LICENSE). MedCore is independent of EQUATOR Network, NCBI, Crossref, and OpenAlex.
 
 ## Contact
 
