@@ -1,13 +1,14 @@
 name: Deploy
 
+# Vercel GitHub integration deploys on every push to main automatically.
+# This workflow is manual-only to avoid failure emails when VERCEL_TOKEN is unset.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{ secrets.VERCEL_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
 
