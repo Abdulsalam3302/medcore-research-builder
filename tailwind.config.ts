@@ -85,7 +85,11 @@ const config: Config = {
       },
       keyframes: {
         "fade-in": {
-          from: { opacity: "0", transform: "translateY(4px)" },
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        "fade-in-up": {
+          from: { opacity: "0", transform: "translateY(12px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "pulse-soft": {
@@ -98,7 +102,8 @@ const config: Config = {
         },
       },
       animation: {
-        "fade-in": "fade-in 0.25s ease-out",
+        "fade-in": "fade-in 0.5s ease-out",
+        "fade-in-up": "fade-in-up 0.55s ease-out",
         "pulse-soft": "pulse-soft 2.2s ease-in-out infinite",
         shimmer: "shimmer 2.4s linear infinite",
       },

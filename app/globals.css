@@ -285,3 +285,10 @@ body {
 .lift:hover {
   transform: translateY(-1px);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe\:animate-fade-in,
+  .motion-safe\:animate-fade-in-up {
+    animation: none !important;
+  }
+}
