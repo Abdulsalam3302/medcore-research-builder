@@ -4,6 +4,7 @@
 
 A free, no-login, reporting-guideline-driven workspace for building the core of a **medical research manuscript**. Built for clinicians and researchers worldwide — drafts stay in your browser; scholarly lookups run server-side.
 
+**Live app:** https://medcore-research-builder.vercel.app  
 **Repository:** https://github.com/Abdulsalam3302/medcore-research-builder
 
 ## What’s new in v2
@@ -126,7 +127,16 @@ middleware.ts    # Security headers
 
 ## Deployment (public)
 
-Recommended: **Vercel** (zero-config for Next.js) or any Node host with `npm run build && npm start`.
+**Production:** https://medcore-research-builder.vercel.app
+
+Hosted on Vercel (Next.js standalone). Environment variables are set in the Vercel project dashboard — never commit `.env.local`.
+
+To sync local env to Vercel (maintainers only):
+
+```bash
+./scripts/sync-vercel-env.sh .env.local
+vercel deploy --prod
+```
 
 Before going public:
 
