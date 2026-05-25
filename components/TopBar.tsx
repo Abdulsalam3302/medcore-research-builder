@@ -5,6 +5,7 @@ import type { ProjectState } from "@/lib/types";
 import { scoreLaunch } from "@/lib/launchReadiness";
 import type { AutosaveStatus } from "./useProject";
 import { LogoMark } from "./ui/Logo";
+import { AuthButton } from "./AuthButton";
 import { IconDownload, IconUpload, IconReset } from "./ui/Icon";
 
 export function TopBar({
@@ -140,6 +141,8 @@ export function TopBar({
               <StatusPill ok={status.webSearch.configured} label="Web" tip="Tavily/SerpAPI" />
             </div>
           )}
+
+          <AuthButton />
 
           <label
             className="btn-secondary cursor-pointer"

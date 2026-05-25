@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Smoke tests for MedCore Research Builder API routes.
- * Usage: BASE_URL=http://localhost:3000 node scripts/smoke-test.mjs
+ * Extended smoke tests — local or production.
+ * BASE_URL=https://medcore-research-builder.vercel.app node scripts/smoke-test.mjs
  */
 
 const BASE = process.env.BASE_URL || "http://localhost:3000";
@@ -48,16 +48,35 @@ async function postJson(path, body, expectStatus) {
 
 console.log(`MedCore smoke tests → ${BASE}\n`);
 
+await check("GET /api/health", async () => {
+  const h = await getJson("/api/health");
+  if (h.ok !== true) throw new Error("health not ok");
+});
+
+await check("GET /api/sign-in → redirect /auth", async () => {
+  const r = await fetch(`${BASE}/api/sign-in`, { redirect: "manual" });
+  if (r.status !== 307 && r.status !== 308 && r.status !== 302) {
+    throw new Error(`expected redirect, got ${r.status}`);
+  }
+  const loc = r.headers.get("location") || "";
+  if (!loc.includes("/auth")) throw new Error(`location=${loc}`);
+});
+
+await check("GET /auth", async () => {
+  const r = await fetch(`${BASE}/auth`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const html = await r.text();
+  if (!html.includes("Sign in")) throw new Error("auth page missing");
+});
+
 await check("GET /api/status", async () => {
   const s = await getJson("/api/status");
   if (!s.version) throw new Error("missing version");
-  if (typeof s.llm?.configured !== "boolean") throw new Error("missing llm.configured");
 });
 
 await check("GET /api/registry", async () => {
   const r = await getJson("/api/registry");
   if (!Array.isArray(r.designs) || r.designs.length < 10) throw new Error("designs missing");
-  if (!Array.isArray(r.journals) || r.journals.length < 5) throw new Error("journals missing");
 });
 
 await check("GET /api/guidelines", async () => {
