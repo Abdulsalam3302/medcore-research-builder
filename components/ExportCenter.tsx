@@ -116,7 +116,7 @@ export function ExportCenter({
             <li>Selected research type and reporting guideline.</li>
             <li>Title, candidate titles, novelty / similarity report with evidence.</li>
             <li>Refined section text and checklist coverage with confidence.</li>
-            <li>References with PubMed/Crossref lookup, problems, suggested Vancouver formatting.</li>
+            <li>References with trusted-source lookup, detected issues, and suggested Vancouver formatting.</li>
             <li>Disclaimer footer.</li>
           </ol>
         </CardBody>

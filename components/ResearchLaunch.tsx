@@ -495,7 +495,7 @@ export function ResearchLaunch({
                 onChange={(v) => setLaunch({ coiDisclosed: v })}
               />
               <CheckRow
-                label="AI / LLM use policy reviewed (ICMJE 2026)"
+                label="AI-assisted writing policy reviewed (ICMJE 2026)"
                 checked={!!answers.aiUsePolicyReviewed}
                 onChange={(v) => setLaunch({ aiUsePolicyReviewed: v })}
               />

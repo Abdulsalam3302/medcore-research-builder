@@ -114,7 +114,7 @@ export function ComplianceReport({
                 right={
                   <div className="flex items-center gap-2">
                     {report._source === "heuristic" && (
-                      <Badge kind="warn">heuristic (no LLM)</Badge>
+                      <Badge kind="warn">heuristic (no writing assistant)</Badge>
                     )}
                     <CopyButton text={report.summary} />
                   </div>
@@ -235,16 +235,16 @@ export function ComplianceReport({
               <CardHeader title="Reference summary (multi-database)" />
               <CardBody className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <Stat label="Total" value={report.referenceSummary.total} />
-                <Stat label="PubMed indexed" value={report.referenceSummary.pubmedIndexed} kind="good" />
+                <Stat label="Primary index coverage" value={report.referenceSummary.pubmedIndexed} kind="good" />
                 <Stat label="DOI verified" value={report.referenceSummary.doiVerified} kind="info" />
                 {typeof report.referenceSummary.openAlex === "number" && (
-                  <Stat label="OpenAlex" value={report.referenceSummary.openAlex} kind="info" />
+                  <Stat label="Source C" value={report.referenceSummary.openAlex} kind="info" />
                 )}
                 {typeof report.referenceSummary.europePMC === "number" && (
-                  <Stat label="Europe PMC" value={report.referenceSummary.europePMC} kind="info" />
+                  <Stat label="Source D" value={report.referenceSummary.europePMC} kind="info" />
                 )}
                 {typeof report.referenceSummary.semanticScholar === "number" && (
-                  <Stat label="Semantic Scholar" value={report.referenceSummary.semanticScholar} kind="info" />
+                  <Stat label="Source E" value={report.referenceSummary.semanticScholar} kind="info" />
                 )}
                 {typeof report.referenceSummary.openAccess === "number" && (
                   <Stat label="Open access" value={report.referenceSummary.openAccess} kind="good" />

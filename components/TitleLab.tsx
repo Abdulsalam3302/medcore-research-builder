@@ -649,7 +649,7 @@ function NoveltyResult({ report }: { report: NoveltyReport }) {
     <Card>
       <CardHeader
         title="Novelty / similarity report"
-        subtitle="Evidence-based scan across PubMed, Crossref, OpenAlex (and web search if configured)."
+        subtitle="Evidence-based scan across trusted literature and citation sources."
         right={<Badge kind={riskBadge.kind}>{riskBadge.label}</Badge>}
       />
       <CardBody className="grid gap-4">
@@ -718,7 +718,7 @@ function ResultList({ items }: { items: NoveltyReport["similar"] }) {
         >
           <div className="flex items-center justify-between gap-2">
             <div className="font-medium text-med-ink text-sm">{s.title}</div>
-            <Badge kind="neutral">{s.source}</Badge>
+            <Badge kind="neutral">trusted source</Badge>
           </div>
           <div className="muted mt-0.5">
             {[s.authors?.slice(0, 3).join(", "), s.journal, s.year]

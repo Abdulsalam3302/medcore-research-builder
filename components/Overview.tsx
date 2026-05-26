@@ -4,7 +4,6 @@ import type { ProjectState } from "@/lib/types";
 import type { ComponentType } from "react";
 import { scoreLaunch } from "@/lib/launchReadiness";
 import { Badge } from "./ui/Badge";
-import { SystemStatus } from "./SystemStatus";
 import { ProgressRing } from "./ui/ProgressRing";
 import {
   IconCompass,
@@ -115,7 +114,7 @@ export function Overview({
       step: "04",
       title: "Reference Verifier",
       desc:
-        "Parse, look up in PubMed & Crossref, and produce a verification table.",
+        "Parse references, verify metadata through trusted citation databases, and produce a verification table.",
       target: "references",
       status: project.references.verifications.length > 0 ? "good" : "warn",
       statusLabel: project.references.verifications.length
@@ -177,7 +176,6 @@ export function Overview({
       </div>
 
       <PrinciplesCard />
-      <SystemStatus />
     </div>
   );
 }
@@ -401,7 +399,7 @@ function PrinciplesCard() {
     {
       title: "Verified references",
       desc:
-        "Every reference is verified against PubMed, Crossref, and OpenAlex with citation-level evidence.",
+        "References are cross-checked against trusted literature and citation sources with evidence-level traceability.",
     },
   ];
   return (

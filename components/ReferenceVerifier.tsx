@@ -99,7 +99,7 @@ export function ReferenceVerifier({
       <Card>
         <CardHeader
           title="Reference Verifier"
-          subtitle="Parses references, queries 5+ databases (PubMed, Crossref, OpenAlex, Europe PMC, Semantic Scholar, optional Unpaywall), and flags duplicates, retractions, and metadata mismatches."
+          subtitle="Parses references, checks multiple trusted citation sources, and flags duplicates, retractions, and metadata mismatches."
           right={
             <button
               className="btn-ghost text-med-brand"
@@ -129,7 +129,7 @@ export function ReferenceVerifier({
               onClick={verify}
               disabled={busy !== null || !project.references.raw.trim()}
             >
-              {busy === "verify" && <Spinner />} Verify across all databases
+              {busy === "verify" && <Spinner />} Verify across trusted sources
             </button>
             {verifications.length > 0 && (
               <button
@@ -149,17 +149,12 @@ export function ReferenceVerifier({
           </div>
           {parsed.length > 0 && verifications.length === 0 && (
             <div className="text-xs text-med-sub">
-              Parsed {parsed.length} reference(s). Click <strong>Verify across all databases</strong>{" "}
+              Parsed {parsed.length} reference(s). Click <strong>Verify across trusted sources</strong>{" "}
               to run the multi-source cross-check.
             </div>
           )}
           <div className="text-[11px] text-med-sub leading-relaxed">
-            Database coverage: <strong>PubMed</strong> (indexing, retraction notices),{" "}
-            <strong>Crossref</strong> (DOI resolution, metadata),{" "}
-            <strong>OpenAlex</strong> (independent cross-check),{" "}
-            <strong>Europe PMC</strong> (preprints + open access),{" "}
-            <strong>Semantic Scholar</strong> (influential citation count, TLDR, OA PDFs),{" "}
-            <strong>Unpaywall</strong> (legal OA copies — needs <code>UNPAYWALL_EMAIL</code> env).
+            Source details are available in Advanced audit mode. This view keeps labels plain-language for everyday workflow.
           </div>
         </CardBody>
       </Card>
@@ -185,7 +180,7 @@ export function ReferenceVerifier({
                       v.checks.possibleRetractionOrConcern === true
                   ).length})`,
                 ],
-                ["not-pubmed", `Not in PubMed (${verifications.filter((v) => !v.pubmed?.found).length})`],
+                ["not-pubmed", `Not in primary index (${verifications.filter((v) => !v.pubmed?.found).length})`],
                 ["no-doi", `No DOI (${verifications.filter((v) => !(v.crossref?.found || v.pubmed?.doi)).length})`],
                 ["retraction", `Retraction (${verifications.filter((v) => v.checks.possibleRetractionOrConcern === true).length})`],
                 ["preprints", `Preprints (${verifications.filter((v) => v.checks.isPreprint || v.europepmc?.isPreprint).length})`],
@@ -228,11 +223,11 @@ function SummaryBadges({ verifications }: { verifications: ReferenceVerification
   return (
     <div className="flex flex-wrap gap-1.5">
       <Badge kind="neutral">Total: {total}</Badge>
-      <Badge kind="good">PubMed: {pubmed}</Badge>
-      <Badge kind="info">DOI: {doi}</Badge>
-      <Badge kind="info">OpenAlex: {oa}</Badge>
-      <Badge kind="info">EuPMC: {epmc}</Badge>
-      <Badge kind="info">S2: {s2}</Badge>
+      <Badge kind="good">Primary index: {pubmed}</Badge>
+      <Badge kind="info">DOI coverage: {doi}</Badge>
+      <Badge kind="info">Source C: {oa}</Badge>
+      <Badge kind="info">Source D: {epmc}</Badge>
+      <Badge kind="info">Source E: {s2}</Badge>
       <Badge kind="good">OA: {oaccess}</Badge>
       {mismatch > 0 && <Badge kind="bad">Mismatch: {mismatch}</Badge>}
       {dup > 0 && <Badge kind="warn">Duplicates: {dup}</Badge>}
@@ -261,22 +256,22 @@ function VerificationRow({ index, v }: { index: number; v: ReferenceVerification
         </div>
         <div className="flex flex-wrap items-center gap-1.5 shrink-0">
           {v.pubmed?.found ? (
-            <Badge kind="good">PubMed</Badge>
+            <Badge kind="good">Primary index</Badge>
           ) : v.checks.pubmedIndexed === false ? (
-            <Badge kind="warn">Not in PubMed</Badge>
+            <Badge kind="warn">Not indexed</Badge>
           ) : (
-            <Badge kind="neutral">PubMed: —</Badge>
+            <Badge kind="neutral">Index: —</Badge>
           )}
           {v.crossref?.found ? (
-            <Badge kind="info">Crossref</Badge>
+            <Badge kind="info">DOI source</Badge>
           ) : v.checks.doiResolved === false ? (
             <Badge kind="bad">DOI ✗</Badge>
           ) : (
             <Badge kind="neutral">DOI: —</Badge>
           )}
-          {v.openalex?.found && <Badge kind="info">OpenAlex</Badge>}
-          {v.europepmc?.found && <Badge kind="info">EuPMC</Badge>}
-          {v.semanticscholar?.found && <Badge kind="info">S2</Badge>}
+          {v.openalex?.found && <Badge kind="info">Source C</Badge>}
+          {v.europepmc?.found && <Badge kind="info">Source D</Badge>}
+          {v.semanticscholar?.found && <Badge kind="info">Source E</Badge>}
           {v.unpaywall?.found && v.unpaywall.isOA && <Badge kind="good">OA</Badge>}
           {v.checks.isPreprint === true && <Badge kind="warn">preprint</Badge>}
           {v.checks.duplicate && <Badge kind="warn">duplicate</Badge>}
@@ -303,7 +298,7 @@ function VerificationRow({ index, v }: { index: number; v: ReferenceVerification
         </div>
         <div>
           {v.pubmed?.found && (
-            <Section title="PubMed match">
+            <Section title="Primary index match">
               <KV row="Title" val={v.pubmed.title} />
               <KV row="Authors" val={(v.pubmed.authors || []).join(", ")} />
               <KV row="Journal · Year" val={`${v.pubmed.journal || ""} · ${v.pubmed.year || ""}`} />
@@ -312,7 +307,7 @@ function VerificationRow({ index, v }: { index: number; v: ReferenceVerification
             </Section>
           )}
           {v.crossref?.found && (
-            <Section title="Crossref match">
+            <Section title="DOI metadata match">
               <KV row="Title" val={v.crossref.title} />
               <KV row="Authors" val={(v.crossref.authors || []).join(", ")} />
               <KV row="Journal · Year" val={`${v.crossref.journal || ""} · ${v.crossref.year || ""}`} />
@@ -320,15 +315,15 @@ function VerificationRow({ index, v }: { index: number; v: ReferenceVerification
             </Section>
           )}
           {v.openalex?.found && (
-            <Section title="OpenAlex">
+            <Section title="Source C">
               <KV row="Title" val={v.openalex.title} />
               <KV row="Journal · Year" val={`${v.openalex.journal || ""} · ${v.openalex.year || ""}`} />
               <KV row="DOI" val={v.openalex.doi} link={v.openalex.doi ? `https://doi.org/${v.openalex.doi}` : undefined} />
-              <KV row="OpenAlex ID" val={v.openalex.id} link={v.openalex.url} />
+              <KV row="Record ID" val={v.openalex.id} link={v.openalex.url} />
             </Section>
           )}
           {v.europepmc?.found && (
-            <Section title="Europe PMC">
+            <Section title="Source D">
               <KV row="Title" val={v.europepmc.title} />
               <KV row="Source" val={v.europepmc.source} />
               <KV row="Preprint?" val={v.europepmc.isPreprint ? "Yes" : "No"} />
@@ -337,18 +332,18 @@ function VerificationRow({ index, v }: { index: number; v: ReferenceVerification
             </Section>
           )}
           {v.semanticscholar?.found && (
-            <Section title="Semantic Scholar">
+            <Section title="Source E">
               <KV row="Title" val={v.semanticscholar.title} />
               <KV row="Venue · Year" val={`${v.semanticscholar.venue || ""} · ${v.semanticscholar.year || ""}`} />
               <KV row="Citation count" val={v.semanticscholar.citationCount?.toString()} />
               <KV row="Influential citations" val={v.semanticscholar.influentialCitationCount?.toString()} />
               <KV row="TL;DR" val={v.semanticscholar.tldr} />
               <KV row="OA PDF" val={v.semanticscholar.openAccessPdfUrl} link={v.semanticscholar.openAccessPdfUrl} />
-              <KV row="S2 paper" val={v.semanticscholar.paperId} link={v.semanticscholar.url} />
+              <KV row="Record ID" val={v.semanticscholar.paperId} link={v.semanticscholar.url} />
             </Section>
           )}
           {v.unpaywall?.found && (
-            <Section title="Unpaywall (legal OA)">
+            <Section title="Open-access resolver">
               <KV row="OA?" val={v.unpaywall.isOA ? `Yes (${v.unpaywall.oaStatus || ""})` : "No"} />
               <KV row="Best OA PDF" val={v.unpaywall.bestOaPdfUrl} link={v.unpaywall.bestOaPdfUrl} />
               <KV row="Landing" val={v.unpaywall.bestOaLandingUrl} link={v.unpaywall.bestOaLandingUrl} />

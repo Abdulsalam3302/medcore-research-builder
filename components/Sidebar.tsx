@@ -145,7 +145,7 @@ export function Sidebar({
         <div className="text-[11px] text-[var(--mc-ink-400)] mc-mono">v{APP_VERSION} · open-source</div>
         <div className="pt-1">
           <div className="text-[11px] text-[var(--mc-ink-500)] mb-1 flex justify-between font-medium">
-            <span>Progress</span>
+            <span>Workspace readiness</span>
             <span className="tabular-nums text-[var(--mc-ink-900)]">{progress}%</span>
           </div>
           <div className="progress">

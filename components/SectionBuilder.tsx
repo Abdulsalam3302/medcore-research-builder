@@ -11,6 +11,7 @@ import { Spinner } from "./ui/Spinner";
 import { SkeletonLines } from "./ui/Skeleton";
 import { CopyButton } from "./ui/CopyButton";
 import { StatsAndFigures } from "./StatsAndFigures";
+import { HumanReviewBanner } from "./HumanReviewBanner";
 
 const SECTION_HELP: Record<
   string,
@@ -371,6 +372,7 @@ export function SectionBuilder({
               <CopyButton text={project.sections[section] || ""} label="Copy draft" />
             </div>
             {err && <div className="text-sm text-med-bad">{err}</div>}
+            <HumanReviewBanner compact />
           </CardBody>
         </Card>
 
@@ -417,7 +419,7 @@ export function SectionBuilder({
             <CardBody>
               <SkeletonLines rows={5} />
               <div className="text-[11.5px] text-med-sub mt-3">
-                Calls to PubMed/Crossref + the LLM can take 5–10s. We never invent numbers, citations, or claims while we wait.
+                Checking trusted sources and drafting support can take 5–10s. We never invent numbers, citations, or claims while we wait.
               </div>
             </CardBody>
           </Card>
@@ -638,7 +640,7 @@ export function SectionBuilder({
                             q
                           )}`}
                         >
-                          PubMed →
+                          Open source search →
                         </a>
                       </li>
                     ))}

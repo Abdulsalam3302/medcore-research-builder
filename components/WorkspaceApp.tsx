@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { Sidebar, type ToolKey } from "@/components/Sidebar";
-import { TopBar } from "@/components/TopBar";
+import { LifecycleNavigation, type LifecycleKey } from "@/components/LifecycleNavigation";
+import { WorkspaceHeader } from "@/components/WorkspaceHeader";
 import { Overview } from "@/components/Overview";
 import { ResearchLaunch } from "@/components/ResearchLaunch";
 import { FounderContact } from "@/components/FounderContact";
@@ -13,6 +13,16 @@ import { downloadAsFile } from "@/lib/store";
 import { tryParseSharedHash } from "@/lib/share";
 import { projectStudyContext } from "@/lib/projectContext";
 import { SkeletonLines } from "@/components/ui/Skeleton";
+import { ProtocolProposalAvailability } from "@/components/ProtocolProposalAvailability";
+import { LearningResourcePanel } from "@/components/LearningResourcePanel";
+import { VideoSupplementSlot } from "@/components/VideoSupplementSlot";
+import { TargetJournalIndexationPanel } from "@/components/TargetJournalIndexationPanel";
+import { ManuscriptChecklistEngine } from "@/components/ManuscriptChecklistEngine";
+import { ResultsDataLab } from "@/components/ResultsDataLab";
+import { QualityExcellenceGate } from "@/components/QualityExcellenceGate";
+import { OriginalityCitationGuard } from "@/components/OriginalityCitationGuard";
+import { PostPublicationImpactStudio } from "@/components/PostPublicationImpactStudio";
+import { ResearchPhaseShell } from "@/components/ResearchPhaseShell";
 
 const RouteSkeleton = () => (
   <div className="card-elevated p-6">
@@ -56,10 +66,6 @@ const ExportCenter = dynamic(
   () => import("@/components/ExportCenter").then((m) => m.ExportCenter),
   { loading: RouteSkeleton, ssr: false },
 );
-const VersionHistory = dynamic(
-  () => import("@/components/VersionHistory").then((m) => m.VersionHistory),
-  { loading: RouteSkeleton, ssr: false },
-);
 const CoverLetter = dynamic(
   () => import("@/components/CoverLetter").then((m) => m.CoverLetter),
   { loading: RouteSkeleton, ssr: false },
@@ -68,28 +74,16 @@ const FlowDiagramBuilder = dynamic(
   () => import("@/components/FlowDiagramBuilder").then((m) => m.FlowDiagramBuilder),
   { loading: RouteSkeleton, ssr: false },
 );
-const StatisticianCopilot = dynamic(
-  () => import("@/components/StatisticianCopilot").then((m) => m.StatisticianCopilot),
-  { loading: RouteSkeleton, ssr: false },
-);
-const ReviewerSimulator = dynamic(
-  () => import("@/components/ReviewerSimulator").then((m) => m.ReviewerSimulator),
-  { loading: RouteSkeleton, ssr: false },
-);
-const Collaboration = dynamic(
-  () => import("@/components/Collaboration").then((m) => m.Collaboration),
-  { loading: RouteSkeleton, ssr: false },
-);
 
 export default function WorkspaceApp() {
   const { project, setProject, update, ready, autosave } = useProject();
-  const [active, setActive] = useState<ToolKey>("overview");
+  const [active, setActive] = useState<LifecycleKey>("launch");
 
   useEffect(() => {
     if (!ready) return;
     const incoming = tryParseSharedHash();
     if (incoming) {
-      setActive("collaboration");
+      setActive("export");
       if (typeof window !== "undefined") {
         history.replaceState(null, "", window.location.pathname);
       }
@@ -121,9 +115,9 @@ export default function WorkspaceApp() {
 
   return (
     <div className="min-h-screen flex bg-med-bg">
-      <Sidebar active={active} onSelect={setActive} project={project} />
+      <LifecycleNavigation active={active} onSelect={setActive} project={project} />
       <div className="flex-1 min-w-0 flex flex-col">
-        <TopBar
+        <WorkspaceHeader
           project={project}
           onExport={exportProject}
           onReset={resetProject}
@@ -135,58 +129,266 @@ export default function WorkspaceApp() {
           {!ready ? (
             <div className="muted">Loading…</div>
           ) : active === "launch" ? (
-            <ResearchLaunch
-              project={project}
-              update={update}
-              onJump={(k) => setActive(k as ToolKey)}
-            />
+            <ResearchPhaseShell
+              phaseLabel="Pre-Research Workspace"
+              title="Research Launch"
+              subtitle="Move from idea to feasible, protocol-ready research."
+            >
+              <ResearchLaunch project={project} update={update} onJump={(k) => setActive(k as LifecycleKey)} />
+              <LearningResourcePanel
+                sectionId="launch"
+                quickExplanation="Capture your study question, design intent, timeline, and feasibility assumptions."
+                whyItMatters="A strong launch avoids expensive redesign later in Methods and Submission."
+                commonMistake="Drafting manuscript sections before clarifying outcomes and ethical pathway."
+                example="PICO-framed objective + feasibility score + action checklist."
+              />
+              <VideoSupplementSlot sectionId="launch" />
+            </ResearchPhaseShell>
+          ) : active === "pre-protocol" ? (
+            <ResearchPhaseShell
+              phaseLabel="Pre-Research Workspace"
+              title="Protocol & Proposal Availability"
+              subtitle="Track critical documents, identify gaps, and prepare skeletons."
+            >
+              <ProtocolProposalAvailability project={project} />
+              <LearningResourcePanel
+                sectionId="pre-protocol"
+                quickExplanation="Use the readiness ladder to track protocol, proposal, SAP, ethics, and dissemination files."
+                whyItMatters="Complete protocol packs reduce revision loops and improve compliance confidence."
+                commonMistake="Assuming draft text is enough without supporting operational documents."
+                example="Protocol status board + missing critical items + design-aware guidance."
+              />
+              <VideoSupplementSlot sectionId="pre-protocol" />
+            </ResearchPhaseShell>
+          ) : active === "pre-resources" ? (
+            <ResearchPhaseShell
+              phaseLabel="Pre-Research Workspace"
+              title="Resources & Learning Hub"
+              subtitle="Templates and educational aids to build strong research foundations."
+            >
+              <LearningResourcePanel
+                sectionId="launch"
+                quickExplanation="Use these worksheets to structure your question, design, and feasibility pathway."
+                whyItMatters="Strong setup improves quality across every downstream phase."
+                commonMistake="Skipping documentation and trying to reconstruct decisions later."
+                example="Idea worksheet + PICO/PECO worksheet + protocol template."
+              />
+              <VideoSupplementSlot sectionId="launch" />
+            </ResearchPhaseShell>
           ) : active === "overview" ? (
-            <Overview project={project} onJump={(k) => setActive(k as ToolKey)} />
+            <ResearchPhaseShell
+              phaseLabel="Intra-Research Manuscript"
+              title="Manuscript Workspace"
+              subtitle="Write, refine, and verify your manuscript with guided support."
+            >
+              <Overview project={project} onJump={(k) => setActive(k as LifecycleKey)} />
+            </ResearchPhaseShell>
           ) : active === "type" ? (
-            <ResearchTypeWizard project={project} update={update} />
+            <ResearchPhaseShell
+              phaseLabel="Pre-Research Workspace"
+              title="Study Design Selector"
+              subtitle="Select design, align guideline requirements, and configure context."
+            >
+              <ResearchTypeWizard project={project} update={update} />
+            </ResearchPhaseShell>
           ) : active === "title" ? (
-            <TitleLab project={project} update={update} />
-          ) : active === "introduction" ? (
-            <SectionBuilder section="introduction" project={project} update={update} />
+            <ResearchPhaseShell
+              phaseLabel="Pre-Research Workspace"
+              title="Literature & Gap Explorer"
+              subtitle="Develop title and novelty positioning with trusted evidence support."
+            >
+              <TitleLab project={project} update={update} />
+            </ResearchPhaseShell>
           ) : active === "methods" ? (
-            <SectionBuilder section="methods" project={project} update={update} />
+            <ResearchPhaseShell
+              phaseLabel="Intra-Research Manuscript"
+              title="Methods Builder"
+              subtitle="Create transparent, guideline-aligned methods reporting."
+            >
+              <SectionBuilder section="methods" project={project} update={update} />
+            </ResearchPhaseShell>
+          ) : active === "introduction" ? (
+            <ResearchPhaseShell
+              phaseLabel="Intra-Research Manuscript"
+              title="Introduction Builder"
+              subtitle="Frame burden, gap, rationale, and objective clearly."
+            >
+              <SectionBuilder section="introduction" project={project} update={update} />
+            </ResearchPhaseShell>
           ) : active === "results" ? (
-            <SectionBuilder section="results" project={project} update={update} />
+            <ResearchPhaseShell
+              phaseLabel="Intra-Research Manuscript"
+              title="Analysis & Results Lab"
+              subtitle="Transform uploaded data and analysis context into results-ready output."
+            >
+              <ResultsDataLab project={project} update={update} />
+              <SectionBuilder section="results" project={project} update={update} />
+              <VideoSupplementSlot sectionId="intra-results-lab" />
+            </ResearchPhaseShell>
           ) : active === "discussion" ? (
-            <SectionBuilder section="discussion" project={project} update={update} />
+            <ResearchPhaseShell
+              phaseLabel="Intra-Research Manuscript"
+              title="Interpretation Assistant"
+              subtitle="Build cautious, clinically meaningful interpretation without overclaiming."
+            >
+              <SectionBuilder section="discussion" project={project} update={update} />
+              <SectionBuilder section="conclusion" project={project} update={update} />
+            </ResearchPhaseShell>
           ) : active === "conclusion" ? (
-            <SectionBuilder section="conclusion" project={project} update={update} />
+            <ResearchPhaseShell
+              phaseLabel="Intra-Research Manuscript"
+              title="Conclusion Builder"
+              subtitle="Summarize findings with cautious, evidence-aligned language."
+            >
+              <SectionBuilder section="conclusion" project={project} update={update} />
+            </ResearchPhaseShell>
           ) : active === "appendix" ? (
-            <AppendixBuilder project={project} update={update} />
+            <ResearchPhaseShell
+              phaseLabel="Intra-Research Manuscript"
+              title="Appendices & Supplementary Files"
+              subtitle="Manage supplementary content and structured appendices."
+            >
+              <AppendixBuilder project={project} update={update} />
+            </ResearchPhaseShell>
           ) : active === "references" ? (
-            <ReferenceVerifier project={project} update={update} />
+            <ResearchPhaseShell
+              phaseLabel="Post-Research Submission"
+              title="Citation Verification"
+              subtitle="Check citation metadata quality and source integrity before submission."
+            >
+              <ReferenceVerifier project={project} update={update} />
+            </ResearchPhaseShell>
           ) : active === "stats" ? (
-            <StatsAndFigures
-              designId={study.designId}
-              manuscriptType={study.manuscriptType}
-              expandedNotes={study.expandedNotes}
-            />
-          ) : active === "copilot" ? (
-            <StatisticianCopilot designId={study.designId} expandedNotes={study.expandedNotes} />
+            <ResearchPhaseShell
+              phaseLabel="Intra-Research Manuscript"
+              title="Tables & Figures"
+              subtitle="Generate figure specifications and test recommendations."
+            >
+              <StatsAndFigures
+                designId={study.designId}
+                manuscriptType={study.manuscriptType}
+                expandedNotes={study.expandedNotes}
+              />
+            </ResearchPhaseShell>
           ) : active === "flow" ? (
-            <FlowDiagramBuilder defaultAcronym={study.guidelineAcronym} />
+            <ResearchPhaseShell
+              phaseLabel="Intra-Research Manuscript"
+              title="Flow Diagram Generator"
+              subtitle="Create and export study flow diagrams for Methods transparency."
+            >
+              <FlowDiagramBuilder defaultAcronym={study.guidelineAcronym} />
+            </ResearchPhaseShell>
+          ) : active === "intra-checklist" ? (
+            <ResearchPhaseShell
+              phaseLabel="Intra-Research Manuscript"
+              title="Manuscript Checklist Engine"
+              subtitle="Map guideline requirements to manuscript sections item-by-item."
+            >
+              <ManuscriptChecklistEngine project={project} />
+            </ResearchPhaseShell>
+          ) : active === "intra-resources" ? (
+            <ResearchPhaseShell
+              phaseLabel="Intra-Research Manuscript"
+              title="Resources & Learning Hub"
+              subtitle="Examples, templates, and learning aids for manuscript development."
+            >
+              <LearningResourcePanel
+                sectionId="intra-manuscript"
+                quickExplanation="Use this hub to improve methods, results, and interpretation quality."
+                whyItMatters="Strong manuscript structure improves reviewer confidence and reduces revisions."
+                commonMistake="Treating checklist items as optional rather than core reporting requirements."
+                example="Methods checklist + data dictionary + reporting templates."
+              />
+              <VideoSupplementSlot sectionId="intra-results-lab" />
+            </ResearchPhaseShell>
+          ) : active === "post-journals" ? (
+            <ResearchPhaseShell
+              phaseLabel="Post-Research Submission"
+              title="Target Journals & Indexation"
+              subtitle="Compare fit and verify indexing status from official sources."
+            >
+              <TargetJournalIndexationPanel />
+            </ResearchPhaseShell>
           ) : active === "coverLetter" ? (
-            <CoverLetter project={project} />
-          ) : active === "reviewer" ? (
-            <ReviewerSimulator project={project} />
-          ) : active === "history" ? (
-            <VersionHistory project={project} onRestore={(s) => setProject(s)} />
-          ) : active === "collaboration" ? (
-            <Collaboration project={project} onApplyMerged={(s) => setProject(s)} />
+            <ResearchPhaseShell
+              phaseLabel="Post-Research Submission"
+              title="Submission Package Builder"
+              subtitle="Prepare cover letter, declarations, and submission-ready package files."
+            >
+              <CoverLetter project={project} />
+              <AppendixBuilder project={project} update={update} />
+            </ResearchPhaseShell>
           ) : active === "quality" ? (
-            <QualitySuite project={project} />
+            <ResearchPhaseShell
+              phaseLabel="Post-Research Submission"
+              title="Quality & Excellence Gate"
+              subtitle="Final readiness checks before journal submission."
+            >
+              <QualityExcellenceGate project={project} />
+              <QualitySuite project={project} />
+            </ResearchPhaseShell>
+          ) : active === "post-originality" ? (
+            <ResearchPhaseShell
+              phaseLabel="Post-Research Submission"
+              title="Originality / Citation / AI-use Disclosure Check"
+              subtitle="Validate originality safeguards and disclosure readiness."
+            >
+              <OriginalityCitationGuard project={project} />
+            </ResearchPhaseShell>
           ) : active === "report" ? (
-            <ComplianceReport
-              project={project}
-              onJump={(k) => setActive(k as ToolKey)}
-            />
+            <ResearchPhaseShell
+              phaseLabel="Post-Research Submission"
+              title="Submission Readiness Report"
+              subtitle="Consolidated compliance and quality summary for final review."
+            >
+              <ComplianceReport project={project} onJump={(k) => setActive(k as LifecycleKey)} />
+            </ResearchPhaseShell>
+          ) : active === "post-resources" ? (
+            <ResearchPhaseShell
+              phaseLabel="Post-Research Submission"
+              title="Resources & Learning Hub"
+              subtitle="Submission checklists, declarations, and journal prep resources."
+            >
+              <LearningResourcePanel
+                sectionId="post-quality"
+                quickExplanation="Use this hub to complete submission essentials before uploading files."
+                whyItMatters="Most rejections at first pass come from fit and compliance issues."
+                commonMistake="Submitting without fully aligned declarations and reporting checklists."
+                example="Journal-ready package checklist and declaration templates."
+              />
+              <VideoSupplementSlot sectionId="post-journals" />
+            </ResearchPhaseShell>
+          ) : active === "impact-studio" ? (
+            <ResearchPhaseShell
+              phaseLabel="Post-Publication Impact"
+              title="Post-Publication Impact Studio"
+              subtitle="Create social, conference, and outreach assets responsibly."
+            >
+              <PostPublicationImpactStudio project={project} />
+            </ResearchPhaseShell>
+          ) : active === "impact-resources" ? (
+            <ResearchPhaseShell
+              phaseLabel="Post-Publication Impact"
+              title="Resources & Learning Hub"
+              subtitle="Promotion playbooks, examples, and post-publication timelines."
+            >
+              <LearningResourcePanel
+                sectionId="impact-studio"
+                quickExplanation="Build practical outreach assets for audiences beyond your specialty."
+                whyItMatters="Visibility and translation increase citation uptake and practical impact."
+                commonMistake="Overstating findings or omitting publication status context."
+                example="Platform-specific posts + lay summary + conference toolkit."
+              />
+              <VideoSupplementSlot sectionId="impact-studio" />
+            </ResearchPhaseShell>
           ) : active === "export" ? (
-            <ExportCenter project={project} onImport={importProject} onReset={resetProject} />
+            <ResearchPhaseShell
+              phaseLabel="Post-Publication Impact"
+              title="Export Center"
+              subtitle="Export project assets for submission, collaboration, and outreach."
+            >
+              <ExportCenter project={project} onImport={importProject} onReset={resetProject} />
+            </ResearchPhaseShell>
           ) : null}
         </main>
         <FounderContact />
@@ -211,30 +413,25 @@ function MobileTabs({
   active,
   onSelect,
 }: {
-  active: ToolKey;
-  onSelect: (k: ToolKey) => void;
+  active: LifecycleKey;
+  onSelect: (k: LifecycleKey) => void;
 }) {
-  const items: { key: ToolKey; label: string }[] = [
+  const items: { key: LifecycleKey; label: string }[] = [
     { key: "launch", label: "Launch" },
-    { key: "overview", label: "Overview" },
-    { key: "type", label: "Type" },
-    { key: "title", label: "Title" },
-    { key: "introduction", label: "Intro" },
+    { key: "pre-protocol", label: "Protocol" },
+    { key: "type", label: "Design" },
+    { key: "title", label: "Gap" },
+    { key: "overview", label: "Manuscript" },
     { key: "methods", label: "Methods" },
     { key: "results", label: "Results" },
-    { key: "discussion", label: "Discussion" },
-    { key: "conclusion", label: "Conclusion" },
-    { key: "appendix", label: "Appendix" },
+    { key: "flow", label: "Flow" },
+    { key: "stats", label: "Figures" },
+    { key: "intra-checklist", label: "Checklist" },
+    { key: "post-journals", label: "Journals" },
     { key: "references", label: "Refs" },
-    { key: "stats", label: "Stats" },
-    { key: "copilot", label: "Stats copilot" },
-    { key: "flow", label: "Flow diagram" },
-    { key: "coverLetter", label: "Cover letter" },
-    { key: "reviewer", label: "Reviewer" },
-    { key: "history", label: "History" },
-    { key: "collaboration", label: "Share" },
     { key: "quality", label: "Quality" },
-    { key: "report", label: "Report" },
+    { key: "post-originality", label: "Originality" },
+    { key: "impact-studio", label: "Impact" },
     { key: "export", label: "Export" },
   ];
   return (

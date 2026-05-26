@@ -397,7 +397,7 @@ function Recommender({
         </div>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={enrich} onChange={(e) => setEnrich(e.target.checked)} />
-          Enrich rationale with LLM
+          Enrich rationale with writing assistant
         </label>
         <button
           className="btn-primary"

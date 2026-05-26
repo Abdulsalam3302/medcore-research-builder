@@ -112,7 +112,7 @@ export function TopBar({
             className="hidden xl:inline-flex items-center gap-2 rounded-full border border-med-line bg-white px-2.5 py-1 text-[11px] font-medium text-med-inkSoft"
             title={`Project completion: ${progress}%`}
           >
-            <span className="text-med-sub">Progress</span>
+            <span className="text-med-sub">Workspace readiness</span>
             <span className="h-1.5 w-24 rounded-full bg-slate-100 overflow-hidden">
               <span
                 className="block h-full bg-brand-gradient transition-all"
@@ -126,19 +126,19 @@ export function TopBar({
         <div className="flex items-center gap-2">
           {status && (
             <div className="hidden md:flex items-center gap-2 mr-1 rounded-full border border-med-line bg-white px-3 py-1.5 flex-wrap max-w-[640px]">
-              <StatusPill ok={status.llm.configured} label="LLM" tip={status.llm.provider || undefined} />
+              <StatusPill ok={status.llm.configured} label="Writing assistant" tip={status.llm.provider || undefined} />
               <span className="h-3 w-px bg-med-line" />
-              <StatusPill ok={status.pubmed.keyConfigured} label="PubMed" tip={status.pubmed.keyConfigured ? "API key set" : "Works without key (lower rate limit)"} />
-              <StatusPill ok={status.semanticScholar.keyConfigured} label="S2" tip="Semantic Scholar" />
-              <StatusPill ok={status.openalex.configured} label="OpenAlex" tip={status.openalex.mailto ? "polite pool" : "anonymous"} />
-              <StatusPill ok={status.crossref.configured} label="Crossref" tip={status.crossref.mailto ? "polite pool" : "anonymous"} />
-              <StatusPill ok={status.europePMC.configured} label="EuPMC" tip="Europe PMC + preprints" />
-              <StatusPill ok={status.elicit.configured} label="Elicit" tip={status.elicit.configured ? "API key set" : "Not configured"} />
-              <StatusPill ok={status.unpaywall.configured} label="Unpaywall" tip={status.unpaywall.configured ? "OA resolver" : "Set UNPAYWALL_EMAIL"} />
-              <StatusPill ok={status.openCitations.configured} label="OC" tip="OpenCitations" />
-              <StatusPill ok={status.clinicalTrials.configured} label="Trials" tip="ClinicalTrials.gov" />
+              <StatusPill ok={status.pubmed.keyConfigured} label="Primary index" tip={status.pubmed.keyConfigured ? "Key set" : "Lower rate mode"} />
+              <StatusPill ok={status.semanticScholar.keyConfigured} label="Source E" tip="Citation source" />
+              <StatusPill ok={status.openalex.configured} label="Source C" tip={status.openalex.mailto ? "Polite mode" : "Anonymous mode"} />
+              <StatusPill ok={status.crossref.configured} label="DOI source" tip={status.crossref.mailto ? "Polite mode" : "Anonymous mode"} />
+              <StatusPill ok={status.europePMC.configured} label="Source D" tip="Open biomedical source" />
+              <StatusPill ok={status.elicit.configured} label="Source F" tip={status.elicit.configured ? "Configured" : "Not configured"} />
+              <StatusPill ok={status.unpaywall.configured} label="OA resolver" tip={status.unpaywall.configured ? "Ready" : "Email required"} />
+              <StatusPill ok={status.openCitations.configured} label="Citation links" tip="Open citation map" />
+              <StatusPill ok={status.clinicalTrials.configured} label="Trial registry" tip="Registry source" />
               <span className="h-3 w-px bg-med-line" />
-              <StatusPill ok={status.webSearch.configured} label="Web" tip="Tavily/SerpAPI" />
+              <StatusPill ok={status.webSearch.configured} label="Web fallback" tip="General search connector" />
             </div>
           )}
 
