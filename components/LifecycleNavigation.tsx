@@ -6,30 +6,17 @@ import { APP_VERSION } from "@/lib/constants";
 
 export type LifecycleKey =
   | "launch"
-  | "pre-protocol"
-  | "pre-resources"
-  | "overview"
-  | "introduction"
   | "type"
   | "title"
+  | "introduction"
   | "methods"
   | "results"
   | "discussion"
   | "conclusion"
-  | "appendix"
-  | "flow"
-  | "stats"
-  | "intra-checklist"
-  | "intra-resources"
-  | "post-journals"
-  | "coverLetter"
-  | "quality"
-  | "report"
-  | "post-originality"
-  | "post-resources"
-  | "impact-studio"
-  | "impact-resources"
   | "references"
+  | "appendix"
+  | "submission"
+  | "impact-studio"
   | "export";
 
 type NavItem = {
@@ -40,30 +27,19 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { key: "launch", label: "Research Launch", phase: "Pre-Research" },
-  { key: "pre-protocol", label: "Protocol / Proposal Availability", phase: "Pre-Research" },
   { key: "type", label: "Study Design Selector", phase: "Pre-Research" },
   { key: "title", label: "Literature & Gap Explorer", phase: "Pre-Research" },
-  { key: "pre-resources", label: "Resources & Learning Hub", phase: "Pre-Research" },
+  { key: "introduction", label: "Introduction", phase: "Intra-Research" },
+  { key: "methods", label: "Methods", phase: "Intra-Research" },
+  { key: "results", label: "Results", phase: "Intra-Research" },
+  { key: "discussion", label: "Discussion", phase: "Intra-Research" },
+  { key: "conclusion", label: "Conclusion", phase: "Intra-Research" },
+  { key: "references", label: "References", phase: "Intra-Research" },
+  { key: "appendix", label: "Appendix (optional)", phase: "Intra-Research" },
 
-  { key: "overview", label: "Manuscript Workspace", phase: "Intra-Research" },
-  { key: "methods", label: "Methods Builder", phase: "Intra-Research" },
-  { key: "results", label: "Analysis & Results Lab", phase: "Intra-Research" },
-  { key: "stats", label: "Tables & Figures", phase: "Intra-Research" },
-  { key: "flow", label: "Flow Diagram Generator", phase: "Intra-Research" },
-  { key: "discussion", label: "Interpretation Assistant", phase: "Intra-Research" },
-  { key: "intra-checklist", label: "Manuscript Checklist Engine", phase: "Intra-Research" },
-  { key: "intra-resources", label: "Resources & Learning Hub", phase: "Intra-Research" },
-
-  { key: "post-journals", label: "Target Journals & Indexation", phase: "Post-Research" },
-  { key: "references", label: "Citation Verification", phase: "Post-Research" },
-  { key: "coverLetter", label: "Submission Package Builder", phase: "Post-Research" },
-  { key: "quality", label: "Quality & Excellence Gate", phase: "Post-Research" },
-  { key: "post-originality", label: "Originality / AI-use Disclosure", phase: "Post-Research" },
-  { key: "report", label: "Submission Readiness Report", phase: "Post-Research" },
-  { key: "post-resources", label: "Resources & Learning Hub", phase: "Post-Research" },
+  { key: "submission", label: "Submission & Quality", phase: "Post-Research" },
 
   { key: "impact-studio", label: "Post-Publication Impact Studio", phase: "Post-Publication" },
-  { key: "impact-resources", label: "Resources & Learning Hub", phase: "Post-Publication" },
   { key: "export", label: "Export Center", phase: "Post-Publication" },
 ];
 
