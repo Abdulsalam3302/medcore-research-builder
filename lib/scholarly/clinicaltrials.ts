@@ -40,6 +40,7 @@ export async function ctgSearch(args: {
   p.set("format", "json");
   const res = await fetch(`${BASE}/studies?${p.toString()}`, {
     headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(20000),
   });
   if (!res.ok) throw new Error(`ClinicalTrials.gov ${res.status}`);
   const data = (await res.json()) as { studies?: Array<Record<string, unknown>> };

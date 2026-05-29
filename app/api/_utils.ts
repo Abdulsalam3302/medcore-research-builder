@@ -59,6 +59,8 @@ export function handleError(e: unknown) {
     const status = msg.includes("too large") ? 413 : 429;
     return bad(msg, status);
   }
-  // Surface upstream API errors transparently for debugging, but don't leak keys.
-  return bad(msg, 500);
+  // Log full error server-side; return a generic message so we never leak
+  // raw upstream error text/bodies to the client.
+  console.error("[api]", e);
+  return bad("Upstream request failed. Please try again.", 502);
 }

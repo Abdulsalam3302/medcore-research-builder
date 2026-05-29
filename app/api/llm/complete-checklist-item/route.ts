@@ -1,4 +1,4 @@
-import { bad, handleError, ok, safeJson } from "../../_utils";
+import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import { GLOBAL_SYSTEM } from "@/lib/prompts";
 import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
 import type { ResearchTypeAnswersV2 } from "@/lib/types";
@@ -20,6 +20,8 @@ type Body = {
 };
 
 export async function POST(req: Request) {
+  const rl = enforceRateLimit(req, "llm");
+  if (rl) return rl;
   try {
     if (!isLLMConfigured())
       return bad("LLM not configured — set MINIMAX_API_KEY (default), ANTHROPIC_API_KEY, or OPENAI_API_KEY", 503);

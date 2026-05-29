@@ -1,4 +1,4 @@
-import { bad, handleError, ok, safeJson } from "../../_utils";
+import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import {
   descriptive,
   welchTTest,
@@ -17,6 +17,8 @@ type Body =
   | { test: "pearson"; x: number[]; y: number[] };
 
 export async function POST(req: Request) {
+  const rl = enforceRateLimit(req, "llm");
+  if (rl) return rl;
   try {
     const body = await safeJson<Body>(req);
     if (!body?.test) return bad("test is required");

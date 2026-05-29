@@ -29,6 +29,7 @@ export async function webSearch(query: string, max = 10): Promise<WebHit[]> {
         max_results: max,
         search_depth: "basic",
       }),
+      signal: AbortSignal.timeout(20000),
     });
     if (!res.ok) return [];
     const data = (await res.json()) as { results?: Array<{ title: string; url: string; content?: string }> };
@@ -45,7 +46,9 @@ export async function webSearch(query: string, max = 10): Promise<WebHit[]> {
   p.set("api_key", process.env.SERPAPI_API_KEY!);
   p.set("engine", "google");
   p.set("num", String(max));
-  const res = await fetch(`https://serpapi.com/search.json?${p.toString()}`);
+  const res = await fetch(`https://serpapi.com/search.json?${p.toString()}`, {
+    signal: AbortSignal.timeout(20000),
+  });
   if (!res.ok) return [];
   const data = (await res.json()) as { organic_results?: Array<{ title: string; link: string; snippet?: string }> };
   return (data.organic_results || []).slice(0, max).map((r) => ({

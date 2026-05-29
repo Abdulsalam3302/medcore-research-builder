@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "./ui/Badge";
 
 type StatusPayload = {
@@ -41,6 +41,25 @@ export function AdvancedAuditDrawer({
 }) {
   const [status, setStatus] = useState<StatusPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocused = useRef<Element | null>(null);
+
+  // Focus management + Escape-to-close while the dialog is open.
+  useEffect(() => {
+    if (!open) return;
+    previouslyFocused.current = document.activeElement;
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      if (previouslyFocused.current instanceof HTMLElement) {
+        previouslyFocused.current.focus();
+      }
+    };
+  }, [open, onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -63,13 +82,20 @@ export function AdvancedAuditDrawer({
         className="absolute inset-0 bg-slate-900/35"
         onClick={onClose}
       />
-      <aside className="absolute right-0 top-0 h-full w-full max-w-[430px] bg-white border-l border-med-line shadow-elevated overflow-y-auto">
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="audit-drawer-title"
+        className="absolute right-0 top-0 h-full w-full max-w-[430px] bg-white border-l border-med-line shadow-elevated overflow-y-auto"
+      >
         <div className="card-header sticky top-0 bg-white z-10">
           <div>
             <div className="eyebrow">Advanced</div>
-            <h3 className="section-title text-[15px]">Audit log & source transparency</h3>
+            <h3 id="audit-drawer-title" className="section-title text-[15px]">
+              Audit log & source transparency
+            </h3>
           </div>
-          <button className="btn-ghost" onClick={onClose}>
+          <button ref={closeRef} type="button" className="btn-ghost" onClick={onClose}>
             Close
           </button>
         </div>
@@ -79,7 +105,7 @@ export function AdvancedAuditDrawer({
             use plain-language labels.
           </div>
           {error ? (
-            <div className="text-sm text-med-bad">{error}</div>
+            <div role="alert" className="text-sm text-med-bad">{error}</div>
           ) : (
             <div className="grid gap-2">
               {sourceRows.map((row) => {

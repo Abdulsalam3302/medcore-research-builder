@@ -1,10 +1,12 @@
-import { bad, handleError, ok } from "../../_utils";
+import { bad, handleError, ok, enforceRateLimit } from "../../_utils";
 import { openCitationsCitedBy, openCitationsReferences } from "@/lib/scholarly/opencitations";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request, { params }: { params: { doi: string } }) {
   try {
+    const limited = enforceRateLimit(req, "search");
+    if (limited) return limited;
     const doi = decodeURIComponent(params.doi);
     if (!doi) return bad("doi is required");
     const direction = new URL(req.url).searchParams.get("direction") || "citations";

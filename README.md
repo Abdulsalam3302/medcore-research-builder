@@ -24,7 +24,7 @@ A free, no-login, reporting-guideline-driven workspace for building the core of 
 - **Never fabricate** PMIDs, DOIs, statistics, or citations
 - **Checklist-driven** against EQUATOR reporting guidelines (CONSORT, STROBE, PRISMA, SPIRIT, STARD, TRIPOD, CARE, etc.)
 - **Transparent LLM outputs** — missing data is flagged, not invented
-- **Privacy-first** — no accounts, no server-side draft storage
+- **Privacy-first** — no account required; in guest mode drafts stay in your browser with no server-side storage. Optional Supabase sign-in enables cloud sync, which stores your draft server-side only while you are signed in.
 
 ## Tech stack
 

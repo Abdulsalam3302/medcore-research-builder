@@ -1,4 +1,4 @@
-import { bad, handleError, ok, safeJson } from "../../_utils";
+import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import { GLOBAL_SYSTEM } from "@/lib/prompts";
 import { callLLM, isLLMConfigured } from "@/lib/llm";
 import { buildContextBundle, bundleToPromptBlock } from "@/lib/agents/contextBundle";
@@ -32,6 +32,8 @@ type Body = {
 };
 
 export async function POST(req: Request) {
+  const rl = enforceRateLimit(req, "llm");
+  if (rl) return rl;
   try {
     if (!isLLMConfigured()) return bad("LLM not configured", 503);
     const body = await safeJson<Body>(req);

@@ -81,6 +81,7 @@ export async function crossrefSearch(args: {
   if (mailto) p.set("mailto", mailto);
   const res = await fetch(`${BASE}/works?${p.toString()}`, {
     headers: { "user-agent": ua(), accept: "application/json" },
+    signal: AbortSignal.timeout(20000),
   });
   if (!res.ok) throw new Error(`Crossref ${res.status}`);
   const data = (await res.json()) as {
@@ -101,6 +102,7 @@ export async function crossrefByDOI(doi: string): Promise<CrossrefWork | null> {
   }`;
   const res = await fetch(url, {
     headers: { "user-agent": ua(), accept: "application/json" },
+    signal: AbortSignal.timeout(20000),
   });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Crossref ${res.status}`);

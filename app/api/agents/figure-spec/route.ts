@@ -1,4 +1,4 @@
-import { bad, handleError, ok, safeJson } from "../../_utils";
+import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import {
   recommendFigureKind,
   specifyForest,
@@ -20,6 +20,8 @@ type Body =
   | { kind: "roc"; curves: Array<{ name: string; fpr: number[]; tpr: number[]; auc?: number }> };
 
 export async function POST(req: Request) {
+  const rl = enforceRateLimit(req, "llm");
+  if (rl) return rl;
   try {
     const body = await safeJson<Body>(req);
     if (!body?.kind) return bad("kind is required");

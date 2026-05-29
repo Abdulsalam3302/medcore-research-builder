@@ -45,6 +45,7 @@ export async function europepmcSearch(args: {
   p.set("resultType", args.resultType ?? "lite");
   const res = await fetch(`${BASE}/search?${p.toString()}`, {
     headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(20000),
   });
   if (!res.ok) throw new Error(`EuropePMC ${res.status}`);
   const data = (await res.json()) as {
@@ -93,6 +94,7 @@ export async function europepmcFullText(pmcid: string): Promise<string | null> {
   const id = pmcid.replace(/^PMC/i, "");
   const res = await fetch(`${BASE}/PMC${id}/fullTextXML`, {
     headers: { accept: "application/xml" },
+    signal: AbortSignal.timeout(20000),
   });
   if (!res.ok) return null;
   return res.text();

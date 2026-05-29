@@ -28,10 +28,18 @@ export function loadProject(): ProjectState {
   }
 }
 
-export function saveProject(p: ProjectState) {
-  if (typeof window === "undefined") return;
+// Returns true when the project was persisted, false when localStorage rejected
+// the write (e.g. quota exceeded). Callers can react to a false result.
+export function saveProject(p: ProjectState): boolean {
+  if (typeof window === "undefined") return false;
   const toSave: ProjectState = { ...p, updatedAt: new Date().toISOString() };
-  localStorage.setItem(KEY, JSON.stringify(toSave));
+  try {
+    localStorage.setItem(KEY, JSON.stringify(toSave));
+    return true;
+  } catch (err) {
+    console.warn("saveProject: failed to persist to localStorage", err);
+    return false;
+  }
 }
 
 export function resetProject() {
@@ -53,7 +61,11 @@ export function loadSnapshots(): ProjectSnapshot[] {
 
 export function saveSnapshots(s: ProjectSnapshot[]) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(s));
+  try {
+    localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(s));
+  } catch (err) {
+    console.warn("saveSnapshots: failed to persist to localStorage", err);
+  }
 }
 
 export function addSnapshot(p: ProjectState, label: string, auto = false): ProjectSnapshot {
@@ -92,10 +104,14 @@ export function getLaunchBaseline(): { score: number; capturedAt: string } | nul
 
 export function setLaunchBaseline(score: number) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(
-    LAUNCH_BASELINE_KEY,
-    JSON.stringify({ score, capturedAt: new Date().toISOString() }),
-  );
+  try {
+    localStorage.setItem(
+      LAUNCH_BASELINE_KEY,
+      JSON.stringify({ score, capturedAt: new Date().toISOString() }),
+    );
+  } catch (err) {
+    console.warn("setLaunchBaseline: failed to persist to localStorage", err);
+  }
 }
 
 export function downloadAsFile(filename: string, content: string, mime = "text/plain") {

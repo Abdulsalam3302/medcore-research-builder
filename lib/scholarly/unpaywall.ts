@@ -28,7 +28,10 @@ export async function unpaywallLookup(doi: string): Promise<UnpaywallResult | nu
   if (!email) throw new Error("UNPAYWALL_EMAIL not configured");
   const clean = doi.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
   const url = `${BASE}/${encodeURIComponent(clean)}?email=${encodeURIComponent(email)}`;
-  const res = await fetch(url, { headers: { accept: "application/json" } });
+  const res = await fetch(url, {
+    headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(20000),
+  });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Unpaywall ${res.status}`);
   const data = (await res.json()) as Record<string, unknown>;

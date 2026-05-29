@@ -1,10 +1,12 @@
-import { bad, handleError, ok } from "../../_utils";
+import { bad, handleError, ok, enforceRateLimit } from "../../_utils";
 import { s2Search } from "@/lib/scholarly/semanticscholar";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
   try {
+    const limited = enforceRateLimit(req, "search");
+    if (limited) return limited;
     const u = new URL(req.url);
     const q = u.searchParams.get("query") || "";
     if (!q) return bad("query is required");

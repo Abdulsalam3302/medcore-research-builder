@@ -36,6 +36,7 @@ export async function openCitationsCitedBy(doi: string): Promise<OCRecord[]> {
   const clean = doi.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
   const res = await fetch(`${BASE}/citations/${encodeURIComponent(clean)}`, {
     headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(20000),
   });
   if (!res.ok) throw new Error(`OpenCitations ${res.status}`);
   const data = (await res.json()) as Array<Record<string, unknown>>;
@@ -46,6 +47,7 @@ export async function openCitationsReferences(doi: string): Promise<OCRecord[]> 
   const clean = doi.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
   const res = await fetch(`${BASE}/references/${encodeURIComponent(clean)}`, {
     headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(20000),
   });
   if (!res.ok) throw new Error(`OpenCitations ${res.status}`);
   const data = (await res.json()) as Array<Record<string, unknown>>;

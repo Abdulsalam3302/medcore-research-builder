@@ -12,6 +12,8 @@ const MINIMAX_DEFAULT_BASE_URL = "https://api.minimaxi.chat/v1";
 
 export type Provider = "minimax" | "anthropic" | "openai";
 
+const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS) || 60000;
+
 export type LLMCallOptions = {
   system?: string;
   prompt: string;
@@ -75,6 +77,7 @@ async function callMiniMax(opts: LLMCallOptions): Promise<string> {
       "content-type": "application/json",
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -110,6 +113,7 @@ async function callAnthropic(opts: LLMCallOptions): Promise<string> {
       "content-type": "application/json",
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -146,6 +150,7 @@ async function callOpenAI(opts: LLMCallOptions): Promise<string> {
       "content-type": "application/json",
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
   });
   if (!res.ok) {
     const text = await res.text();

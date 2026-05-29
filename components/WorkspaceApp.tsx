@@ -102,6 +102,12 @@ export default function WorkspaceApp() {
 
   return (
     <div className="min-h-screen flex bg-med-bg">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-elevated focus:ring-2 focus:ring-med-brand"
+      >
+        Skip to content
+      </a>
       <LifecycleNavigation active={active} onSelect={setActive} project={project} />
       <div className="flex-1 min-w-0 flex flex-col">
         <WorkspaceHeader
@@ -112,7 +118,7 @@ export default function WorkspaceApp() {
           autosave={autosave}
         />
         <MobileTabs active={active} onSelect={setActive} />
-        <main className="p-4 md:p-6 lg:p-8 flex-1 max-w-[1400px] w-full mx-auto">
+        <main id="main-content" className="p-4 md:p-6 lg:p-8 flex-1 max-w-[1400px] w-full mx-auto">
           {!ready ? (
             <div className="muted">Loading…</div>
           ) : active === "launch" ? (
@@ -278,12 +284,17 @@ function MobileTabs({
     { key: "export", label: "Export" },
   ];
   return (
-    <div className="md:hidden border-b border-med-line bg-white/85 backdrop-blur px-2 py-2 overflow-x-auto sticky top-[57px] z-10">
+    <nav
+      aria-label="Section navigation"
+      className="md:hidden border-b border-med-line bg-white/85 backdrop-blur px-2 py-2 overflow-x-auto sticky top-[57px] z-10"
+    >
       <div className="flex gap-1 min-w-max">
         {items.map((it) => (
           <button
             key={it.key}
+            type="button"
             onClick={() => onSelect(it.key)}
+            aria-current={active === it.key ? "page" : undefined}
             className={`pill-tab whitespace-nowrap ${
               active === it.key ? "pill-tab-active" : ""
             }`}
@@ -292,6 +303,6 @@ function MobileTabs({
           </button>
         ))}
       </div>
-    </div>
+    </nav>
   );
 }

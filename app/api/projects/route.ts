@@ -1,4 +1,4 @@
-import { bad, handleError, ok } from "../_utils";
+import { bad, handleError, ok, safeJson } from "../_utils";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { getAppUser } from "@/lib/auth";
 import type { ProjectState } from "@/lib/types";
@@ -38,8 +38,15 @@ export async function PUT(req: Request) {
     const user = await getAppUser();
     if (!user) return bad("Sign in required for cloud sync", 401);
 
-    const body = (await req.json()) as { state?: ProjectState; title?: string };
+    const body = await safeJson<{ state?: ProjectState; title?: string }>(req, "references");
     if (!body?.state) return bad("state is required");
+    if (
+      typeof body.state !== "object" ||
+      body.state === null ||
+      Array.isArray(body.state)
+    ) {
+      return bad("state must be a plain object");
+    }
 
     const supabase = createClient();
     const title =

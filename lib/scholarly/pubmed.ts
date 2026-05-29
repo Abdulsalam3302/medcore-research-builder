@@ -40,7 +40,10 @@ export async function pubmedSearch(args: {
   p.set("retmax", String(args.retmax ?? 20));
   p.set("retmode", "json");
   const url = `${EUTILS}/esearch.fcgi?${p.toString()}`;
-  const res = await fetch(url, { headers: { accept: "application/json" } });
+  const res = await fetch(url, {
+    headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(20000),
+  });
   if (!res.ok) throw new Error(`PubMed esearch ${res.status}`);
   const data = (await res.json()) as {
     esearchresult?: { idlist?: string[]; count?: string };
@@ -59,7 +62,10 @@ export async function pubmedSummary(
   p.set("id", pmids.join(","));
   p.set("retmode", "json");
   const url = `${EUTILS}/esummary.fcgi?${p.toString()}`;
-  const res = await fetch(url, { headers: { accept: "application/json" } });
+  const res = await fetch(url, {
+    headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(20000),
+  });
   if (!res.ok) throw new Error(`PubMed esummary ${res.status}`);
   const data = (await res.json()) as { result?: Record<string, unknown> };
   const result = data.result || {};

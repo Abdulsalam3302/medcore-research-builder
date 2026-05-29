@@ -145,7 +145,7 @@ export function ReferenceVerifier({
                 Export CSV
               </button>
             )}
-            {err && <div className="text-sm text-med-bad">{err}</div>}
+            {err && <div role="alert" className="text-sm text-med-bad">{err}</div>}
           </div>
           {parsed.length > 0 && verifications.length === 0 && (
             <div className="text-xs text-med-sub">

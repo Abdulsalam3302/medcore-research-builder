@@ -65,7 +65,7 @@ export function LifecycleNavigation({
         <LogoWordmark />
       </div>
 
-      <nav className="px-3 py-4 flex-1 overflow-y-auto space-y-5">
+      <nav aria-label="Research lifecycle" className="px-3 py-4 flex-1 overflow-y-auto space-y-5">
         {Object.entries(groups).map(([phase, items]) => (
           <section key={phase}>
             <div className="mc-eyebrow px-2 pb-1.5 text-[10.5px] text-[var(--mc-ink-400)]">{phase}</div>
@@ -75,7 +75,9 @@ export function LifecycleNavigation({
                 return (
                   <button
                     key={item.key}
+                    type="button"
                     onClick={() => onSelect(item.key)}
+                    aria-current={isActive ? "page" : undefined}
                     className={`w-full text-left rounded-lg px-2.5 py-2 text-[13px] transition ${
                       isActive
                         ? "bg-[var(--mc-blue-50)] text-[var(--mc-blue-700)] font-semibold"

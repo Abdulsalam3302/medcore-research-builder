@@ -30,6 +30,7 @@ export async function openalexSearch(args: {
   if (process.env.OPENALEX_API_KEY) p.set("api_key", process.env.OPENALEX_API_KEY);
   const res = await fetch(`${BASE}/works?${p.toString()}`, {
     headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(20000),
   });
   if (!res.ok) throw new Error(`OpenAlex ${res.status}`);
   const data = (await res.json()) as { results?: Array<Record<string, unknown>> };

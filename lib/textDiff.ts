@@ -18,9 +18,26 @@ export function tokenize(s: string): string[] {
   return s.match(TOKEN_RE) || [];
 }
 
+// Beyond this size the (n+1)x(m+1) LCS matrix is too expensive to allocate, so
+// we fall back to a coarse whole-string diff instead.
+const MAX_TOKENS = 4000;
+const MAX_PRODUCT = 2_000_000;
+
 export function diffTokens(a: string[], b: string[]): DiffToken[] {
   const n = a.length;
   const m = b.length;
+
+  // Guard: short-circuit for very large inputs without allocating the matrix.
+  if (n > MAX_TOKENS || m > MAX_TOKENS || n * m > MAX_PRODUCT) {
+    if (n === m && a.every((t, k) => t === b[k])) {
+      return a.map((text) => ({ op: "eq", text }));
+    }
+    const out: DiffToken[] = [];
+    for (const text of a) out.push({ op: "del", text });
+    for (const text of b) out.push({ op: "ins", text });
+    return out;
+  }
+
   // LCS length matrix
   const dp: number[][] = Array.from({ length: n + 1 }, () =>
     new Array(m + 1).fill(0),

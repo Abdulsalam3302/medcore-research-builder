@@ -137,9 +137,15 @@ export function referencesToCSV(verifs: ReferenceVerification[]): string {
 
 function csvEscape(s: string): string {
   if (s == null) return "";
-  const needs = /[",\n]/.test(s);
-  if (!needs) return s;
-  return `"${s.replace(/"/g, '""')}"`;
+  // Neutralize CSV formula injection: a cell starting with one of these
+  // characters can be interpreted as a formula by spreadsheet apps.
+  let cell = s;
+  if (/^[=+\-@\t\r]/.test(cell)) {
+    cell = `'${cell}`;
+  }
+  const needs = /[",\n]/.test(cell);
+  if (!needs) return cell;
+  return `"${cell.replace(/"/g, '""')}"`;
 }
 
 export function complianceToMarkdown(p: ProjectState): string {

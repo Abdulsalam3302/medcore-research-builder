@@ -65,7 +65,7 @@ export function Collaboration({
           <div className="flex items-center gap-2">
             <input className="input text-[12.5px] font-mono" value={link} readOnly />
             <CopyButton text={link} label="Copy" />
-            <button className="btn-ghost text-[12px]" onClick={regenerate}>
+            <button type="button" className="btn-ghost text-[12px]" onClick={regenerate}>
               Refresh
             </button>
           </div>
@@ -90,11 +90,11 @@ export function Collaboration({
             onChange={(e) => setPasted(e.target.value)}
           />
           <div className="flex justify-end gap-2">
-            <button className="btn-secondary" onClick={loadFromPaste} disabled={!pasted.trim()}>
+            <button type="button" className="btn-secondary" onClick={loadFromPaste} disabled={!pasted.trim()}>
               Load for merge
             </button>
           </div>
-          {parseErr ? <div className="text-sm text-med-bad">{parseErr}</div> : null}
+          {parseErr ? <div role="alert" className="text-sm text-med-bad">{parseErr}</div> : null}
         </CardBody>
       </Card>
 
@@ -102,7 +102,16 @@ export function Collaboration({
         <MergeView
           decisions={decisions}
           onChange={setDecisions}
-          onApply={() => onApplyMerged(applyMerge(project, remote, decisions))}
+          onApply={() => {
+            if (
+              !confirm(
+                "Apply this merge? Selected fields will overwrite your current project and cannot be undone (consider exporting or saving a snapshot first).",
+              )
+            ) {
+              return;
+            }
+            onApplyMerged(applyMerge(project, remote, decisions));
+          }}
         />
       ) : null}
     </div>
@@ -127,7 +136,7 @@ function MergeView({
         title="Merge preview"
         subtitle="Pick a winner per field. Default = the longer side. Nothing applies until you confirm."
         right={
-          <button className="btn-primary" onClick={onApply}>
+          <button type="button" className="btn-primary" onClick={onApply}>
             Apply merge
           </button>
         }
@@ -141,6 +150,7 @@ function MergeView({
                 <Badge kind="neutral">local {d.localLen}c</Badge>
                 <Badge kind="info">remote {d.remoteLen}c</Badge>
                 <select
+                  aria-label={`Merge choice for ${d.field}`}
                   className="input text-[12px] max-w-[140px]"
                   value={d.choice}
                   onChange={(e) => setChoice(i, e.target.value as MergeChoice)}

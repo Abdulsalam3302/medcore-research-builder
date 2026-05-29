@@ -73,7 +73,10 @@ export function WorkspaceHeader({
               Guided research mode
             </span>
             {autosave ? (
-              <span className="hidden md:inline-flex items-center gap-1.5 text-[11.5px] text-[var(--mc-ink-500)]">
+              <span
+                aria-live="polite"
+                className="hidden md:inline-flex items-center gap-1.5 text-[11.5px] text-[var(--mc-ink-500)]"
+              >
                 <span
                   className="rounded-full"
                   style={{
@@ -93,7 +96,7 @@ export function WorkspaceHeader({
           </div>
 
           <div className="flex items-center gap-2">
-            <button className="btn-ghost text-xs" onClick={() => setOpenAudit(true)}>
+            <button type="button" className="btn-ghost text-xs" onClick={() => setOpenAudit(true)}>
               Advanced audit
             </button>
             <AuthButton />
@@ -117,11 +120,13 @@ export function WorkspaceHeader({
                 }}
               />
             </label>
-            <button className="btn-primary" onClick={onExport} title="Export project as JSON">
+            <button type="button" className="btn-primary" onClick={onExport} title="Export project as JSON">
               <IconDownload size={15} />
               <span className="hidden sm:inline">Export</span>
             </button>
             <button
+              type="button"
+              aria-label="Reset project"
               className="btn-icon text-med-bad hover:bg-rose-50 hover:text-med-bad"
               title="Reset project"
               onClick={() => {

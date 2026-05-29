@@ -94,6 +94,7 @@ export async function elicitSearch(args: {
     method: "POST",
     headers: headers(),
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(20000),
   });
   if (!res.ok) {
     const text = await res.text();
