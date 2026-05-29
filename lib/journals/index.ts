@@ -88,7 +88,8 @@ export function journalCount(): { total: number; curated: number; saudi: number;
     total: all.length,
     curated: all.filter((j) => j.dataConfidence === "curated").length,
     saudi: all.filter((j) => j.saudi).length,
-    generated: generatedJournals.length,
+    // Count from the de-duplicated set so total === curated-ish + generated.
+    generated: all.filter((j) => j.dataConfidence !== "curated").length,
   };
 }
 

@@ -21,9 +21,9 @@ type Body = {
 };
 
 export async function POST(req: Request) {
-  const rl = await enforceRateLimit(req, "llm");
-  if (rl) return rl;
   try {
+    const rl = await enforceRateLimit(req, "llm");
+    if (rl) return rl;
     if (!isLLMConfigured()) {
       return bad(
         "AI drafting requires an LLM (set MINIMAX_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY). " +

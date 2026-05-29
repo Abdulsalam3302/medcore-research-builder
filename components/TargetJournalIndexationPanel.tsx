@@ -169,6 +169,13 @@ export function TargetJournalIndexationPanel() {
           <p className="text-sm text-med-sub">
             Verify every indexing claim from official sources. Journal website claims alone are not sufficient.
           </p>
+          <div className="text-[12.5px] text-med-inkSoft border border-sky-200 bg-sky-50/60 rounded-lg p-3">
+            💡 Looking for journal suggestions matched to your manuscript? Use the
+            dedicated <strong>Journal Finder</strong> lane — it ranks WoS SCIE/ESCI,
+            Scopus, PubMed/MEDLINE, DOAJ, and Saudi journals by topical fit and builds
+            a submission-formatting package. This panel is for manually verifying a
+            shortlist against official index sources.
+          </div>
           <input
             className="input"
             value={query}

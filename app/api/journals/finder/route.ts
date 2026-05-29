@@ -1,5 +1,5 @@
 import { ok, bad, safeJson, handleError, enforceRateLimit } from "../../_utils";
-import { findJournals, journalCount, profileFromInputs } from "@/lib/journals";
+import { findJournals, journalCount, profileFromInputs, getJournalById } from "@/lib/journals";
 import type { JournalFilters } from "@/lib/journals/types";
 
 export const runtime = "nodejs";
@@ -16,10 +16,16 @@ type FinderBody = {
   limit?: number;
 };
 
-/** GET — dataset stats (cheap; used by the UI header). */
+/** GET — dataset stats, or a single journal record via ?id=. */
 export async function GET(req: Request) {
   const limited = await enforceRateLimit(req, "search");
   if (limited) return limited;
+  const id = new URL(req.url).searchParams.get("id");
+  if (id) {
+    const journal = getJournalById(id);
+    if (!journal) return bad("Journal not found", 404);
+    return ok({ journal });
+  }
   return ok({ counts: journalCount() });
 }
 

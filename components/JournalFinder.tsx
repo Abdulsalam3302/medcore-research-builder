@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import type { ProjectState } from "@/lib/types";
 import type { JournalMatch, JournalFilters, WosCollection } from "@/lib/journals/types";
 import { buildSubmissionFormat } from "@/lib/journals/formatting";
-import { getJournalById } from "@/lib/journals";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { CopyButton } from "./ui/CopyButton";
@@ -90,7 +89,7 @@ export function JournalFinder({ project }: { project: ProjectState }) {
     });
   }
 
-  const selected = selectedId ? getJournalById(selectedId) : undefined;
+  const selected = selectedId ? matches.find((m) => m.journal.id === selectedId)?.journal : undefined;
   const submission = selected ? buildSubmissionFormat(selected, project) : null;
 
   return (
@@ -148,6 +147,10 @@ export function JournalFinder({ project }: { project: ProjectState }) {
               {counts.generated ? ` · ${counts.generated.toLocaleString()} ingested` : ""}
             </div>
           )}
+          <div className="text-[11px] text-amber-700">
+            ⚠ Impact factors, quartiles, and indexing shown here are indicative and dated — always
+            confirm the current status at the official source (links on each journal) before submitting.
+          </div>
           {err && <div role="alert" className="text-sm text-med-bad">{err}</div>}
         </CardBody>
       </Card>
@@ -180,7 +183,10 @@ export function JournalFinder({ project }: { project: ProjectState }) {
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {m.journal.metrics?.impactFactor != null && (
-                    <Badge kind="neutral">IF {m.journal.metrics.impactFactor}</Badge>
+                    <Badge kind="neutral">
+                      IF {m.journal.metrics.impactFactor}
+                      {m.journal.metrics.metricsYear ? ` (${m.journal.metrics.metricsYear})` : ""}
+                    </Badge>
                   )}
                   {m.journal.metrics?.quartile && <Badge kind="neutral">{m.journal.metrics.quartile}</Badge>}
                   {m.journal.indexing.medline === "indexed" && <Badge kind="neutral">MEDLINE</Badge>}

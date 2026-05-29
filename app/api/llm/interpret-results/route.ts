@@ -17,9 +17,9 @@ export const runtime = "nodejs";
 type Body = Partial<ResultsInterpretationArgs>;
 
 export async function POST(req: Request) {
-  const rl = await enforceRateLimit(req, "llm");
-  if (rl) return rl;
   try {
+    const rl = await enforceRateLimit(req, "llm");
+    if (rl) return rl;
     if (!isLLMConfigured())
       return bad(
         "LLM not configured — set MINIMAX_API_KEY (default), ANTHROPIC_API_KEY, or OPENAI_API_KEY in .env.local",

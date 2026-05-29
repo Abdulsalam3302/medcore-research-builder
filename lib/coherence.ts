@@ -103,16 +103,21 @@ function numericClaims(s: string): string[] {
 
   // percentages: 12%, 12.5 %
   for (const m of text.matchAll(/(\d+(?:\.\d+)?)\s*%/g)) add(m[1] + "%");
-  // p-values: p<0.05, p = 0.001, p≤0.01
-  for (const m of text.matchAll(/p\s*[<>=≤≥]+\s*(\d*\.?\d+)/g)) add("p" + m[1]);
+  // p-values: p<0.05, p = 0.001, p≤0.01 — keep the operator so p<0.001 and
+  // p=0.001 are distinct claims (real Results↔Discussion mismatch detection).
+  for (const m of text.matchAll(/p\s*([<>=≤≥]+)\s*(\d*\.?\d+)/g)) add("p" + m[1] + m[2]);
   // n counts: n = 240, n=12
   for (const m of text.matchAll(/\bn\s*=\s*(\d+)/g)) add("n=" + m[1]);
-  // confidence intervals: 95% CI ... 1.2-3.4 / 1.2 to 3.4
-  for (const m of text.matchAll(/ci[^0-9]*(\d+(?:\.\d+)?)\s*(?:to|[-–—])\s*(\d+(?:\.\d+)?)/g)) {
+  // confidence intervals: anchor on a real "CI" token (word-bounded) and bound
+  // the gap to a few chars so "inCIdence … 5 to 9" can't masquerade as a CI.
+  for (const m of text.matchAll(
+    /\b(?:95\s*%\s*)?ci\b[^0-9]{0,6}(\d+(?:\.\d+)?)\s*(?:to|[-–—])\s*(\d+(?:\.\d+)?)/g,
+  )) {
     add("ci" + m[1] + "-" + m[2]);
   }
-  // effect sizes / ratios: or 1.45, hr 0.78, rr=2.1
-  for (const m of text.matchAll(/\b(or|hr|rr|aor|ahr)\s*[=:]?\s*(\d+(?:\.\d+)?)/g)) {
+  // effect sizes / ratios: require an explicit operator (or=1.45, hr: 0.78) so
+  // the English word "or" in prose ("3 or 4 sites") is not read as an odds ratio.
+  for (const m of text.matchAll(/\b(aor|ahr|or|hr|rr)\s*[=:]\s*(\d+(?:\.\d+)?)/g)) {
     add(m[1] + m[2]);
   }
   return Array.from(claims);
@@ -222,11 +227,16 @@ function analyzeCitationOrder(markers: number[]): { ok: boolean; detail: string 
 
   const startsAtOne = firstSeen[0] === 1;
 
-  if (outOfOrder.length === 0 && skipped.length === 0 && startsAtOne) {
-    return {
-      ok: true,
-      detail: `Citations appear in ascending first-use order (1…${max}).`,
-    };
+  // A genuine ordering defect = out-of-order first appearances or skipped
+  // numbers. "Doesn't start at [1]" alone is common in a partial draft (one
+  // section excerpt) and should not read as a hard error.
+  const hasRealDefect = outOfOrder.length > 0 || skipped.length > 0;
+
+  if (!hasRealDefect) {
+    const detail = startsAtOne
+      ? `Citations appear in ascending first-use order (1…${max}).`
+      : `Citations ascend in first-use order but begin at [${firstSeen[0]}] (expected [1] in a complete manuscript).`;
+    return { ok: true, detail };
   }
 
   const parts: string[] = [];
