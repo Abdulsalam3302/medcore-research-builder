@@ -63,6 +63,30 @@ const CoverLetter = dynamic(
   () => import("@/components/CoverLetter").then((m) => m.CoverLetter),
   { loading: RouteSkeleton, ssr: false },
 );
+const ProtocolStudio = dynamic(
+  () => import("@/components/ProtocolStudio").then((m) => m.ProtocolStudio),
+  { loading: RouteSkeleton, ssr: false },
+);
+const ManuscriptCoherence = dynamic(
+  () => import("@/components/ManuscriptCoherence").then((m) => m.ManuscriptCoherence),
+  { loading: RouteSkeleton, ssr: false },
+);
+const LanguageStudio = dynamic(
+  () => import("@/components/LanguageStudio").then((m) => m.LanguageStudio),
+  { loading: RouteSkeleton, ssr: false },
+);
+const JournalFinder = dynamic(
+  () => import("@/components/JournalFinder").then((m) => m.JournalFinder),
+  { loading: RouteSkeleton, ssr: false },
+);
+const ReferenceSafetyPanel = dynamic(
+  () => import("@/components/ReferenceSafetyPanel").then((m) => m.ReferenceSafetyPanel),
+  { loading: RouteSkeleton, ssr: false },
+);
+const StatsAndFigures = dynamic(
+  () => import("@/components/StatsAndFigures").then((m) => m.StatsAndFigures),
+  { loading: RouteSkeleton, ssr: false },
+);
 
 export default function WorkspaceApp() {
   const { project, setProject, update, ready, autosave } = useProject();
@@ -161,6 +185,15 @@ export default function WorkspaceApp() {
               />
               <VideoSupplementSlot sectionId="launch" />
             </ResearchPhaseShell>
+          ) : active === "protocol" ? (
+            <ResearchPhaseShell
+              phaseLabel="Pre-Research Workspace"
+              title="Protocol / Proposal Studio"
+              subtitle="Generate a study-design-aware protocol or proposal — develop it here, not just upload it."
+            >
+              <ProtocolStudio project={project} />
+              <ProtocolProposalAvailability project={project} />
+            </ResearchPhaseShell>
           ) : active === "type" ? (
             <ResearchPhaseShell
               phaseLabel="Pre-Research Workspace"
@@ -200,6 +233,11 @@ export default function WorkspaceApp() {
               subtitle="Transform uploaded data and analysis context into results-ready output."
             >
               <ResultsDataLab project={project} update={update} />
+              <StatsAndFigures
+                designId={project.researchTypeAnswers?.designId}
+                manuscriptType={project.researchTypeAnswers?.manuscriptType}
+                expandedNotes={project.researchTypeAnswers?.expandedNotes}
+              />
               <SectionBuilder section="results" project={project} update={update} />
               <VideoSupplementSlot sectionId="intra-results-lab" />
             </ResearchPhaseShell>
@@ -234,6 +272,31 @@ export default function WorkspaceApp() {
               subtitle="Check citation metadata quality and source integrity before submission."
             >
               <ReferenceVerifier project={project} update={update} />
+              <ReferenceSafetyPanel project={project} />
+            </ResearchPhaseShell>
+          ) : active === "coherence" ? (
+            <ResearchPhaseShell
+              phaseLabel="Post-Research Submission"
+              title="Manuscript Coherence"
+              subtitle="One connected manuscript: checks title, sections, results, discussion, and citation order for conflicts."
+            >
+              <ManuscriptCoherence project={project} />
+            </ResearchPhaseShell>
+          ) : active === "language" ? (
+            <ResearchPhaseShell
+              phaseLabel="Post-Research Submission"
+              title="Language Studio"
+              subtitle="Academic language editing, readability, and writing-integrity advisories — meaning preserved, every number intact."
+            >
+              <LanguageStudio project={project} />
+            </ResearchPhaseShell>
+          ) : active === "journal-finder" ? (
+            <ResearchPhaseShell
+              phaseLabel="Post-Research Submission"
+              title="Journal Finder"
+              subtitle="Find and compare target journals (WoS SCIE/ESCI, Scopus, PubMed/MEDLINE, DOAJ, Saudi) with submission formatting."
+            >
+              <JournalFinder project={project} />
             </ResearchPhaseShell>
           ) : active === "submission" ? (
             <ResearchPhaseShell
@@ -293,6 +356,7 @@ function MobileTabs({
 }) {
   const items: { key: LifecycleKey; label: string }[] = [
     { key: "launch", label: "Launch" },
+    { key: "protocol", label: "Protocol" },
     { key: "type", label: "Design" },
     { key: "title", label: "Gap" },
     { key: "introduction", label: "Intro" },
@@ -302,6 +366,9 @@ function MobileTabs({
     { key: "conclusion", label: "Conclusion" },
     { key: "references", label: "Refs" },
     { key: "appendix", label: "Appendix" },
+    { key: "coherence", label: "Coherence" },
+    { key: "language", label: "Language" },
+    { key: "journal-finder", label: "Journals" },
     { key: "submission", label: "Submit" },
     { key: "impact-studio", label: "Impact" },
     { key: "export", label: "Export" },

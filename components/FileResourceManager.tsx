@@ -44,7 +44,12 @@ export function FileResourceManager({
       };
 
       if (/\.(csv|tsv|json)$/i.test(file.name)) {
-        const txt = await file.text();
+        let txt = "";
+        try {
+          txt = await file.text();
+        } catch {
+          profile.warnings.push("File stored, but text could not be read for preview.");
+        }
         if (/\.json$/i.test(file.name)) {
           try {
             const parsed = JSON.parse(txt) as Array<Record<string, unknown>> | Record<string, unknown>;
@@ -74,7 +79,9 @@ export function FileResourceManager({
           if (!cols.length) profile.warnings.push("No tabular columns found in file header.");
         }
       } else {
-        profile.warnings.push("Preview parsing not available for this file type yet.");
+        // xlsx / pdf / docx / images: store the file entry without crashing on
+        // binary content — preview/column detection is simply unavailable.
+        profile.warnings.push("Stored — column preview unavailable for this file type.");
       }
 
       if (profile.columns.some((c) => /patient|name|phone|email|mrn|dob|address/i.test(c))) {
@@ -85,6 +92,14 @@ export function FileResourceManager({
 
     setProfiles((prev) => {
       const merged = [...prev, ...next];
+      onProfilesChange?.(merged);
+      return merged;
+    });
+  }
+
+  function removeFile(fileId: string) {
+    setProfiles((prev) => {
+      const merged = prev.filter((p) => p.fileId !== fileId);
       onProfilesChange?.(merged);
       return merged;
     });
@@ -109,7 +124,11 @@ export function FileResourceManager({
             className="hidden"
             multiple
             accept={ALLOWED}
-            onChange={(e) => onFilesSelected(e.target.files)}
+            onChange={(e) => {
+              void onFilesSelected(e.target.files);
+              // Allow re-selecting the same file again.
+              e.target.value = "";
+            }}
           />
         </label>
         <div className="text-xs text-med-sub">
@@ -118,7 +137,18 @@ export function FileResourceManager({
         <div className="grid gap-2">
           {profiles.map((p) => (
             <div key={p.fileId} className="border border-med-line rounded-lg p-3">
-              <div className="font-medium text-sm text-med-ink">{p.name}</div>
+              <div className="flex items-start justify-between gap-2">
+                <div className="font-medium text-sm text-med-ink">{p.name}</div>
+                <button
+                  type="button"
+                  className="btn-secondary text-xs leading-none px-2 py-1"
+                  aria-label={`Remove ${p.name}`}
+                  title="Remove file"
+                  onClick={() => removeFile(p.fileId)}
+                >
+                  ×
+                </button>
+              </div>
               <div className="text-xs text-med-sub mt-1">
                 {p.columns.length
                   ? `Columns: ${p.columns.join(", ")}`

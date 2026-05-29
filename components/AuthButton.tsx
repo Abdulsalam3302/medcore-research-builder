@@ -32,7 +32,7 @@ export function AuthButton() {
 
   if (!email) {
     return (
-      <Link href="/auth" className="btn-secondary text-sm hidden sm:inline-flex">
+      <Link href="/auth" className="btn-secondary text-sm">
         Sign in
       </Link>
     );

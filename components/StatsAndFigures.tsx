@@ -3,8 +3,28 @@
 import { useState } from "react";
 import type { ExpandedNotes } from "@/lib/types";
 import { PlotlyPreview } from "./PlotlyPreview";
+import { CopyButton } from "./ui/CopyButton";
+import {
+  buildBaselineTableScaffold,
+  type BaselineTableVariable,
+} from "@/lib/agents/figureSpecifier";
 
-type Tab = "descriptive" | "twoSample" | "chi" | "correlation" | "recommend" | "figure";
+type Tab =
+  | "descriptive"
+  | "twoSample"
+  | "chi"
+  | "correlation"
+  | "recommend"
+  | "figure"
+  | "table";
+
+type FigurePublicationMeta = {
+  figureType: string;
+  caption: string;
+  legend: string;
+  footnotes: string[];
+  combinedMarkdown: string;
+};
 
 export function StatsAndFigures({
   designId,
@@ -47,6 +67,7 @@ export function StatsAndFigures({
             ["correlation", "Correlation"],
             ["recommend", "Test recommender"],
             ["figure", "Figure spec"],
+            ["table", "Table scaffold"],
           ] as Array<[Tab, string]>
         ).map(([k, label]) => (
           <button
@@ -69,6 +90,47 @@ export function StatsAndFigures({
         />
       )}
       {tab === "figure" && <FigureSpec />}
+      {tab === "table" && <TableScaffold />}
+    </div>
+  );
+}
+
+function PublicationMetaBlock({ meta }: { meta: FigurePublicationMeta }) {
+  return (
+    <div className="border border-med-line rounded-lg p-3 space-y-3 bg-slate-50/40">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="text-sm font-semibold text-med-ink">
+          Recommended figure: {meta.figureType}
+        </div>
+        <CopyButton text={meta.combinedMarkdown} label="Copy all" />
+      </div>
+      <div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="label">Caption</div>
+          <CopyButton text={meta.caption} label="Copy caption" />
+        </div>
+        <p className="text-sm text-med-ink">{meta.caption}</p>
+      </div>
+      <div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="label">Legend</div>
+          <CopyButton text={meta.legend} label="Copy legend" />
+        </div>
+        <p className="text-sm text-med-ink">{meta.legend}</p>
+      </div>
+      {meta.footnotes.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="label">Footnotes</div>
+            <CopyButton text={meta.footnotes.join("\n")} label="Copy footnotes" />
+          </div>
+          <ul className="list-disc list-inside text-xs text-med-sub space-y-1">
+            {meta.footnotes.map((f, i) => (
+              <li key={`${f}-${i}`}>{f}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
@@ -490,10 +552,10 @@ function FigureSpec() {
           />
         </div>
         <div className="flex gap-2 flex-wrap">
-          <button className="btn-secondary" onClick={recommend} disabled={loading}>
+          <button type="button" className="btn-secondary" onClick={recommend} disabled={loading}>
             Recommend figure kind
           </button>
-          <button className="btn-primary" onClick={sampleForest} disabled={loading}>
+          <button type="button" className="btn-primary" onClick={sampleForest} disabled={loading}>
             Generate sample forest plot spec
           </button>
         </div>
@@ -503,14 +565,157 @@ function FigureSpec() {
         {error && <div className="badge-bad">{error}</div>}
         {spec != null && (
           <>
-            <div className="grid gap-3">
-              <PlotlyPreview spec={spec as { data?: unknown; layout?: unknown }} />
-            </div>
+            {(() => {
+              const s = spec as {
+                plotly?: { data?: unknown; layout?: unknown };
+                data?: unknown;
+                layout?: unknown;
+                publication?: FigurePublicationMeta;
+              };
+              const plotSpec = s.plotly ?? { data: s.data, layout: s.layout };
+              return (
+                <>
+                  {s.publication && <PublicationMetaBlock meta={s.publication} />}
+                  <div className="grid gap-3">
+                    <PlotlyPreview spec={plotSpec as { data?: unknown; layout?: unknown }} />
+                  </div>
+                </>
+              );
+            })()}
             <div className="muted text-xs">
               Live preview above renders Plotly client-side. Paste the JSON below into any Plotly renderer for downstream use.
             </div>
             <ResultBlock data={spec} />
           </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TableScaffold() {
+  const [title, setTitle] = useState("Table 1. Baseline characteristics");
+  const [columnText, setColumnText] = useState("Overall, Treatment, Control");
+  const [variableText, setVariableText] = useState(
+    [
+      "Age, years | continuous",
+      "Age, years (skewed) | continuous | nonNormal",
+      "Sex | categorical | Female; Male",
+      "Comorbidity | categorical | Yes; No",
+    ].join("\n")
+  );
+  const [includeP, setIncludeP] = useState(true);
+  const [test, setTest] = useState("");
+  const [result, setResult] = useState<{ markdown: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  function build() {
+    setError(null);
+    try {
+      const columns = columnText
+        .split(/[,\n]+/)
+        .map((c) => c.trim())
+        .filter(Boolean)
+        .map((label) => ({ label, n: null }));
+      if (!columns.length) throw new Error("Add at least one column.");
+      const variables: BaselineTableVariable[] = variableText
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const parts = line.split("|").map((p) => p.trim());
+          const label = parts[0] || "[variable]";
+          const type = parts[1]?.toLowerCase() === "categorical" ? "categorical" : "continuous";
+          if (type === "categorical") {
+            const levels = (parts[2] || "")
+              .split(/[;,]/)
+              .map((l) => l.trim())
+              .filter(Boolean);
+            return { label, type, levels: levels.length ? levels : undefined };
+          }
+          const nonNormal = parts.slice(1).some((p) => /nonnormal/i.test(p));
+          return { label, type, nonNormal };
+        });
+      if (!variables.length) throw new Error("Add at least one variable.");
+      const out = buildBaselineTableScaffold({
+        title,
+        columns,
+        variables,
+        includePValue: includeP,
+        statisticalTest: test.trim() || undefined,
+      });
+      setResult(out);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  return (
+    <div className="card">
+      <div className="card-body space-y-3">
+        <div className="text-sm muted">
+          Generate a manuscript-ready baseline / characteristics table skeleton
+          (Table 1). Cells are author-fillable placeholders in the correct format
+          — n (%) for categorical, mean (SD) / median (IQR) for continuous. No
+          numbers are invented.
+        </div>
+        <div>
+          <label className="label">Table title</label>
+          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} />
+        </div>
+        <div>
+          <label className="label">Columns (comma or newline separated)</label>
+          <input
+            className="input"
+            value={columnText}
+            onChange={(e) => setColumnText(e.target.value)}
+            placeholder="Overall, Treatment, Control"
+          />
+        </div>
+        <div>
+          <label className="label">
+            Variables — one per line: <code>label | continuous|categorical | levels/nonNormal</code>
+          </label>
+          <textarea
+            className="textarea font-mono"
+            rows={5}
+            value={variableText}
+            onChange={(e) => setVariableText(e.target.value)}
+          />
+        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={includeP} onChange={(e) => setIncludeP(e.target.checked)} />
+          Include a p-value column
+        </label>
+        {includeP && (
+          <div>
+            <label className="label">Statistical test (for the footnote, optional)</label>
+            <input
+              className="input"
+              value={test}
+              onChange={(e) => setTest(e.target.value)}
+              placeholder="e.g. t-test / Mann–Whitney U / chi-square / Fisher's exact"
+            />
+          </div>
+        )}
+        <button type="button" className="btn-primary" onClick={build}>
+          Generate table scaffold
+        </button>
+        {error && (
+          <div className="badge-bad" role="alert">
+            {error}
+          </div>
+        )}
+        {result && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="label">Markdown</div>
+              <CopyButton text={result.markdown} label="Copy table" />
+            </div>
+            <pre className="card-body text-xs overflow-x-auto bg-slate-50 border border-med-line rounded-lg whitespace-pre">
+              {result.markdown}
+            </pre>
+          </div>
         )}
       </div>
     </div>

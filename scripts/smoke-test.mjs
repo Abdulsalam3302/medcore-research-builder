@@ -148,6 +148,37 @@ await check("POST /api/references/verify (demo ref)", async () => {
   }
 });
 
+await check("GET /api/journals/finder (counts)", async () => {
+  const r = await getJson("/api/journals/finder");
+  if (!r.counts || typeof r.counts.total !== "number" || r.counts.total < 20) {
+    throw new Error(`journal counts missing/low: ${JSON.stringify(r.counts)}`);
+  }
+  if (r.counts.saudi < 15) throw new Error(`expected >=15 Saudi journals, got ${r.counts.saudi}`);
+});
+
+await check("POST /api/journals/finder (ranked matches)", async () => {
+  const { status, json } = await postJson(
+    "/api/journals/finder",
+    { title: "Randomized trial of metformin in type 2 diabetes", specialties: ["diabetes"], manuscriptType: "original_investigation", limit: 10 },
+    200,
+  );
+  if (status !== 200) throw new Error(`status ${status}`);
+  if (!Array.isArray(json.matches) || json.matches.length < 1) throw new Error("no matches");
+  if (typeof json.matches[0].score !== "number") throw new Error("match missing score");
+});
+
+await check("POST /api/journals/finder (Saudi-only filter)", async () => {
+  const { json } = await postJson(
+    "/api/journals/finder",
+    { title: "Health systems research in Saudi Arabia", filters: { saudiOnly: true }, limit: 30 },
+    200,
+  );
+  if (!Array.isArray(json.matches)) throw new Error("no matches array");
+  if (!json.matches.every((m) => m.journal.saudi === true)) {
+    throw new Error("Saudi-only filter leaked non-Saudi journals");
+  }
+});
+
 await check("GET / (HTML shell)", async () => {
   const r = await fetch(`${BASE}/`);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);

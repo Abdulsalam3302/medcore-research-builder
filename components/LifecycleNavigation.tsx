@@ -6,6 +6,7 @@ import { APP_VERSION } from "@/lib/constants";
 
 export type LifecycleKey =
   | "launch"
+  | "protocol"
   | "type"
   | "title"
   | "introduction"
@@ -15,6 +16,9 @@ export type LifecycleKey =
   | "conclusion"
   | "references"
   | "appendix"
+  | "coherence"
+  | "language"
+  | "journal-finder"
   | "submission"
   | "impact-studio"
   | "export";
@@ -27,6 +31,7 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { key: "launch", label: "Research Launch", phase: "Pre-Research" },
+  { key: "protocol", label: "Protocol / Proposal Studio", phase: "Pre-Research" },
   { key: "type", label: "Study Design Selector", phase: "Pre-Research" },
   { key: "title", label: "Literature & Gap Explorer", phase: "Pre-Research" },
   { key: "introduction", label: "Introduction", phase: "Intra-Research" },
@@ -37,6 +42,9 @@ const NAV_ITEMS: NavItem[] = [
   { key: "references", label: "References", phase: "Intra-Research" },
   { key: "appendix", label: "Appendix (optional)", phase: "Intra-Research" },
 
+  { key: "coherence", label: "Manuscript Coherence", phase: "Post-Research" },
+  { key: "language", label: "Language Studio", phase: "Post-Research" },
+  { key: "journal-finder", label: "Journal Finder", phase: "Post-Research" },
   { key: "submission", label: "Submission & Quality", phase: "Post-Research" },
 
   { key: "impact-studio", label: "Post-Publication Impact Studio", phase: "Post-Publication" },
