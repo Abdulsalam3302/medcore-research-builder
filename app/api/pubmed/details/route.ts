@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 
 export async function GET(req: Request) {
   try {
-    const limited = enforceRateLimit(req, "search");
+    const limited = await enforceRateLimit(req, "search");
     if (limited) return limited;
     const u = new URL(req.url);
     const pmids = (u.searchParams.get("pmids") || "")

@@ -7,7 +7,7 @@ type Body = { query: string; limit?: number; yearFrom?: number; yearTo?: number 
 
 export async function POST(req: Request) {
   try {
-    const limited = enforceRateLimit(req, "search");
+    const limited = await enforceRateLimit(req, "search");
     if (limited) return limited;
     if (!elicitConfigured()) return bad("ELICIT_API_KEY not configured", 503);
     const body = await safeJson<Body>(req);

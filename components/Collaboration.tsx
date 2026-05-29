@@ -8,6 +8,7 @@ import { CopyButton } from "./ui/CopyButton";
 import {
   applyMerge,
   buildMergePreview,
+  createServerShare,
   makeShareLink,
   tryParseSharedHash,
   type MergeChoice,
@@ -28,12 +29,35 @@ export function Collaboration({
   const [remote, setRemote] = useState<ProjectState | null>(null);
   const [decisions, setDecisions] = useState<MergePreviewItem[]>([]);
   const [parseErr, setParseErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [serverLink, setServerLink] = useState<string>("");
+  const [serverExpiry, setServerExpiry] = useState<string>("");
+  const [serverNote, setServerNote] = useState<string>("");
 
   function regenerate() {
     const r = makeShareLink(project);
     setLink(r.url);
     setBytes(r.bytes);
     setWarn(r.warn);
+  }
+
+  async function createPrivateLink() {
+    if (busy) return;
+    setBusy(true);
+    setServerNote("");
+    try {
+      const res = await createServerShare(project);
+      if (res) {
+        setServerLink(res.url);
+        setServerExpiry(res.expiresAt);
+      } else {
+        setServerLink("");
+        setServerExpiry("");
+        setServerNote("Private links need cloud storage — using inline link instead.");
+      }
+    } finally {
+      setBusy(false);
+    }
   }
 
   useEffect(() => {
@@ -60,22 +84,63 @@ export function Collaboration({
   return (
     <div className="grid gap-5">
       <Card>
-        <CardHeader title="Share by link" subtitle="Encodes the entire project into the URL fragment. Nothing is sent to a server." />
+        <CardHeader title="Share by link" subtitle="Inline link embeds the entire project (including any PII) directly in the URL. The private link stores it server-side and shares only a token." />
         <CardBody className="grid gap-3">
-          <div className="flex items-center gap-2">
-            <input className="input text-[12.5px] font-mono" value={link} readOnly />
-            <CopyButton text={link} label="Copy" />
-            <button type="button" className="btn-ghost text-[12px]" onClick={regenerate}>
-              Refresh
-            </button>
+          <div>
+            <div className="text-[11px] uppercase tracking-wide text-med-sub mb-1">Inline link (data in URL)</div>
+            <div className="flex items-center gap-2">
+              <input className="input text-[12.5px] font-mono" value={link} readOnly />
+              <CopyButton text={link} label="Copy" />
+              <button type="button" className="btn-ghost text-[12px]" onClick={regenerate}>
+                Refresh
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2 items-center text-[11.5px] text-med-sub mt-2">
+              <Badge kind="neutral">{Math.round(bytes / 1024)} KB encoded</Badge>
+              {warn ? <Badge kind="warn">{warn}</Badge> : null}
+              <span>
+                The recipient pastes the URL into their browser → MedCore detects the
+                <code className="mx-1 font-mono">#shared=…</code> fragment and offers to merge.
+                All project data is embedded in this link.
+              </span>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2 items-center text-[11.5px] text-med-sub">
-            <Badge kind="neutral">{Math.round(bytes / 1024)} KB encoded</Badge>
-            {warn ? <Badge kind="warn">{warn}</Badge> : null}
-            <span>
-              The recipient pastes the URL into their browser → MedCore detects the
-              <code className="mx-1 font-mono">#shared=…</code> fragment and offers to merge.
-            </span>
+
+          <div className="border-t border-med-line pt-3">
+            <div className="text-[11px] uppercase tracking-wide text-med-sub mb-1">Private link (data not in URL)</div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="btn-secondary text-[12px]"
+                onClick={createPrivateLink}
+                disabled={busy}
+              >
+                {busy ? "Creating…" : "Create private link"}
+              </button>
+              {serverLink ? (
+                <>
+                  <input className="input text-[12.5px] font-mono flex-1 min-w-[200px]" value={serverLink} readOnly />
+                  <CopyButton text={serverLink} label="Copy" />
+                </>
+              ) : null}
+            </div>
+            {serverLink ? (
+              <div className="flex flex-wrap gap-2 items-center text-[11.5px] text-med-sub mt-2">
+                <Badge kind="info">Server link · data NOT in URL</Badge>
+                {serverExpiry ? (
+                  <Badge kind="neutral">
+                    Expires {new Date(serverExpiry).toLocaleDateString()}
+                  </Badge>
+                ) : null}
+                <span>
+                  Stored server-side for 7 days. The recipient opens the
+                  <code className="mx-1 font-mono">?share=…</code> link and MedCore fetches the project.
+                </span>
+              </div>
+            ) : null}
+            {serverNote ? (
+              <div className="text-[11.5px] text-med-sub mt-2">{serverNote}</div>
+            ) : null}
           </div>
         </CardBody>
       </Card>

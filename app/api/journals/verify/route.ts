@@ -75,7 +75,7 @@ async function crossrefJournalExists(journalName: string): Promise<boolean | nul
 
 export async function POST(req: Request) {
   try {
-    const limited = enforceRateLimit(req, "default");
+    const limited = await enforceRateLimit(req, "default");
     if (limited) return limited;
 
     const body = await safeJson<VerifyReq>(req, "default");

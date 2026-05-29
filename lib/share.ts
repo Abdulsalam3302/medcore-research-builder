@@ -52,6 +52,56 @@ export function tryParseSharedHash(): ProjectState | null {
   }
 }
 
+/**
+ * Create a server-stored, tokenized share link. The project data lives in
+ * Supabase (not the URL). Returns null when the server cannot store it
+ * (e.g. Supabase not configured → 503) so callers fall back to makeShareLink.
+ */
+export async function createServerShare(
+  project: ProjectState,
+): Promise<{ token: string; url: string; expiresAt: string } | null> {
+  try {
+    const res = await fetch("/api/share", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ state: project }),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      token?: string;
+      url?: string;
+      expiresAt?: string;
+    };
+    if (!data.token || !data.url || !data.expiresAt) return null;
+    return { token: data.token, url: data.url, expiresAt: data.expiresAt };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolve a share token into a project. Spread over emptyProject() for safety,
+ * mirroring tryParseSharedHash. Returns null on any failure (expired/missing).
+ */
+export async function fetchServerShare(token: string): Promise<ProjectState | null> {
+  try {
+    const res = await fetch(`/api/share?token=${encodeURIComponent(token)}`);
+    if (!res.ok) return null;
+    const data = (await res.json()) as { state?: ProjectState };
+    if (!data.state || typeof data.state !== "object") return null;
+    return { ...emptyProject(), ...data.state };
+  } catch {
+    return null;
+  }
+}
+
+/** Read a `?share=<token>` value from the current URL, or null. */
+export function tryParseShareToken(): string | null {
+  if (typeof window === "undefined") return null;
+  const token = new URLSearchParams(window.location.search).get("share");
+  return token && token.trim() ? token : null;
+}
+
 // Merge a remote project into the local one, field by field.
 export type MergeChoice = "remote" | "local" | "longer";
 

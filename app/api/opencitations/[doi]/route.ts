@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 
 export async function GET(req: Request, { params }: { params: { doi: string } }) {
   try {
-    const limited = enforceRateLimit(req, "search");
+    const limited = await enforceRateLimit(req, "search");
     if (limited) return limited;
     const doi = decodeURIComponent(params.doi);
     if (!doi) return bad("doi is required");

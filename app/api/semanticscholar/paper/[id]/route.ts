@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
-    const limited = enforceRateLimit(req, "search");
+    const limited = await enforceRateLimit(req, "search");
     if (limited) return limited;
     const id = decodeURIComponent(params.id);
     if (!id) return bad("id is required");

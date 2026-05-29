@@ -7,7 +7,7 @@ type Body = { query: string; max?: number };
 
 export async function POST(req: Request) {
   try {
-    const limited = enforceRateLimit(req, "search");
+    const limited = await enforceRateLimit(req, "search");
     if (limited) return limited;
     if (!webSearchConfigured())
       return bad("Web search not configured — set TAVILY_API_KEY or SERPAPI_API_KEY", 503);

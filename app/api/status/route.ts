@@ -6,6 +6,7 @@ import { s2Configured } from "@/lib/scholarly/semanticscholar";
 import { elicitConfigured } from "@/lib/scholarly/elicit";
 import { unpaywallConfigured } from "@/lib/scholarly/unpaywall";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
+import { rateLimitBackend } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -54,6 +55,10 @@ export async function GET() {
     supabase: {
       configured: isSupabaseConfigured(),
       projectRef: process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/https:\/\/([^.]+)/)?.[1] ?? null,
+    },
+    rateLimit: {
+      backend: rateLimitBackend(),
+      durable: rateLimitBackend() === "redis",
     },
     app: {
       url: process.env.NEXT_PUBLIC_APP_URL || process.env.APP_BASE_URL || null,

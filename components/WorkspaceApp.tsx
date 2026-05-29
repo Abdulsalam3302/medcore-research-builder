@@ -9,7 +9,7 @@ import { FounderContact } from "@/components/FounderContact";
 import { useProject } from "@/components/useProject";
 import { emptyProject, type ProjectState } from "@/lib/types";
 import { downloadAsFile } from "@/lib/store";
-import { tryParseSharedHash } from "@/lib/share";
+import { fetchServerShare, tryParseShareToken, tryParseSharedHash } from "@/lib/share";
 import { SkeletonLines } from "@/components/ui/Skeleton";
 import { ProtocolProposalAvailability } from "@/components/ProtocolProposalAvailability";
 import { LearningResourcePanel } from "@/components/LearningResourcePanel";
@@ -70,12 +70,35 @@ export default function WorkspaceApp() {
 
   useEffect(() => {
     if (!ready) return;
+    // Existing inline-fragment path (#shared=…): data already lives in the URL,
+    // Collaboration reads it and offers a merge — just open the export view.
     const incoming = tryParseSharedHash();
     if (incoming) {
       setActive("export");
       if (typeof window !== "undefined") {
         history.replaceState(null, "", window.location.pathname);
       }
+      return;
+    }
+    // Server-stored token path (?share=<token>): fetch the project, import it,
+    // then clean the token out of the URL. Degrades silently if unavailable.
+    const token = tryParseShareToken();
+    if (token) {
+      let cancelled = false;
+      void (async () => {
+        const remote = await fetchServerShare(token);
+        if (cancelled) return;
+        if (remote) {
+          importProject(remote);
+          setActive("export");
+        }
+        if (typeof window !== "undefined") {
+          history.replaceState(null, "", window.location.pathname);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);

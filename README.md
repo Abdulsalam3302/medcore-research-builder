@@ -145,6 +145,7 @@ Before going public:
 3. Set `CROSSREF_MAILTO`, `OPENALEX_MAILTO`, `NCBI_EMAIL` for polite API pools
 4. Consider adding `TAVILY_API_KEY` for Title Lab web search
 5. Monitor rate limits — defaults are ~24 LLM req/min/IP, 12 verify/min/IP
+6. (Optional) For server-stored share links, run [`docs/SHARE_TABLE.sql`](docs/SHARE_TABLE.sql) in Supabase — without it, sharing falls back to inline URL-fragment links
 
 ## License
 

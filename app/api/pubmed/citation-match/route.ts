@@ -14,7 +14,7 @@ type Body = {
 
 export async function POST(req: Request) {
   try {
-    const limited = enforceRateLimit(req, "search");
+    const limited = await enforceRateLimit(req, "search");
     if (limited) return limited;
     const body = await safeJson<Body>(req);
     if (!body || Object.keys(body).length === 0) return bad("at least one field is required");

@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 
 export async function GET(req: Request, { params }: { params: { doi: string } }) {
   try {
-    const limited = enforceRateLimit(req, "search");
+    const limited = await enforceRateLimit(req, "search");
     if (limited) return limited;
     if (!unpaywallConfigured()) return bad("UNPAYWALL_EMAIL not configured", 503);
     const doi = decodeURIComponent(params.doi);

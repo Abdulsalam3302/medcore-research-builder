@@ -26,7 +26,7 @@ type Body = { inputs: TitleInputs; answers?: ResearchTypeAnswersV2 };
 
 export async function POST(req: Request) {
   try {
-    const limited = enforceRateLimit(req, "llm");
+    const limited = await enforceRateLimit(req, "llm");
     if (limited) return limited;
     const body = await safeJson<Body>(req, "llm");
     if (!body?.inputs) return bad("inputs is required");

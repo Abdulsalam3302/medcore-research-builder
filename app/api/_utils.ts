@@ -13,10 +13,10 @@ export function bad(message: string, status = 400, extra?: Record<string, unknow
 export type RateTier = keyof typeof RATE_LIMITS;
 export type BodyTier = keyof typeof BODY_LIMITS;
 
-export function enforceRateLimit(req: Request, tier: RateTier = "default") {
+export async function enforceRateLimit(req: Request, tier: RateTier = "default") {
   const { limit, windowMs } = RATE_LIMITS[tier];
   const key = `${tier}:${clientKey(req)}`;
-  const result = checkRateLimit(key, limit, windowMs);
+  const result = await checkRateLimit(key, limit, windowMs);
   if (!result.ok) {
     return bad("Rate limit exceeded — please wait and try again.", 429, {
       retryAfterSec: result.retryAfterSec,

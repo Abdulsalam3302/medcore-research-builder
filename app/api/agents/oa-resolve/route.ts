@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 type Body = { doi: string };
 
 export async function POST(req: Request) {
-  const rl = enforceRateLimit(req, "llm");
+  const rl = await enforceRateLimit(req, "llm");
   if (rl) return rl;
   try {
     const body = await safeJson<Body>(req);
