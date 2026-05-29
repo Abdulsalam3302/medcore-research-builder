@@ -8,6 +8,8 @@
 
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 
+import { scholarlyHeaders, SCHOLARLY_TIMEOUT_MS } from "./_http";
+
 function commonParams(): URLSearchParams {
   const p = new URLSearchParams();
   p.set("tool", process.env.NCBI_TOOL || "MedCoreResearchBuilder");
@@ -41,8 +43,8 @@ export async function pubmedSearch(args: {
   p.set("retmode", "json");
   const url = `${EUTILS}/esearch.fcgi?${p.toString()}`;
   const res = await fetch(url, {
-    headers: { accept: "application/json" },
-    signal: AbortSignal.timeout(20000),
+    headers: scholarlyHeaders(),
+    signal: AbortSignal.timeout(SCHOLARLY_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`PubMed esearch ${res.status}`);
   const data = (await res.json()) as {
@@ -63,8 +65,8 @@ export async function pubmedSummary(
   p.set("retmode", "json");
   const url = `${EUTILS}/esummary.fcgi?${p.toString()}`;
   const res = await fetch(url, {
-    headers: { accept: "application/json" },
-    signal: AbortSignal.timeout(20000),
+    headers: scholarlyHeaders(),
+    signal: AbortSignal.timeout(SCHOLARLY_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`PubMed esummary ${res.status}`);
   const data = (await res.json()) as { result?: Record<string, unknown> };

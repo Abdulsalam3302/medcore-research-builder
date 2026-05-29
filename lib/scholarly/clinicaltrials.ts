@@ -8,6 +8,8 @@
  *  - benchmarking endpoints used in similar trials
  */
 
+import { scholarlyHeaders, SCHOLARLY_TIMEOUT_MS } from "./_http";
+
 const BASE = "https://clinicaltrials.gov/api/v2";
 
 export type CTrial = {
@@ -39,8 +41,8 @@ export async function ctgSearch(args: {
   if (args.phase) p.set("filter.phase", args.phase);
   p.set("format", "json");
   const res = await fetch(`${BASE}/studies?${p.toString()}`, {
-    headers: { accept: "application/json" },
-    signal: AbortSignal.timeout(20000),
+    headers: scholarlyHeaders(),
+    signal: AbortSignal.timeout(SCHOLARLY_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`ClinicalTrials.gov ${res.status}`);
   const data = (await res.json()) as { studies?: Array<Record<string, unknown>> };

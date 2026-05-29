@@ -4,6 +4,9 @@ import { getAppUser } from "@/lib/auth";
 import type { ProjectState } from "@/lib/types";
 
 export const runtime = "nodejs";
+// Cloud-sync route depends on auth/cookies and supports GET + PUT — never
+// statically prerender it, or the PUT handler is dropped (405).
+export const dynamic = "force-dynamic";
 
 /** Cloud sync: load/save manuscript project for authenticated users. */
 export async function GET() {

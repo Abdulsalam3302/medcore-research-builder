@@ -49,18 +49,31 @@ export async function safeJson<T = unknown>(
   try {
     return (await req.json()) as T;
   } catch {
-    throw new Error("Invalid JSON body");
+    throw new BadRequestError("Invalid JSON body");
+  }
+}
+
+/** Thrown for malformed/invalid client input — surfaced to the client as 400. */
+export class BadRequestError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BadRequestError";
   }
 }
 
 export function handleError(e: unknown) {
   const msg = e instanceof Error ? e.message : String(e);
+  // Client-input problems: echo the message with the right status. These are
+  // safe to surface (they describe the caller's request, not an upstream).
+  if (e instanceof BadRequestError || msg === "Invalid JSON body") {
+    return bad(msg, 400);
+  }
   if (msg.includes("Rate limit") || msg.includes("too large")) {
     const status = msg.includes("too large") ? 413 : 429;
     return bad(msg, status);
   }
-  // Log full error server-side; return a generic message so we never leak
-  // raw upstream error text/bodies to the client.
+  // Everything else may carry raw upstream text/keys — log server-side and
+  // return a generic message so we never leak it to the client.
   console.error("[api]", e);
   return bad("Upstream request failed. Please try again.", 502);
 }
