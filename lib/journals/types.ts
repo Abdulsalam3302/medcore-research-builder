@@ -144,7 +144,11 @@ export type JournalFilters = {
   requireDoaj?: boolean;
   saudiOnly?: boolean;
   openAccessOnly?: boolean;
+  /** Only journals with no article-processing charge (diamond / society / free). */
+  freeApcOnly?: boolean;
   maxApcUsd?: number;
+  /** Only journals with a typical time-to-first-decision at or under this many days. */
+  maxDecisionDays?: number;
   minImpactFactor?: number;
   specialties?: string[];
   country?: string;

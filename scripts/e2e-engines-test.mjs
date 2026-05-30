@@ -52,6 +52,9 @@ const FILES = [
   "lib/knowledge/integrations.ts",
   "lib/journals/anticipate.ts",
   "lib/journals/bestPractices.ts",
+  "lib/journals/compare.ts",
+  "lib/journals/strategy.ts",
+  "lib/journals/predatoryCheck.ts",
 ];
 
 const tsconfig = {
@@ -253,6 +256,32 @@ try {
   const allSourced = (bp.journalBestPractices || []).every((p) => p.sourceUrl && p.source);
   if (allSourced) ok("every best practice is attributed (no unsourced advice)"); else no("bp sourced", "missing source");
 } catch (e) { no("anticipate/trust run", e.message); }
+
+// v3.4: compare + submission strategy + predatory checklist
+try {
+  const cmp = await load("journals/compare.js");
+  const strat = await load("journals/strategy.js");
+  const pred = await load("journals/predatoryCheck.js");
+  const { allJournals, findJournals } = await load("journals/index.js");
+  const all = allJournals();
+  const comparison = cmp.compareJournals(all.slice(0, 3));
+  if (comparison.rows.length >= 5 && comparison.suggestion) ok(`comparison matrix builds (${comparison.rows.length} rows, suggests #${comparison.suggestion.index})`); else no("compare", JSON.stringify({ r: comparison.rows.length }));
+  // best-on-row highlighting must be computed.
+  const hasBest = comparison.rows.some((r) => r.bestIndexes.length > 0);
+  if (hasBest) ok("comparison highlights a best cell per row"); else no("compare best", "no bestIndexes");
+
+  const matches = findJournals({ title: "diabetes cardiovascular", specialties: ["cardiology", "endocrinology"], manuscriptType: "original_investigation" }, {}, 12);
+  const ladder = strat.buildSubmissionStrategy(matches);
+  const tiers = new Set(ladder.rungs.map((r) => r.tier));
+  if (ladder.rungs.length >= 2 && ladder.plan.length >= 3) ok(`submission ladder builds (${ladder.rungs.length} rungs, tiers: ${[...tiers].join("/")})`); else no("ladder", JSON.stringify({ r: ladder.rungs.length }));
+
+  // Predatory checklist: a "good" answer set scores high; a red-flag set scores low.
+  const goodAnswers = {}; for (const q of pred.predatoryQuestions) goodAnswers[q.id] = q.kind === "green" ? "yes" : "no";
+  const badAnswers = {}; for (const q of pred.predatoryQuestions) badAnswers[q.id] = q.kind === "green" ? "no" : "yes";
+  const good = pred.assessPredatory(goodAnswers);
+  const bad2 = pred.assessPredatory(badAnswers);
+  if (good.score >= 75 && bad2.verdict === "likely-predatory") ok(`predatory check discriminates (good ${good.score} vs bad ${bad2.score}/${bad2.verdict})`); else no("predatory", JSON.stringify({ g: good.score, b: bad2.score, v: bad2.verdict }));
+} catch (e) { no("compare/strategy/predatory run", e.message); }
 
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${pass}/${pass + fail} checks passed`);
