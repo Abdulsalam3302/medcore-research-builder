@@ -10,10 +10,21 @@
  * Run:  node scripts/e2e-engines-test.mjs
  */
 
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
+
+/** Recursively list emitted .js files. */
+function walkJs(dir) {
+  const out = [];
+  for (const name of readdirSync(dir)) {
+    const full = path.join(dir, name);
+    if (statSync(full).isDirectory()) out.push(...walkJs(full));
+    else if (name.endsWith(".js")) out.push(full);
+  }
+  return out;
+}
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -31,6 +42,12 @@ const FILES = [
   "lib/journals/formatting.ts",
   "lib/references/safety.ts",
   "lib/protocol/generator.ts",
+  "lib/eval/scorecard.ts",
+  "lib/swarm/orchestrator.ts",
+  "lib/knowledge/skills.ts",
+  "lib/knowledge/methods.ts",
+  "lib/knowledge/opensource.ts",
+  "lib/knowledge/mcp.ts",
 ];
 
 const tsconfig = {
@@ -51,6 +68,21 @@ try {
   try {
     execFileSync("npx", ["tsc", "-p", cfgPath], { cwd: repo, stdio: "pipe" });
   } catch { /* emit-on-error: JS is still produced */ }
+  // TS resolves the `@/` path alias for types but emits a literal
+  // `require("@/lib/x")` Node can't resolve. Rewrite those to relative paths
+  // against each emitted file's location so the modules load standalone.
+  for (const jsPath of walkJs(outDir)) {
+    let src = readFileSync(jsPath, "utf8");
+    if (src.includes('require("@/')) {
+      src = src.replace(/require\("@\/lib\/([^"]+)"\)/g, (_m, sub) => {
+        const target = path.join(outDir, sub);
+        let rel = path.relative(path.dirname(jsPath), target).replace(/\\/g, "/");
+        if (!rel.startsWith(".")) rel = "./" + rel;
+        return `require("${rel}")`;
+      });
+      writeFileSync(jsPath, src);
+    }
+  }
   ok("engines transpile to JS");
 } catch (e) {
   no("transpile", e.message);
@@ -113,6 +145,58 @@ try {
   const skel = gen.buildProtocolSkeleton({ researchTypeAnswers: { designId: "interv.rct.parallel", manuscriptType: "protocol" }, titleInputs: { draftTitle: "RCT", population: "x", intervention: "y", outcome: "z" }, researchLaunch: {}, sections: {}, references: { verifications: [] } });
   if (skel.length > 1000 && /SPIRIT/i.test(skel)) ok("offline protocol skeleton (SPIRIT-aware, no API key)"); else no("protocol skeleton", `${skel.length} chars`);
 } catch (e) { no("protocol run", e.message); }
+
+// ---- v3: eval harness proves a better manuscript scores higher ----
+try {
+  const { evaluateManuscript, compareEvaluations } = await load("eval/scorecard.js");
+  const weak = { ...project, sections: { introduction: "Falls happen.", methods: "We looked.", results: "Some fell.", discussion: "It matters.", conclusion: "Done." } };
+  const strong = {
+    ...project,
+    references: { raw: "", verifications: [{ parsed: {}, checks: {}, confidence: "high", sources: {} }] },
+    sections: {
+      introduction: "Falls are a leading cause of injury in older adults. Despite known risk factors, the association between vitamin D status and falls remains unclear, and few studies have quantified it prospectively. We aimed to estimate this association.",
+      methods: "In this prospective cohort we enrolled 1200 community-dwelling adults. The primary outcome was incident falls over 12 months. We calculated a priori sample size for 80% power. We adjusted for confounders and ran a sensitivity analysis. Ethics approval and informed consent were obtained.",
+      results: "Among 1200 participants, lower vitamin D was associated with falls (adjusted OR=1.6, 95% CI 1.2 to 2.1). Effect sizes are reported with confidence intervals.",
+      discussion: "Our findings align with prior cohorts. Limitations include residual confounding. Funding and competing interests are disclosed.",
+      conclusion: "Lower vitamin D was associated with a modestly higher fall risk; causal inference is limited by the observational design.",
+    },
+  };
+  const ev = evaluateManuscript(strong);
+  if (ev.overall > 0 && ev.dimensions.length === 7 && ["A","B","C","D","F"].includes(ev.grade)) ok(`scorecard evaluates (overall ${ev.overall}, grade ${ev.grade})`); else no("scorecard shape", JSON.stringify({o:ev.overall,g:ev.grade}));
+  const delta = compareEvaluations(weak, strong);
+  if (delta.overallDelta > 0 && delta.verdict.includes("improvement")) ok(`eval proves improvement weak→strong (+${delta.overallDelta}, ${delta.verdict})`); else no("eval delta", JSON.stringify({d:delta.overallDelta,v:delta.verdict}));
+} catch (e) { no("eval run", e.message); }
+
+// ---- v3: swarm offline synthesis returns a valid report with no LLM ----
+try {
+  const { buildSwarmContext, synthesizeReport } = await load("swarm/orchestrator.js");
+  const { analyzeCoherence } = await load("coherence.js");
+  const coh = analyzeCoherence(project);
+  buildSwarmContext(project); // must not throw
+  const report = synthesizeReport([], coh);
+  const hasLayers = report.scorecard && typeof report.overallVerdict === "string";
+  if (hasLayers && Array.isArray(report.findings)) ok(`swarm offline synthesis works (verdict ${report.overallVerdict})`); else no("swarm offline", JSON.stringify(Object.keys(report)));
+} catch (e) { no("swarm run", e.message); }
+
+// ---- v3: knowledge registries load with expected volume ----
+try {
+  const skills = await load("knowledge/skills.js");
+  const methods = await load("knowledge/methods.js");
+  const oss = await load("knowledge/opensource.js");
+  const mcp = await load("knowledge/mcp.js");
+  const nSkills = skills.researchSkills?.length ?? 0;
+  const nTips = methods.researchTips?.length ?? 0;
+  const nOss = oss.ossProjects?.length ?? 0;
+  const nMcp = mcp.mcpServers?.length ?? 0;
+  if (nSkills >= 100) ok(`skills library loaded (${nSkills})`); else no("skills count", `${nSkills}`);
+  if (nTips >= 60) ok(`tips/methods loaded (${nTips})`); else no("tips count", `${nTips}`);
+  if (nOss >= 18) ok(`open-source registry loaded (${nOss})`); else no("oss count", `${nOss}`);
+  if (nMcp >= 40) ok(`MCP registry loaded (${nMcp})`); else no("mcp count", `${nMcp}`);
+  // Honesty: every OSS + MCP entry must carry a verifyUrl.
+  const ossOk = (oss.ossProjects || []).every((p) => p.verifyUrl);
+  const mcpOk = (mcp.mcpServers || []).every((p) => p.verifyUrl);
+  if (ossOk && mcpOk) ok("every registry entry has a verify link (no unsourced claims)"); else no("verify links", `oss=${ossOk} mcp=${mcpOk}`);
+} catch (e) { no("knowledge run", e.message); }
 
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${pass}/${pass + fail} checks passed`);

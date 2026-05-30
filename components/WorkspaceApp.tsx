@@ -87,6 +87,22 @@ const StatsAndFigures = dynamic(
   () => import("@/components/StatsAndFigures").then((m) => m.StatsAndFigures),
   { loading: RouteSkeleton, ssr: false },
 );
+const ResearchSwarm = dynamic(
+  () => import("@/components/ResearchSwarm").then((m) => m.ResearchSwarm),
+  { loading: RouteSkeleton, ssr: false },
+);
+const ManuscriptScorecard = dynamic(
+  () => import("@/components/ManuscriptScorecard").then((m) => m.ManuscriptScorecard),
+  { loading: RouteSkeleton, ssr: false },
+);
+const ResearchSkills = dynamic(
+  () => import("@/components/ResearchSkills").then((m) => m.ResearchSkills),
+  { loading: RouteSkeleton, ssr: false },
+);
+const ResearchToolkit = dynamic(
+  () => import("@/components/ResearchToolkit").then((m) => m.ResearchToolkit),
+  { loading: RouteSkeleton, ssr: false },
+);
 
 export default function WorkspaceApp() {
   const { project, setProject, update, ready, autosave } = useProject();
@@ -311,6 +327,38 @@ export default function WorkspaceApp() {
               <OriginalityCitationGuard project={project} />
               <ComplianceReport project={project} onJump={(k) => setActive(k as LifecycleKey)} />
             </ResearchPhaseShell>
+          ) : active === "swarm" ? (
+            <ResearchPhaseShell
+              phaseLabel="Quality & Empowerment"
+              title="AI Peer-Review Swarm"
+              subtitle="A swarm of specialist agents (methodologist, statistician, reviewer, editor, integrity officer…) reviews your manuscript across layers of quality and safety."
+            >
+              <ResearchSwarm project={project} />
+            </ResearchPhaseShell>
+          ) : active === "scorecard" ? (
+            <ResearchPhaseShell
+              phaseLabel="Quality & Empowerment"
+              title="Manuscript Scorecard"
+              subtitle="Objective, repeatable multi-dimension evaluation. Re-run after edits to prove the draft is getting better."
+            >
+              <ManuscriptScorecard project={project} />
+            </ResearchPhaseShell>
+          ) : active === "skills" ? (
+            <ResearchPhaseShell
+              phaseLabel="Quality & Empowerment"
+              title="Research Skills & Methods"
+              subtitle="130+ focused skills and 69 best-practice tips to empower every part of your research."
+            >
+              <ResearchSkills />
+            </ResearchPhaseShell>
+          ) : active === "toolkit" ? (
+            <ResearchPhaseShell
+              phaseLabel="Quality & Empowerment"
+              title="Tools & MCP Directory"
+              subtitle="Curated open-source projects and MCP servers that empower medical and academic research — each with a verify link."
+            >
+              <ResearchToolkit />
+            </ResearchPhaseShell>
           ) : active === "impact-studio" ? (
             <ResearchPhaseShell
               phaseLabel="Post-Publication Impact"
@@ -370,6 +418,10 @@ function MobileTabs({
     { key: "language", label: "Language" },
     { key: "journal-finder", label: "Journals" },
     { key: "submission", label: "Submit" },
+    { key: "swarm", label: "Swarm" },
+    { key: "scorecard", label: "Score" },
+    { key: "skills", label: "Skills" },
+    { key: "toolkit", label: "Tools" },
     { key: "impact-studio", label: "Impact" },
     { key: "export", label: "Export" },
   ];

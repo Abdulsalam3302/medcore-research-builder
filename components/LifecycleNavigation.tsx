@@ -20,13 +20,17 @@ export type LifecycleKey =
   | "language"
   | "journal-finder"
   | "submission"
+  | "swarm"
+  | "scorecard"
+  | "toolkit"
+  | "skills"
   | "impact-studio"
   | "export";
 
 type NavItem = {
   key: LifecycleKey;
   label: string;
-  phase: "Pre-Research" | "Intra-Research" | "Post-Research" | "Post-Publication";
+  phase: "Pre-Research" | "Intra-Research" | "Post-Research" | "Quality & Empowerment" | "Post-Publication";
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -46,6 +50,11 @@ const NAV_ITEMS: NavItem[] = [
   { key: "language", label: "Language Studio", phase: "Post-Research" },
   { key: "journal-finder", label: "Journal Finder", phase: "Post-Research" },
   { key: "submission", label: "Submission & Quality", phase: "Post-Research" },
+
+  { key: "swarm", label: "AI Peer-Review Swarm", phase: "Quality & Empowerment" },
+  { key: "scorecard", label: "Manuscript Scorecard", phase: "Quality & Empowerment" },
+  { key: "skills", label: "Research Skills (130+)", phase: "Quality & Empowerment" },
+  { key: "toolkit", label: "Tools & MCP Directory", phase: "Quality & Empowerment" },
 
   { key: "impact-studio", label: "Post-Publication Impact Studio", phase: "Post-Publication" },
   { key: "export", label: "Export Center", phase: "Post-Publication" },
