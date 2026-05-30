@@ -91,6 +91,30 @@ export type JournalRecord = {
   trendingTopics?: string[];
   specialIssues?: Array<{ title: string; deadline?: string; url?: string }>;
 
+  /**
+   * Cost/business model for *publishing* in the journal. Distinct from `oaModel`,
+   * which describes *access*. Lets users choose on cost as well as fit/speed.
+   *  - "none": no charge to publish (diamond/platinum OA or society-funded).
+   *  - "gold-apc": pay-to-publish, article is immediately open access.
+   *  - "hybrid-apc": subscription journal with an optional paid-OA route.
+   *  - "subscription": no APC; access is behind a paywall (closed).
+   *  - "waiver-available": charges an APC but routinely waives it (e.g. LMIC).
+   *  - "unknown": not confirmed.
+   */
+  apcModel?: "none" | "gold-apc" | "hybrid-apc" | "subscription" | "waiver-available" | "unknown";
+  /** True when there is no article processing charge to authors (diamond/platinum OA or free society journal). */
+  freeApc?: boolean;
+  /** Distilled 2-3 line summary of the key author requirements (word limits, structure, reporting rules). */
+  authorGuidelinesSummary?: string;
+  /** Brief description of the peer-review process, e.g. "single-blind, ~6 weeks to first decision". */
+  reviewerProcess?: string;
+  /** Approx time to first decision in days (publisher-stated or community-reported). */
+  decisionTimeDays?: number;
+  /** ISO date (YYYY-MM-DD) this record's fields were last verified against sources. */
+  verifiedAt?: string;
+  /** Where the data was confirmed, e.g. "publisher site", "DOAJ", "Scimago", "NLM Catalog". */
+  dataSource?: string;
+
   dataConfidence: DataConfidence;
   /** Official sources a user can open to verify indexing/metrics themselves. */
   verifyUrls?: Partial<Record<"wos" | "scopus" | "nlm" | "doaj" | "scimago" | "homepage", string>>;

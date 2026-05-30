@@ -37,6 +37,10 @@ export type LLMRefineResponse = {
   riskWarnings: string[];
   claimsNeedingCitation: string[];
   suggestedSearchQueries: string[];
+  /** Language-editing improvements applied by default (clarity, flow, register). */
+  languageNotes?: string[];
+  /** Cross-section coherence observations (design/claims/objective consistency). */
+  coherenceNotes?: string[];
   confidence: "high" | "medium" | "low";
 };
 

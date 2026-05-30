@@ -10,16 +10,43 @@
  */
 
 import type { ProjectState } from "@/lib/types";
-import { analyzeCoherence } from "@/lib/coherence";
+import type { SwarmReport } from "@/lib/swarm/types";
+import {
+  aiPatternMetric,
+  originalityMetric,
+  significanceMetric,
+  noveltyMetric,
+  statisticalRigorMetric,
+  reportingCompletenessMetric,
+  structureMetric,
+  abstractQualityMetric,
+  titleQualityMetric,
+  referenceQualityMetric,
+  readabilityMetric,
+  coherenceMetric,
+  type MetricResult,
+} from "./metrics";
 
 export type EvalDimension =
+  // legacy dimension names (kept for backward compatibility)
   | "completeness"
   | "coherence"
   | "rigor"
   | "reporting-compliance"
   | "readability"
   | "citation-integrity"
-  | "originality-signal";
+  | "originality-signal"
+  // expanded multi-metric dimensions
+  | "structure"
+  | "statistical-rigor"
+  | "reporting-completeness"
+  | "reference-quality"
+  | "title-quality"
+  | "abstract-quality"
+  | "significance"
+  | "novelty"
+  | "ai-writing-patterns"
+  | "originality-risk";
 
 export type DimensionScore = {
   dimension: EvalDimension;
@@ -47,154 +74,129 @@ export type EvalDelta = {
   summary: string;
 };
 
-const SECTION_KEYS = ["introduction", "methods", "results", "discussion", "conclusion"] as const;
+/* ------------------------------------------------------------------ */
+/* Dimension registry                                                 */
+/* ------------------------------------------------------------------ */
 
-function words(s?: string): number {
-  return (s || "").trim() ? (s || "").trim().split(/\s+/).length : 0;
+type DimensionSpec = {
+  dimension: EvalDimension;
+  weight: number;
+  fn: (project: ProjectState) => MetricResult;
+};
+
+/**
+ * The expanded multi-metric registry (15 dimensions). Weights are relative;
+ * the overall score is the weighted mean so the absolute sum need not be 1.
+ */
+const DIMENSIONS: DimensionSpec[] = [
+  { dimension: "structure", weight: 0.1, fn: structureMetric },
+  { dimension: "coherence", weight: 0.12, fn: coherenceMetric },
+  { dimension: "statistical-rigor", weight: 0.12, fn: statisticalRigorMetric },
+  { dimension: "reporting-completeness", weight: 0.1, fn: reportingCompletenessMetric },
+  { dimension: "reference-quality", weight: 0.09, fn: referenceQualityMetric },
+  { dimension: "significance", weight: 0.07, fn: significanceMetric },
+  { dimension: "novelty", weight: 0.06, fn: noveltyMetric },
+  { dimension: "title-quality", weight: 0.05, fn: titleQualityMetric },
+  { dimension: "abstract-quality", weight: 0.06, fn: abstractQualityMetric },
+  { dimension: "readability", weight: 0.06, fn: readabilityMetric },
+  { dimension: "ai-writing-patterns", weight: 0.05, fn: aiPatternMetric },
+  { dimension: "originality-risk", weight: 0.05, fn: originalityMetric },
+];
+
+function buildDimensions(project: ProjectState): DimensionScore[] {
+  return DIMENSIONS.map((spec) => {
+    const r = spec.fn(project);
+    return {
+      dimension: spec.dimension,
+      score: r.score,
+      weight: spec.weight,
+      detail: r.detail,
+      signals: r.signals,
+    };
+  });
 }
 
-function sentences(s: string): string[] {
-  return (s || "").split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter(Boolean);
+function gradeFor(overall: number): ManuscriptEvaluation["grade"] {
+  return overall >= 85 ? "A" : overall >= 70 ? "B" : overall >= 55 ? "C" : overall >= 40 ? "D" : "F";
 }
 
-/** Lightweight Flesch-style readability proxy → 0..100 (higher = clearer). */
-function readabilityScore(text: string): { score: number; detail: string } {
-  const sents = sentences(text);
-  const wds = (text || "").trim().split(/\s+/).filter(Boolean);
-  if (sents.length === 0 || wds.length === 0) return { score: 0, detail: "No prose to assess." };
-  const avgSentLen = wds.length / sents.length;
-  // Penalize very long sentences; academic sweet spot ≈ 18-25 words.
-  let score = 100;
-  if (avgSentLen > 30) score -= (avgSentLen - 30) * 2.5;
-  else if (avgSentLen > 25) score -= (avgSentLen - 25) * 1.5;
-  else if (avgSentLen < 10) score -= (10 - avgSentLen) * 2;
-  // Penalize uniformity (robotic) — low stdev of sentence length.
-  const lens = sents.map((s) => s.split(/\s+/).length);
-  const mean = lens.reduce((a, b) => a + b, 0) / lens.length;
-  const variance = lens.reduce((a, b) => a + (b - mean) ** 2, 0) / lens.length;
-  const stdev = Math.sqrt(variance);
-  if (lens.length > 4 && stdev < 3) score -= 8;
-  score = Math.max(0, Math.min(100, Math.round(score)));
-  return { score, detail: `avg sentence ${avgSentLen.toFixed(1)} words, variation ${stdev.toFixed(1)}` };
-}
-
-function completeness(project: ProjectState): DimensionScore {
-  const present = SECTION_KEYS.filter((k) => words(project.sections?.[k]) >= 40);
-  const hasTitle = Boolean(project.titleFinal || project.titleInputs?.draftTitle);
-  const hasRefs = (project.references?.verifications?.length ?? 0) > 0;
-  const total = SECTION_KEYS.length + 2;
-  const got = present.length + (hasTitle ? 1 : 0) + (hasRefs ? 1 : 0);
-  const score = Math.round((got / total) * 100);
-  const signals: string[] = [];
-  const missing = SECTION_KEYS.filter((k) => !present.includes(k));
-  if (missing.length) signals.push(`Thin/empty: ${missing.join(", ")}`);
-  if (!hasTitle) signals.push("No finalized title");
-  if (!hasRefs) signals.push("No verified references");
-  return { dimension: "completeness", score, weight: 0.18, detail: `${got}/${total} core components present`, signals };
-}
-
-function rigor(project: ProjectState): DimensionScore {
-  const results = project.sections?.results || "";
-  const methods = project.sections?.methods || "";
-  const signals: string[] = [];
-  let score = 50;
-  if (/95%\s*ci|confidence interval/i.test(results)) { score += 15; signals.push("Reports confidence intervals"); }
-  else signals.push("No confidence intervals detected in Results");
-  if (/effect size|cohen|odds ratio|hazard ratio|\bor\b|\bhr\b|\brr\b/i.test(results)) { score += 10; signals.push("Reports effect measures"); }
-  if (/\bp\s*[<>=]/i.test(results) && !/95%\s*ci/i.test(results)) { score -= 8; signals.push("p-values without CIs (over-reliance)"); }
-  if (/sample size|power|a priori|sample-size/i.test(methods)) { score += 12; signals.push("Sample size / power addressed"); }
-  else signals.push("No sample-size/power justification in Methods");
-  if (/sensitivity analysis|robustness|adjusted for|confounder/i.test(methods + results)) { score += 8; signals.push("Adjustment / robustness present"); }
-  if (/randomi[sz]ed|allocation|blinded|double-blind/i.test(methods)) { score += 5; }
-  score = Math.max(0, Math.min(100, score));
-  return { dimension: "rigor", score, weight: 0.2, detail: "Statistical & methodological rigor signals", signals };
-}
-
-function reportingCompliance(project: ProjectState): DimensionScore {
-  const all = SECTION_KEYS.map((k) => project.sections?.[k] || "").join("\n").toLowerCase();
-  const signals: string[] = [];
-  let hits = 0;
-  const checks: Array<[RegExp, string]> = [
-    [/ethic|irb|institutional review|consent/, "Ethics/consent statement"],
-    [/limitation/, "Limitations acknowledged"],
-    [/funding|grant|supported by/, "Funding statement"],
-    [/conflict|competing interest|disclosure/, "Conflict-of-interest statement"],
-    [/registration|registered|prospero|clinicaltrials/, "Registration mentioned"],
-    [/data (availability|are available)|available (on|upon) request|repository/, "Data availability"],
-  ];
-  for (const [re, label] of checks) {
-    if (re.test(all)) { hits++; signals.push(`✓ ${label}`); }
-    else signals.push(`✗ ${label} missing`);
-  }
-  const score = Math.round((hits / checks.length) * 100);
-  return { dimension: "reporting-compliance", score, weight: 0.16, detail: `${hits}/${checks.length} reporting elements`, signals };
-}
-
-function originalitySignal(project: ProjectState): DimensionScore {
-  const intro = (project.sections?.introduction || "").toLowerCase();
-  const signals: string[] = [];
-  let score = 55;
-  if (/gap|unknown|remains unclear|has not been|few studies|no (prior|previous) stud/i.test(intro)) {
-    score += 20; signals.push("Articulates a knowledge gap");
-  } else signals.push("Knowledge gap not clearly stated in Introduction");
-  if (/novel|first|to our knowledge/i.test(intro)) {
-    signals.push("Makes a novelty claim — ensure it is evidence-backed (Title Lab novelty scan)");
-  }
-  if (project.noveltyReport) { score += 15; signals.push("Novelty scan was run"); }
-  score = Math.max(0, Math.min(100, score));
-  return { dimension: "originality-signal", score, weight: 0.1, detail: "Gap framing & novelty positioning", signals };
-}
-
-export function evaluateManuscript(project: ProjectState): ManuscriptEvaluation {
-  const coh = analyzeCoherence(project);
-  const cohDim: DimensionScore = {
-    dimension: "coherence",
-    score: coh.score,
-    weight: 0.18,
-    detail: `${coh.issues.length} coherence issue(s); citation order ${coh.citationOrder.ok ? "ok" : "needs fixing"}`,
-    signals: coh.issues.slice(0, 5).map((i) => `[${i.severity}] ${i.area}`),
-  };
-
-  // Citation integrity from coherence + reference presence.
-  const refCount = project.references?.verifications?.length ?? 0;
-  const citDim: DimensionScore = {
-    dimension: "citation-integrity",
-    score: refCount === 0 ? 20 : coh.citationOrder.ok ? 85 : 60,
-    weight: 0.1,
-    detail: refCount === 0 ? "No references verified" : `${refCount} references; order ${coh.citationOrder.ok ? "consistent" : "inconsistent"}`,
-    signals: [coh.citationOrder.detail],
-  };
-
-  const prose = SECTION_KEYS.map((k) => project.sections?.[k] || "").join("\n\n");
-  const read = readabilityScore(prose);
-  const readDim: DimensionScore = {
-    dimension: "readability",
-    score: read.score,
-    weight: 0.08,
-    detail: read.detail,
-    signals: [],
-  };
-
-  const dims = [
-    completeness(project),
-    cohDim,
-    rigor(project),
-    reportingCompliance(project),
-    readDim,
-    citDim,
-    originalitySignal(project),
-  ];
-
-  const overall = Math.round(dims.reduce((a, d) => a + d.score * d.weight, 0) / dims.reduce((a, d) => a + d.weight, 0));
-  const grade: ManuscriptEvaluation["grade"] =
-    overall >= 85 ? "A" : overall >= 70 ? "B" : overall >= 55 ? "C" : overall >= 40 ? "D" : "F";
-
-  const strengths = dims.filter((d) => d.score >= 75).map((d) => `${d.dimension}: ${d.detail}`);
+function assemble(dims: DimensionScore[]): ManuscriptEvaluation {
+  const totalWeight = dims.reduce((a, d) => a + d.weight, 0) || 1;
+  const overall = Math.round(dims.reduce((a, d) => a + d.score * d.weight, 0) / totalWeight);
+  const strengths = dims.filter((d) => d.score >= 75).map((d) => `${d.dimension.replace(/-/g, " ")}: ${d.detail}`);
   const gaps = dims
     .filter((d) => d.score < 60)
-    .flatMap((d) => d.signals.filter((s) => /missing|no |not |✗|thin|empty/i.test(s)).slice(0, 2));
+    .flatMap((d) => d.signals.filter((s) => /missing|no |not |✗|⚠|thin|empty/i.test(s)).slice(0, 2))
+    .slice(0, 10);
+  return { overall, grade: gradeFor(overall), dimensions: dims, strengths, gaps, evaluatedAt: new Date().toISOString() };
+}
 
-  return { overall, grade, dimensions: dims, strengths, gaps, evaluatedAt: new Date().toISOString() };
+/**
+ * Deterministic, offline, multi-dimension evaluation (15 dimensions).
+ * Backward-compatible signature — returns the same ManuscriptEvaluation shape.
+ */
+export function evaluateManuscript(project: ProjectState): ManuscriptEvaluation {
+  return assemble(buildDimensions(project));
+}
+
+/* ------------------------------------------------------------------ */
+/* Swarm-aware evaluation                                              */
+/* ------------------------------------------------------------------ */
+
+/** Map which dimensions a given swarm layer's problems should affect. */
+const LAYER_TO_DIMENSIONS: Record<string, EvalDimension[]> = {
+  quality: ["coherence", "structure", "readability", "abstract-quality"],
+  safety: ["statistical-rigor", "reporting-completeness", "originality-risk"],
+  literature: ["reference-quality", "novelty", "significance"],
+  "peer-review": ["statistical-rigor", "significance", "coherence"],
+};
+
+/**
+ * Fold an optional SwarmReport's findings into the deterministic scoring.
+ *
+ * Swarm-found CRITICAL issues lower the dimensions their layer maps to (and
+ * major issues lower them a little), so a clean deterministic score cannot mask
+ * a serious problem the swarm surfaced. With no report, this equals
+ * evaluateManuscript(project). Pure & offline — the swarm route already
+ * tolerates no-LLM (coherence-only) reports.
+ */
+export function evaluateWithReport(project: ProjectState, report?: SwarmReport): ManuscriptEvaluation {
+  const dims = buildDimensions(project);
+  if (!report) return assemble(dims);
+
+  // Derive per-layer penalties directly from the report's per-layer scorecard.
+  const layerPenalty: Record<string, number> = {};
+
+  // The report's own per-layer scorecard (0..100) — lower layer score
+  // means more/worse findings there. Convert the shortfall into a penalty.
+  const scorecard = report.scorecard || {};
+  for (const layer of Object.keys(LAYER_TO_DIMENSIONS)) {
+    const layerScore = typeof scorecard[layer] === "number" ? scorecard[layer] : 100;
+    layerPenalty[layer] = Math.max(0, 100 - layerScore);
+  }
+
+  // Count critical findings overall to add an extra clamp on the worst layers.
+  const criticalCount = (report.findings || []).filter((f) => f.severity === "critical").length;
+
+  const adjusted = dims.map((d) => {
+    // Sum the (scaled) penalties from every layer that maps to this dimension.
+    let penalty = 0;
+    for (const [layer, targets] of Object.entries(LAYER_TO_DIMENSIONS)) {
+      if (targets.includes(d.dimension)) {
+        // Scale the layer shortfall modestly so a 60/100 layer doesn't zero a dim.
+        penalty += (layerPenalty[layer] || 0) * 0.35;
+      }
+    }
+    if (penalty <= 0) return d;
+    const newScore = Math.max(0, Math.round(d.score - penalty));
+    const note =
+      criticalCount > 0
+        ? `Adjusted down by ${Math.round(penalty)} pt(s) from AI swarm findings (${criticalCount} critical across the review).`
+        : `Adjusted down by ${Math.round(penalty)} pt(s) from AI swarm findings.`;
+    return { ...d, score: newScore, signals: [...d.signals, note].slice(0, 7) };
+  });
+
+  return assemble(adjusted);
 }
 
 /** Multi-trial comparison: did an edit improve the manuscript? */
