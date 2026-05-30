@@ -4,10 +4,19 @@ import { useMemo, useState } from "react";
 import type { ProjectState } from "@/lib/types";
 import type { JournalMatch, JournalFilters, WosCollection } from "@/lib/journals/types";
 import { buildSubmissionFormat } from "@/lib/journals/formatting";
+import { anticipateImpact, assessTrust, quickProfile } from "@/lib/journals/anticipate";
+import { journalBestPractices } from "@/lib/journals/bestPractices";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { CopyButton } from "./ui/CopyButton";
 import { downloadAsFile } from "@/lib/store";
+
+function trustBadge(level: ReturnType<typeof assessTrust>["level"]): { kind: "good" | "info" | "warn" | "bad"; label: string } {
+  if (level === "high") return { kind: "good", label: "Trusted" };
+  if (level === "moderate") return { kind: "info", label: "Likely OK" };
+  if (level === "caution") return { kind: "warn", label: "Check carefully" };
+  return { kind: "bad", label: "High risk" };
+}
 
 function deriveProfile(project: ProjectState) {
   const ti = project.titleInputs || {};
@@ -50,6 +59,31 @@ export function JournalFinder({ project }: { project: ProjectState }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showPractices, setShowPractices] = useState(false);
+  // Real-time "check any journal" panel.
+  const [checkQ, setCheckQ] = useState("");
+  const [checkBusy, setCheckBusy] = useState(false);
+  const [checkResult, setCheckResult] = useState<Record<string, unknown> | null>(null);
+  const [checkErr, setCheckErr] = useState<string | null>(null);
+
+  async function checkJournal() {
+    if (!checkQ.trim()) return;
+    setCheckBusy(true);
+    setCheckErr(null);
+    setCheckResult(null);
+    try {
+      const isIssn = /^\d{4}-?\d{3}[\dxX]$/.test(checkQ.trim());
+      const param = isIssn ? `issn=${encodeURIComponent(checkQ.trim())}` : `q=${encodeURIComponent(checkQ.trim())}`;
+      const r = await fetch(`/api/journals/check?${param}`, { cache: "no-store" });
+      const data = (await r.json()) as Record<string, unknown> & { error?: string };
+      if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+      setCheckResult(data);
+    } catch (e) {
+      setCheckErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setCheckBusy(false);
+    }
+  }
 
   async function run() {
     setBusy(true);
@@ -155,6 +189,57 @@ export function JournalFinder({ project }: { project: ProjectState }) {
         </CardBody>
       </Card>
 
+      {/* Real-time check: look up ANY journal live (OpenAlex + DOAJ). */}
+      <Card>
+        <CardHeader
+          title="Check any journal (real-time)"
+          subtitle="Considering a journal not in the list? Look it up live by name or ISSN — get an anticipated metric, open-access/APC, and a trust read with official verify links."
+        />
+        <CardBody className="grid gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              className="input flex-1 min-w-[220px]"
+              placeholder="Journal name or ISSN (e.g. 1471-2458)"
+              value={checkQ}
+              onChange={(e) => setCheckQ(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") checkJournal(); }}
+            />
+            <button type="button" className="btn-primary" onClick={checkJournal} disabled={checkBusy || !checkQ.trim()}>
+              {checkBusy ? "Checking…" : "Check live"}
+            </button>
+          </div>
+          {checkErr && <div role="alert" className="text-sm text-med-bad">{checkErr}</div>}
+          {checkResult && <LiveCheckResult data={checkResult} />}
+        </CardBody>
+      </Card>
+
+      {/* Best-practice coaching (attributed). */}
+      <Card>
+        <CardHeader
+          title="How to choose well — best practices"
+          subtitle="Journal selection is where many strong papers stall. These attributed principles help you choose confidently and avoid predatory venues."
+          right={
+            <button type="button" className="btn-secondary text-xs" onClick={() => setShowPractices((s) => !s)}>
+              {showPractices ? "Hide" : "Show"}
+            </button>
+          }
+        />
+        {showPractices && (
+          <CardBody className="grid gap-3">
+            {journalBestPractices.map((p) => (
+              <div key={p.id} className="rounded-lg border border-med-line p-3">
+                <div className="font-semibold text-[13px] text-med-ink">{p.step}</div>
+                <p className="text-[12.5px] text-med-inkSoft mt-1">{p.principle}</p>
+                <p className="text-[11.5px] text-med-sub mt-1"><em>Why:</em> {p.why}</p>
+                <a href={p.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-[11.5px] text-med-brand hover:underline mt-1 inline-block">
+                  {p.source} →
+                </a>
+              </div>
+            ))}
+          </CardBody>
+        )}
+      </Card>
+
       {matches.length > 0 && (
         <Card>
           <CardHeader title={`Ranked matches (${matches.length})`} subtitle="Click a journal for submission formatting and verification links." />
@@ -177,22 +262,26 @@ export function JournalFinder({ project }: { project: ProjectState }) {
                     <div className="text-[12px] text-med-sub mt-0.5">{m.journal.publisher} · {m.journal.country}</div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
+                    {(() => { const t = trustBadge(assessTrust(m.journal).level); return <Badge kind={t.kind}>{t.label}</Badge>; })()}
                     {wosBadge(m.journal.indexing.wos)}
                     <Badge kind={m.score >= 70 ? "good" : m.score >= 45 ? "info" : "neutral"}>{m.score}</Badge>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  {m.journal.metrics?.impactFactor != null && (
-                    <Badge kind="neutral">
-                      IF {m.journal.metrics.impactFactor}
-                      {m.journal.metrics.metricsYear ? ` (${m.journal.metrics.metricsYear})` : ""}
-                    </Badge>
-                  )}
+                  {(() => {
+                    const a = anticipateImpact(m.journal);
+                    return a.value != null ? (
+                      <Badge kind={a.confidence === "reported" ? "neutral" : "info"} >{a.label}</Badge>
+                    ) : null;
+                  })()}
                   {m.journal.metrics?.quartile && <Badge kind="neutral">{m.journal.metrics.quartile}</Badge>}
                   {m.journal.indexing.medline === "indexed" && <Badge kind="neutral">MEDLINE</Badge>}
                   {m.journal.indexing.scopus === "indexed" && <Badge kind="neutral">Scopus</Badge>}
-                  {(m.journal.oaModel === "gold" || m.journal.oaModel === "diamond") && <Badge kind="neutral">OA</Badge>}
+                  {m.journal.freeApc && <Badge kind="good">Free to publish</Badge>}
+                  {m.journal.apcModel === "gold-apc" && typeof m.journal.apcUsd === "number" && <Badge kind="neutral">APC ${m.journal.apcUsd}</Badge>}
+                  {m.journal.apcModel === "subscription" && !m.journal.freeApc && <Badge kind="neutral">Subscription</Badge>}
                 </div>
+                <div className="text-[11px] text-med-sub mt-1.5">{quickProfile(m.journal)}</div>
                 {m.reasons.length > 0 && (
                   <div className="text-[11.5px] text-med-sub mt-2">✓ {m.reasons.slice(0, 3).join(" · ")}</div>
                 )}
@@ -297,4 +386,49 @@ function renderSubmissionMd(s: ReturnType<typeof buildSubmissionFormat>): string
     "## Submission package",
     ...s.packageChecklist.map((p) => `- [ ] ${p}`),
   ].join("\n");
+}
+
+/** Renders the live /api/journals/check result with honest framing. */
+function LiveCheckResult({ data }: { data: Record<string, unknown> }) {
+  if (data.found === false) {
+    const verify = (data.verify || {}) as Record<string, string>;
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 text-[12.5px]">
+        <div className="font-medium text-amber-900">{String(data.message || "Not found.")}</div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {Object.entries(verify).map(([k, url]) => (
+            <a key={k} href={url} target="_blank" rel="noopener noreferrer" className="pill-tab">{k}</a>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  const j = (data.journal || {}) as Record<string, unknown>;
+  const ant = (data.anticipated || {}) as Record<string, unknown>;
+  const verify = (data.verify || {}) as Record<string, string>;
+  return (
+    <div className="rounded-lg border border-med-line p-3 grid gap-2">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <div className="font-semibold text-med-ink text-[14px]">{String(j.name)}</div>
+          <div className="text-[12px] text-med-sub">{String(j.publisher || "")}{j.country ? ` · ${j.country}` : ""}{j.issn ? ` · ISSN ${j.issn}` : ""}</div>
+        </div>
+        <Badge kind="info">live · {String(data.source || "OpenAlex")}</Badge>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {ant.impactEstimate != null && <Badge kind="info">≈ {String(ant.impactEstimate)} (est.)</Badge>}
+        {j.inDoaj ? <Badge kind="good">DOAJ</Badge> : null}
+        {j.isOpenAccess ? <Badge kind="neutral">Open access</Badge> : null}
+        {j.freeApc ? <Badge kind="good">Free to publish</Badge> : (typeof j.apcUsd === "number" ? <Badge kind="neutral">APC ${String(j.apcUsd)}</Badge> : null)}
+        {typeof j.hIndex === "number" && <Badge kind="neutral">h-index {String(j.hIndex)}</Badge>}
+        {typeof j.worksCount === "number" && <Badge kind="neutral">{Number(j.worksCount).toLocaleString()} articles</Badge>}
+      </div>
+      <p className="text-[11px] text-med-sub">{String(ant.basis || "")}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {Object.entries(verify).map(([k, url]) => (
+          <a key={k} href={url} target="_blank" rel="noopener noreferrer" className="pill-tab text-[11px]">Verify: {k}</a>
+        ))}
+      </div>
+    </div>
+  );
 }
