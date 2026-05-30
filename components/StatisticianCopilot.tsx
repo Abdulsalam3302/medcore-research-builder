@@ -16,6 +16,7 @@ import {
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { CopyButton } from "./ui/CopyButton";
+import { InfoHint } from "./ui/InfoHint";
 
 type Tab = "assumptions" | "power" | "snippets";
 
@@ -37,7 +38,15 @@ export function StatisticianCopilot({
       )}
       <Card>
         <CardHeader
-          title="Statistician copilot"
+          title={
+            <span className="inline-flex items-center gap-2">
+              Statistician copilot
+              <InfoHint
+                title="Plan the analysis before you collect data"
+                text="The valid test is set by outcome type × design, and many methods rest on assumptions (normality, equal variance, independence). Checking these and pre-specifying the analysis guards against p-hacking. Always report the effect size with its 95% CI, not just a p-value — p tells you about chance, the effect and CI tell you about magnitude and precision. This tool aids planning; it does not replace a statistician for confirmatory work."
+              />
+            </span>
+          }
           subtitle="Quick assumption checks, sample-size estimates, and code snippets for R / Python / Stata. Use for sanity — confirmatory analysis should still be reviewed by a statistician."
         />
         <CardBody>
@@ -108,6 +117,15 @@ function Assumptions() {
         </CardBody>
       </Card>
       <div className="lg:col-span-2 grid gap-2">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[12px] uppercase tracking-wide text-med-sub font-semibold">
+            Assumption checks
+          </span>
+          <InfoHint
+            title="Why assumptions matter"
+            text="Standard parametric tests assume the data are roughly normal, that groups have similar variances, and that observations are independent. When these are violated the p-value and CI can be misleading. A normality flag may point you to a Mann–Whitney/Wilcoxon test; unequal variance points to Welch's t. These are screens on small samples — visual checks (histograms, Q–Q plots) and judgement still matter."
+          />
+        </div>
         {checks.map((c, i) => (
           <div
             key={i}

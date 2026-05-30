@@ -6,6 +6,7 @@ import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { Spinner } from "./ui/Spinner";
 import { aiHeuristic, readability } from "@/lib/readability";
+import { InfoHint } from "./ui/InfoHint";
 
 type DimScore = { dimension: string; score: number | null; rationale: string };
 type Concern = { section: string; issue: string; resolution: string };
@@ -89,12 +90,27 @@ export function QualitySuite({ project }: { project: ProjectState }) {
     <div className="grid gap-5">
       <Card>
         <CardHeader
-          title="Quality Suite"
+          title={
+            <span className="inline-flex items-center gap-1.5">
+              Quality Suite
+              <InfoHint
+                title="What this suite does"
+                text="A mock peer-review pass: it scores your manuscript across the dimensions reviewers weigh (rigour, integrity, clarity, ethics) and lists concrete fixes. Treat it as a rehearsal of the critique you'll face — it sharpens the draft but does not replace real peer, expert, or ethics review, and a good score is not a promise of acceptance."
+              />
+            </span>
+          }
           subtitle="Peer review, scientific scoring, AI-detect heuristic, readability, and plagiarism guidance — all in one place."
           right={
-            <button className="btn-primary" onClick={runReview} disabled={busy || !allText.trim()}>
-              {busy && <Spinner />} Run full quality review
-            </button>
+            <div className="flex items-center gap-2">
+              <InfoHint
+                side="left"
+                title="Why run a full review"
+                text="Running every check together gives you a single, honest picture before an editor forms one. The earlier you see weak rigour, overstated claims, or thin reporting, the cheaper they are to fix — this is your private dry run."
+              />
+              <button className="btn-primary" onClick={runReview} disabled={busy || !allText.trim()}>
+                {busy && <Spinner />} Run full quality review
+              </button>
+            </div>
           }
         />
         <CardBody className="grid gap-3">
@@ -109,7 +125,15 @@ export function QualitySuite({ project }: { project: ProjectState }) {
 
       <Card>
         <CardHeader
-          title="Readability"
+          title={
+            <span className="inline-flex items-center gap-1.5">
+              Readability
+              <InfoHint
+                title="Why readability matters"
+                text="Reviewers read faster and judge more kindly when prose is clear. These indices estimate how demanding your sentences are — overly long sentences, heavy passive voice, and dense vocabulary slow comprehension and can obscure your argument. Aim for precision, not simplicity for its own sake."
+              />
+            </span>
+          }
           subtitle="Local Flesch-Kincaid, Gunning-Fog, passive voice — no API call, no upload."
           right={
             <Badge
@@ -142,7 +166,15 @@ export function QualitySuite({ project }: { project: ProjectState }) {
 
       <Card>
         <CardHeader
-          title="AI-detect heuristic"
+          title={
+            <span className="inline-flex items-center gap-1.5">
+              AI-detect heuristic
+              <InfoHint
+                title="What this signal is (and isn't)"
+                text="This looks at local patterns — sentence-length variation (burstiness), transition-word density, and hedging — that tend to be flatter in machine-generated text. It's a rough self-check to prompt revision toward your own voice, not a verdict on authorship. AI-detection is unreliable in general; never treat any score here as proof, and disclose genuine AI assistance regardless."
+              />
+            </span>
+          }
           subtitle="Local burstiness + transition-density + AI-hedge signal. Not a replacement for GPTZero / Originality.ai — flags suspicious patterns only."
           right={
             <Badge
@@ -174,7 +206,15 @@ export function QualitySuite({ project }: { project: ProjectState }) {
 
       <Card>
         <CardHeader
-          title="Plagiarism guidance"
+          title={
+            <span className="inline-flex items-center gap-1.5">
+              Plagiarism guidance
+              <InfoHint
+                title="Why a real similarity check"
+                text="Reliable plagiarism detection needs a curated similarity corpus and a real comparison engine — something this tool deliberately does not fake. Many journals run iThenticate/Turnitin themselves, so checking with a publisher-grade service first lets you catch accidental overlap, missing quotation marks, or self-plagiarism before an editor does."
+              />
+            </span>
+          }
           subtitle="External plagiarism services require a paid API key. We never send your draft anywhere without your action."
         />
         <CardBody className="grid gap-2 text-sm">
@@ -208,6 +248,12 @@ export function QualitySuite({ project }: { project: ProjectState }) {
                 title="Peer-reviewer summary"
                 right={
                   report.verdict && (
+                    <span className="inline-flex items-center gap-1.5">
+                    <InfoHint
+                      side="left"
+                      title="Reading the verdict"
+                      text="This mirrors a journal decision band: 'ready' means no major issue surfaced; 'near ready' / 'needs minor revision' means small, addressable gaps; 'needs major revision' means substantive rework before it would survive review. It's a simulated reviewer's read to guide your next edit — not the journal's actual decision."
+                    />
                     <Badge
                       kind={
                         report.verdict === "ready"
@@ -219,6 +265,7 @@ export function QualitySuite({ project }: { project: ProjectState }) {
                     >
                       {report.verdict.replaceAll("-", " ")}
                     </Badge>
+                    </span>
                   )
                 }
               />
@@ -226,7 +273,13 @@ export function QualitySuite({ project }: { project: ProjectState }) {
                 <p className="text-sm text-med-ink leading-relaxed">{report.summary}</p>
                 {typeof report.overall === "number" && (
                   <div className="mt-3 flex items-center gap-2 text-sm">
-                    <span className="text-med-sub">Overall:</span>
+                    <span className="text-med-sub inline-flex items-center gap-1.5">
+                      Overall:
+                      <InfoHint
+                        title="The overall score"
+                        text="A single 0–100 roll-up of the dimension scores below, meant to track progress across drafts. Use it to see whether revisions are moving the needle — but always read the individual dimensions and concerns, since one serious flaw (e.g. an ethics or integrity gap) matters more than a high average."
+                      />
+                    </span>
                     <Badge
                       kind={
                         report.overall >= 80 ? "good" : report.overall >= 60 ? "info" : "warn"
@@ -242,7 +295,17 @@ export function QualitySuite({ project }: { project: ProjectState }) {
 
           {report.scores && report.scores.length > 0 && (
             <Card>
-              <CardHeader title="Multi-dimensional scoring" />
+              <CardHeader
+                title={
+                  <span className="inline-flex items-center gap-1.5">
+                    Multi-dimensional scoring
+                    <InfoHint
+                      title="Why split the score apart"
+                      text="A manuscript can be well-written yet methodologically weak, or rigorous yet poorly framed. Breaking the assessment into dimensions — novelty, rigour, ethics, integrity, clarity, and more — shows exactly where to invest effort, so you fix the real weakness rather than polishing strengths."
+                    />
+                  </span>
+                }
+              />
               <CardBody className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {report.scores.map((s, i) => (
                   <ScoreCard key={i} dim={s} />
@@ -387,7 +450,22 @@ function ConcernCard({
 }) {
   return (
     <Card>
-      <CardHeader title={title} right={<Badge kind={tone}>{concerns.length}</Badge>} />
+      <CardHeader
+        title={
+          <span className="inline-flex items-center gap-1.5">
+            {title}
+            <InfoHint
+              title={tone === "bad" ? "Major concerns" : "Minor concerns"}
+              text={
+                tone === "bad"
+                  ? "Major concerns are issues a reviewer would likely treat as blockers — unsupported primary claims, methodological gaps, or missing declarations. Each comes with a suggested resolution; clear these before submitting, as they are the usual reasons for rejection or major revision."
+                  : "Minor concerns are smaller fixes — wording, missing detail, inconsistent reporting — that rarely block acceptance but add up. Resolving them now reduces reviewer friction and shortens revision rounds."
+              }
+            />
+          </span>
+        }
+        right={<Badge kind={tone}>{concerns.length}</Badge>}
+      />
       <CardBody className="grid gap-3">
         {concerns.map((c, i) => (
           <div

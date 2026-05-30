@@ -9,6 +9,7 @@ import {
 } from "@/lib/coherence";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
+import { InfoHint } from "./ui/InfoHint";
 
 const SEVERITY_LABEL: Record<CoherenceIssue["severity"], string> = {
   high: "High severity",
@@ -72,12 +73,26 @@ export function ManuscriptCoherence({ project }: { project: ProjectState }) {
     <div className="grid gap-5">
       <Card>
         <CardHeader
-          title="Manuscript coherence"
+          title={
+            <span className="inline-flex items-center gap-2">
+              Manuscript coherence
+              <InfoHint
+                title="What coherence checks"
+                text="A strong paper tells one consistent story: the title should match what the paper actually reports, the stated design should support the claims you make, the results should align with what the discussion concludes, and citations should be ordered and used consistently. This engine flags places where those threads conflict so a reader (or reviewer) is not left confused."
+              />
+            </span>
+          }
           subtitle="Deterministic, local cross-section consistency engine — flags conflicts between title, sections, and references. No content leaves your browser."
           right={
-            <Badge kind={scoreKind(report.score)}>
-              Coherence {report.score}/100
-            </Badge>
+            <span className="inline-flex items-center gap-1.5">
+              <Badge kind={scoreKind(report.score)}>
+                Coherence {report.score}/100
+              </Badge>
+              <InfoHint
+                title="How to read the score"
+                text="A single 0–100 summary of internal consistency, computed deterministically from the issues found — higher means fewer/less severe conflicts. It is a self-check to guide revision, not a measure of scientific quality or a predictor of acceptance; resolve the flagged issues rather than chasing the number."
+              />
+            </span>
           }
         />
         <CardBody className="grid gap-3 text-sm">
@@ -89,8 +104,12 @@ export function ManuscriptCoherence({ project }: { project: ProjectState }) {
             }`}
           >
             <div className="flex items-center gap-2">
-              <span className="text-xs uppercase tracking-wide text-med-sub font-semibold">
+              <span className="text-xs uppercase tracking-wide text-med-sub font-semibold inline-flex items-center gap-1.5">
                 Citation order
+                <InfoHint
+                  title="Why citation order matters"
+                  text="Numbered (Vancouver-style) reference systems require in-text citations to appear in ascending order of first mention, with no gaps or duplicates in the reference list. Out-of-order or orphaned citations are a common, easily-avoided reason for revision; this check flags them so the numbering reconciles with the reference list."
+                />
               </span>
               <Badge kind={report.citationOrder.ok ? "good" : "warn"}>
                 {report.citationOrder.ok ? "OK" : "Needs review"}

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { InfoHint } from "@/components/ui/InfoHint";
 import {
   ossByCategory,
   type OSSConfidence,
@@ -346,7 +347,15 @@ export function ResearchToolkit() {
   return (
     <Card>
       <CardHeader
-        title="Research toolkit"
+        title={
+          <span className="inline-flex items-center gap-1.5">
+            Research toolkit
+            <InfoHint
+              title="Three tabs, three audiences"
+              text="Built into MedCore: capabilities you already have here — nothing to install. Open-source tools and MCP servers: external software for technical users who want to go further. The external entries are hand-curated, not live-tested, so always open the verify link and confirm a tool fits before relying on it."
+            />
+          </span>
+        }
         subtitle="What MedCore already does for you — plus the open tools and connectors that power the wider research world."
       />
       <CardBody>
@@ -361,6 +370,10 @@ export function ResearchToolkit() {
             >
               ✨ Built into MedCore
             </button>
+            <InfoHint
+              className="self-center"
+              text="Capabilities already wired into MedCore — you don't need to install or configure anything to use them. Just open the matching tab in your workspace."
+            />
             <button
               type="button"
               role="tab"
@@ -370,6 +383,10 @@ export function ResearchToolkit() {
             >
               🧰 Open-source tools
             </button>
+            <InfoHint
+              className="self-center"
+              text="Free, externally maintained software you'd install and run yourself — for technical users who want capabilities beyond MedCore. Listings are hand-curated with dated GitHub snapshots, so verify the project before relying on it."
+            />
             <button
               type="button"
               role="tab"
@@ -379,6 +396,10 @@ export function ResearchToolkit() {
             >
               🔌 MCP servers
             </button>
+            <InfoHint
+              className="self-center"
+              text="An MCP server is a standard plug that lets an AI assistant connect to an outside tool or data source. These are for technical users; you don't need them for everyday work here. Confirm each one at its verify link before trusting it."
+            />
           </div>
           <div className="text-[12px] text-med-sub">
             {activeCount} {activeCount === 1 ? "entry" : "entries"} shown

@@ -8,6 +8,7 @@ import { Badge } from "./ui/Badge";
 import { CopyButton } from "./ui/CopyButton";
 import { SkeletonLines } from "./ui/Skeleton";
 import { downloadAsFile } from "@/lib/store";
+import { InfoHint } from "./ui/InfoHint";
 
 export function CoverLetter({ project }: { project: ProjectState }) {
   const [busy, setBusy] = useState(false);
@@ -54,9 +55,29 @@ export function CoverLetter({ project }: { project: ProjectState }) {
   return (
     <div className="grid lg:grid-cols-[360px_1fr] gap-5">
       <Card>
-        <CardHeader title="Cover letter inputs" />
+        <CardHeader
+          title={
+            <InfoHint
+              title="Why a tailored cover letter?"
+              text="The cover letter is the editor's first read. A letter written for this specific journal frames why your study matters and why it fits the journal's scope and readership — that framing influences whether it's sent out for review. Include the core finding and its significance, fit to the journal, and any required statements (originality, no concurrent submission). Avoid restating the whole abstract or overstating claims."
+              side="right"
+            >
+              Cover letter inputs
+            </InfoHint>
+          }
+        />
         <CardBody className="grid gap-3">
-          <Field label="Salutation">
+          <Field
+            label={
+              <InfoHint
+                title="Address a real person"
+                text="Where possible, address the handling editor by name rather than a generic 'Dear Editor'. It signals you've checked who handles your subject area and adds a small but real touch of fit."
+                side="right"
+              >
+                Salutation
+              </InfoHint>
+            }
+          >
             <input
               className="input text-sm"
               value={editor}
@@ -80,7 +101,17 @@ export function CoverLetter({ project }: { project: ProjectState }) {
               placeholder="Department, Institution, City"
             />
           </Field>
-          <Field label="Override journal name (optional)">
+          <Field
+            label={
+              <InfoHint
+                title="Match the target journal"
+                text="The letter should name the journal you're actually submitting to so the fit argument is concrete. By default this uses your Research Type → Journal mapping; override it here if you're targeting a different journal."
+                side="right"
+              >
+                Override journal name (optional)
+              </InfoHint>
+            }
+          >
             <input
               className="input text-sm"
               value={journalOverride}
@@ -96,9 +127,16 @@ export function CoverLetter({ project }: { project: ProjectState }) {
               placeholder="e.g. emphasise low- and middle-income setting relevance"
             />
           </Field>
-          <button className="btn-primary" onClick={generate} disabled={busy}>
-            {busy && <Spinner />} Generate cover letter
-          </button>
+          <div className="flex items-center gap-2">
+            <button className="btn-primary" onClick={generate} disabled={busy}>
+              {busy && <Spinner />} Generate cover letter
+            </button>
+            <InfoHint
+              title="A draft, not a final letter"
+              text="This drafts a letter from your design, target journal, and novelty report. It won't invent results or claims that aren't in your manuscript. Read it carefully, confirm every statement matches your work, and edit it in your own voice before sending."
+              side="right"
+            />
+          </div>
           {err ? <div className="text-sm text-med-bad">{err}</div> : null}
           <div className="text-[11.5px] text-med-sub leading-relaxed">
             Uses your design + journal + novelty report. Never invents numbers
@@ -160,7 +198,7 @@ export function CoverLetter({ project }: { project: ProjectState }) {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
   return (
     <div>
       <div className="text-[11.5px] font-semibold uppercase tracking-[0.1em] text-med-sub mb-1">

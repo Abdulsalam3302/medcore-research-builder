@@ -2,6 +2,7 @@
 
 import type { ProjectState } from "@/lib/types";
 import { Badge } from "./ui/Badge";
+import { InfoHint } from "./ui/InfoHint";
 
 type ItemState = "Missing" | "Partial" | "Complete" | "Not applicable";
 
@@ -61,9 +62,20 @@ export function ManuscriptChecklistEngine({ project }: { project: ProjectState }
       <div className="card-header">
         <div>
           <div className="eyebrow">Manuscript Checklist Engine</div>
-          <h2 className="section-title text-[16px]">{guideline} mapped checklist</h2>
+          <h2 className="section-title text-[16px] inline-flex items-center gap-1.5">
+            {guideline} mapped checklist
+            <InfoHint
+              title="Why map item-by-item"
+              text="Editors and reviewers grade your manuscript against the reporting guideline for your study design (CONSORT, STROBE, PRISMA, etc.). Mapping each required item to where it appears in your draft makes gaps visible before submission — completely reported studies are screened faster and rejected less often, so this is one of the cheapest ways to raise your acceptance odds."
+            />
+          </h2>
         </div>
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1">
+          <InfoHint
+            side="left"
+            title="Reading the status counts"
+            text="'Complete' means the item appears to be reported; 'Partial' means some text exists but the specific item may be thin or implicit; 'Missing' means the reporting element isn't detected. These are heuristic inferences from your section text — treat 'Complete' as a prompt to confirm, not proof the item is fully and correctly reported."
+          />
           <Badge kind="good">Complete {counts.complete}</Badge>
           <Badge kind="warn">Partial {counts.partial}</Badge>
           <Badge kind="bad">Missing {counts.missing}</Badge>
@@ -80,8 +92,24 @@ export function ManuscriptChecklistEngine({ project }: { project: ProjectState }
               <tr>
                 <th className="text-left px-3 py-2">Section</th>
                 <th className="text-left px-3 py-2">Checklist item</th>
-                <th className="text-left px-3 py-2">Status</th>
-                <th className="text-left px-3 py-2">Evidence snippet</th>
+                <th className="text-left px-3 py-2">
+                  <span className="inline-flex items-center gap-1.5">
+                    Status
+                    <InfoHint
+                      title="What the status reflects"
+                      text="Per-item reporting status inferred from your section text. Aim to turn every 'Missing' and 'Partial' into a confirmed 'Complete' — a reviewer who can tick each guideline item off your manuscript has far less reason to send it back."
+                    />
+                  </span>
+                </th>
+                <th className="text-left px-3 py-2">
+                  <span className="inline-flex items-center gap-1.5">
+                    Evidence snippet
+                    <InfoHint
+                      title="Why show the evidence"
+                      text="The snippet is the passage the engine matched for this item, so you can sanity-check the call rather than trust it blindly. If the snippet doesn't actually report the item, treat the status as wrong and fix the text."
+                    />
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>

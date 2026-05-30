@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { ProjectState } from "@/lib/types";
+import { InfoHint } from "./ui/InfoHint";
 
 type ImpactTab = "social" | "lay" | "poster" | "conference" | "media";
 
@@ -24,7 +25,13 @@ export function PostPublicationImpactStudio({ project }: { project: ProjectState
       <div className="card-header">
         <div>
           <div className="eyebrow">Post-Publication Impact</div>
-          <h2 className="section-title text-[16px]">Visibility and outreach studio</h2>
+          <h2 className="section-title text-[16px] inline-flex items-center gap-1.5">
+            Visibility and outreach studio
+            <InfoHint
+              title="Why dissemination matters"
+              text="A paper only changes practice if people find it. Sharing your work widens its reach — more visibility tends to lead to more citations and faster real-world uptake. Keep outreach accurate: state findings exactly as your data support them, flag preprints as not peer-reviewed, and never overstate effects or imply clinical recommendations the study can't back."
+            />
+          </h2>
         </div>
       </div>
       <div className="p-5 grid gap-3">
@@ -46,6 +53,11 @@ export function PostPublicationImpactStudio({ project }: { project: ProjectState
               {label}
             </button>
           ))}
+          <InfoHint
+            className="self-center"
+            title="These are editable starting points"
+            text="Each tab gives templates pre-filled from your title and conclusion — social posts, plain-language and clinician summaries, posters, conference materials, and media kits. They're scaffolds, not finished copy: edit every placeholder, insert the real DOI, and check the wording matches your results before posting."
+          />
         </div>
 
         {tab === "social" && (

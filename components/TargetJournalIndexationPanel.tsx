@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { JournalIndexingRecord } from "@/lib/lifecycle";
 import { journals } from "@/lib/registry/journals";
 import { Badge } from "./ui/Badge";
+import { InfoHint } from "./ui/InfoHint";
 import { downloadAsFile } from "@/lib/store";
 
 const OFFICIAL_SOURCES = {
@@ -162,7 +163,13 @@ export function TargetJournalIndexationPanel() {
         <div className="card-header">
           <div>
             <div className="eyebrow">Target Journals & Indexation</div>
-            <h2 className="section-title text-[16px]">Journal fit and official index verification</h2>
+            <h2 className="section-title text-[16px] inline-flex items-center gap-1.5">
+              Journal fit and official index verification
+              <InfoHint
+                title="Why verify indexing yourself"
+                text="A journal's own site may claim 'indexed in Scopus/Web of Science/PubMed' that is outdated, partial, or simply false — a common predatory tactic. Confirming each claim at the official index source (Clarivate, Scopus Sources, NLM Catalog) protects you from paying fees to a venue that won't actually get your work discovered or counted. Always verify before you submit or pay."
+              />
+            </h2>
           </div>
         </div>
         <div className="p-5 grid gap-3">
@@ -203,7 +210,13 @@ export function TargetJournalIndexationPanel() {
 
       <section className="card">
         <div className="card-header">
-          <h3 className="section-title text-[15px]">Indexing education cards</h3>
+          <h3 className="section-title text-[15px] inline-flex items-center gap-1.5">
+            Indexing education cards
+            <InfoHint
+              title="WoS vs Scopus vs MEDLINE (in brief)"
+              text="They are different databases with different gatekeeping. Web of Science (Clarivate) is selective and split into collections (SCIE/SSCI/AHCI/ESCI). Scopus (Elsevier) is broader, with coverage that can go inactive. MEDLINE is NLM's curated biomedical subset — distinct from PubMed (the search platform) and PMC (a full-text archive). A journal can sit in one and not the others, so verify each separately. The Journal Finder lane has the full guide."
+            />
+          </h3>
         </div>
         <div className="p-5 grid md:grid-cols-2 gap-3 text-sm">
           <EducationCard
@@ -247,7 +260,13 @@ export function TargetJournalIndexationPanel() {
 
       <section className="card">
         <div className="card-header">
-          <h3 className="section-title text-[15px]">Saved shortlist and index checks</h3>
+          <h3 className="section-title text-[15px] inline-flex items-center gap-1.5">
+            Saved shortlist and index checks
+            <InfoHint
+              title="Reading the index columns"
+              text="Each cell records whether you have confirmed that journal's listing in that database at the official source: 'verified' = you checked and it's listed, 'unverified' = checked and not found (a serious red flag), 'unknown' = not yet checked. Record a last-checked date, since coverage changes — and never rely on the journal's own claim alone."
+            />
+          </h3>
         </div>
         <div className="p-5 grid gap-3">
           {globalError && (
@@ -280,7 +299,7 @@ export function TargetJournalIndexationPanel() {
                     <tr key={r.journalName} className="border-t border-med-line">
                       <td className="px-3 py-2">
                         <div className="font-medium">{r.journalName}</div>
-                        <div className="flex gap-1.5 mt-1">
+                        <div className="flex items-center gap-1.5 mt-1">
                           <button
                             className="btn-secondary text-xs"
                             onClick={() => verifyRecord(r.journalName)}
@@ -288,13 +307,25 @@ export function TargetJournalIndexationPanel() {
                           >
                             {verifying === r.journalName ? "Verifying..." : "Verify now"}
                           </button>
+                          <InfoHint
+                            title="What 'Verify now' does"
+                            text="Pulls an indexing snapshot to populate the columns and surface red flags. Use it as a starting point, then confirm the key claims yourself at the official index source by journal title and ISSN — automated lookups can be stale or ambiguous."
+                          />
                           <button className="btn-ghost text-xs" onClick={() => exportChecklistPackage(r)}>
                             Export checklist package
                           </button>
+                          <InfoHint
+                            title="What the export contains"
+                            text="A Markdown submission package: the indexing snapshot, journal word/reference limits, required declarations (ICMJE authorship, funding, COI, ethics, consent, data sharing, AI use), a core file checklist, and your verification links. Use it as a working checklist — confirm each requirement against the journal's current author guide before submitting."
+                          />
                         </div>
                         {r.redFlags.length > 0 && (
-                          <div className="mt-1 text-xs text-amber-700">
+                          <div className="mt-1 text-xs text-amber-700 inline-flex items-center gap-1.5">
                             {r.redFlags.length} red flag(s)
+                            <InfoHint
+                              title="Why red flags matter"
+                              text="Red flags are mismatches between claimed and verified indexing, or other provenance warnings. Any unexplained discrepancy is a reason to pause and investigate before submitting or paying a fee — predatory venues frequently overstate their indexing. See Think. Check. Submit. for a vetting routine."
+                            />
                           </div>
                         )}
                       </td>

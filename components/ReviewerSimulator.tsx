@@ -7,6 +7,7 @@ import { Spinner } from "./ui/Spinner";
 import { Badge } from "./ui/Badge";
 import { CopyButton } from "./ui/CopyButton";
 import { SkeletonLines } from "./ui/Skeleton";
+import { InfoHint } from "./ui/InfoHint";
 
 type Persona = "statistician" | "methodologist" | "editor";
 
@@ -65,7 +66,15 @@ export function ReviewerSimulator({ project }: { project: ProjectState }) {
     <div className="grid gap-5">
       <Card>
         <CardHeader
-          title="Reviewer simulator"
+          title={
+            <span className="inline-flex items-center gap-2">
+              Reviewer simulator
+              <InfoHint
+                title="Critique yourself before they do"
+                text="Anticipating the toughest questions a statistical reviewer, methodologist, or editor would ask lets you fix weaknesses while you still can — it is far cheaper to address an objection now than after a desk-reject. Treat this as rehearsal: the output is practice and a checklist, not an editorial verdict or a prediction of acceptance."
+              />
+            </span>
+          }
           subtitle="Three personas read your manuscript: a statistical reviewer, a methodologist, and an editor. Pre-submission critique, not a guarantee."
           right={
             <div className="flex items-center gap-2">
@@ -79,7 +88,14 @@ export function ReviewerSimulator({ project }: { project: ProjectState }) {
           }
         />
         <CardBody className="grid gap-3">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 text-[12px] text-med-sub">
+              Personas
+              <InfoHint
+                title="Each persona stresses a different angle"
+                text="A statistical reviewer probes your analysis and assumptions, a methodologist probes design and bias, and an editor weighs novelty, fit, and clarity. Running all three surfaces a wider range of objections than any single read, so you can triangulate where the manuscript is weakest."
+              />
+            </span>
             {ALL.map((p) => {
               const on = selected.has(p);
               return (
@@ -141,7 +157,17 @@ function ReviewCard({ review: r }: { review: Review }) {
     <Card>
       <CardHeader
         title={r.label}
-        right={r.verdict ? <Badge kind={tone}>{r.verdict}</Badge> : null}
+        right={
+          r.verdict ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Badge kind={tone}>{r.verdict}</Badge>
+              <InfoHint
+                title="A simulated verdict, not a decision"
+                text="This label is one model's guess at how a reviewer might lean — it carries no editorial weight and does not predict the real outcome. Use it only to gauge how serious the listed issues are and to prioritise what to fix before you submit."
+              />
+            </span>
+          ) : null
+        }
       />
       <CardBody className="grid gap-3 text-[13px]">
         {r.summary ? (
