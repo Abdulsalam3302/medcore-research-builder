@@ -10,6 +10,7 @@ import { Badge } from "./ui/Badge";
 import { Spinner } from "./ui/Spinner";
 import { SkeletonLines } from "./ui/Skeleton";
 import { CopyButton } from "./ui/CopyButton";
+import { InfoHint } from "./ui/InfoHint";
 import { StatsAndFigures } from "./StatsAndFigures";
 import { HumanReviewBanner } from "./HumanReviewBanner";
 
@@ -46,6 +47,30 @@ const SECTION_HELP: Record<
     placeholder:
       "A short, evidence-aligned closing paragraph. No new data, no overstatement.",
     help: "We will warn if the conclusion overstates causality or claims novelty beyond what the data / novelty report supports.",
+  },
+};
+
+/** Per-section "why this section exists" coaching, in a mentoring voice. */
+const SECTION_PURPOSE: Record<string, { title: string; text: string }> = {
+  introduction: {
+    title: "Purpose of the Introduction",
+    text: "The Introduction earns the reader's attention in three moves: establish the burden (why the problem matters), expose the gap (what's still unknown), and state a single, specific objective. Reviewers should finish it knowing exactly what question you set out to answer — and why it was worth asking.",
+  },
+  methods: {
+    title: "Purpose of the Methods",
+    text: "Methods exist for reproducibility: another team should be able to repeat your study from this section alone. Report design, setting, participants, variables, and analysis in enough detail to be checked. This is where the reporting guideline bites hardest — completeness here is what makes the results trustworthy.",
+  },
+  results: {
+    title: "Purpose of the Results",
+    text: "Report, don't interpret. Present the findings — numbers, estimates, confidence intervals, and flow — neutrally and completely, including results that don't favour your hypothesis. Save the meaning for the Discussion. Mixing in interpretation here is a classic reviewer complaint.",
+  },
+  discussion: {
+    title: "Purpose of the Discussion",
+    text: "Interpret without overclaiming. Summarise the principal findings, compare them with prior work, and state implications strictly within what your design and data support — an observational study shows association, not causation. State limitations honestly; reviewers trust authors who name their own weaknesses.",
+  },
+  conclusion: {
+    title: "Purpose of the Conclusion",
+    text: "Match the evidence. A strong conclusion restates what you actually showed, at the strength your data justify — no new results, no leap from 'associated with' to 'causes', no novelty claim beyond what the literature supports. Overstated conclusions are one of the fastest routes to rejection.",
   },
 };
 
@@ -305,7 +330,17 @@ export function SectionBuilder({
       <div className="lg:col-span-2 grid gap-5">
         <Card>
           <CardHeader
-            title={meta.title}
+            title={
+              <span className="inline-flex items-center gap-1.5">
+                {meta.title}
+                {SECTION_PURPOSE[section] && (
+                  <InfoHint
+                    title={SECTION_PURPOSE[section].title}
+                    text={SECTION_PURPOSE[section].text}
+                  />
+                )}
+              </span>
+            }
             subtitle={meta.help}
             right={
               guidelineId ? (
@@ -369,6 +404,10 @@ export function SectionBuilder({
               >
                 {busy === "enhance" && <Spinner dark />} ✨ AI enhance
               </button>
+              <InfoHint
+                title="Three tools, you stay the author"
+                text="Generate drafts a first version from your pipeline context. Refine scores the draft against the reporting-guideline checklist and proposes edits you accept or reject one by one. Enhance polishes wording without changing meaning. None of them invent numbers, citations, or facts — and every output is a suggestion: read it critically and verify every figure against your data before it ships."
+              />
               <CopyButton text={project.sections[section] || ""} label="Copy draft" />
             </div>
             {err && <div role="alert" className="text-sm text-med-bad">{err}</div>}
@@ -429,7 +468,15 @@ export function SectionBuilder({
       <div className="grid gap-5">
         <Card>
           <CardHeader
-            title="Checklist"
+            title={
+              <span className="inline-flex items-center gap-1.5">
+                Checklist
+                <InfoHint
+                  title="Why work the checklist"
+                  text="These are the exact reporting-guideline items reviewers tick off for this section. Covering each one is what 'complete reporting' means — and many journals require a filled-in checklist at submission. After you Refine, each item is marked covered, partial, or missing so you can close gaps before a reviewer finds them. 'Complete this item' helps draft the missing piece, but asks you for any fact it doesn't have rather than inventing it."
+                />
+              </span>
+            }
             subtitle={
               guidelineId
                 ? `${guidelineDisplayName} — ${section}`
@@ -578,7 +625,15 @@ export function SectionBuilder({
             {feedback.missingInformation.length > 0 && (
               <Card>
                 <CardHeader
-                  title="Needs author input"
+                  title={
+                    <span className="inline-flex items-center gap-1.5">
+                      Needs author input
+                      <InfoHint
+                        title="Why these are left blank"
+                        text="These are facts the assistant deliberately did not fill in — sample sizes, dates, approvals, exact numbers — because inventing them would be fabrication. Supply each one from your own records. A blank here is a gap a reviewer would catch; better that you close it now with the real value."
+                      />
+                    </span>
+                  }
                   right={
                     <Badge kind="warn">
                       {feedback.missingInformation.length}
@@ -597,7 +652,15 @@ export function SectionBuilder({
             {feedback.riskWarnings.length > 0 && (
               <Card>
                 <CardHeader
-                  title="Risk warnings"
+                  title={
+                    <span className="inline-flex items-center gap-1.5">
+                      Risk warnings
+                      <InfoHint
+                        title="Why heed these"
+                        text="These flag statements that could draw a reviewer's objection or cross an integrity line — overclaiming causation from an observational design, spin that oversells a null result, unsupported novelty, or numbers that don't reconcile. They're judgement calls, not errors: read each one and decide, but addressing them before submission is usually cheaper than a revision letter."
+                      />
+                    </span>
+                  }
                   right={<Badge kind="bad">{feedback.riskWarnings.length}</Badge>}
                 />
                 <CardBody>
@@ -651,7 +714,15 @@ export function SectionBuilder({
             {(feedback.languageNotes?.length ?? 0) > 0 && (
               <Card>
                 <CardHeader
-                  title="Language editing applied"
+                  title={
+                    <span className="inline-flex items-center gap-1.5">
+                      Language editing applied
+                      <InfoHint
+                        title="What this panel means"
+                        text="The refinement also tidied grammar, wording, and academic register so non-native and native authors read equally clearly — meaning is preserved, no facts changed. These notes list the kinds of edits made. Clear prose lets reviewers focus on your science rather than stumbling over the writing; still skim the result, as you remain responsible for the final words."
+                      />
+                    </span>
+                  }
                   subtitle="Clarity, flow, and academic register improved by default — meaning preserved."
                   right={<Badge kind="info">{feedback.languageNotes!.length}</Badge>}
                 />
@@ -667,7 +738,15 @@ export function SectionBuilder({
             {(feedback.coherenceNotes?.length ?? 0) > 0 && (
               <Card>
                 <CardHeader
-                  title="Coherence checks"
+                  title={
+                    <span className="inline-flex items-center gap-1.5">
+                      Coherence checks
+                      <InfoHint
+                        title="Why cross-section consistency matters"
+                        text="A manuscript is judged as a whole: the objective in your Introduction must match what the Results report and what the Conclusion claims, and your stated design must line up everywhere. These notes flag drift between sections — an outcome named here but not analysed there, a claim with no matching result. Catching that internal contradiction yourself is one of the strongest signals of a carefully prepared paper."
+                      />
+                    </span>
+                  }
                   subtitle="Consistency with title, objective, design, and sibling sections."
                   right={<Badge kind="warn">{feedback.coherenceNotes!.length}</Badge>}
                 />

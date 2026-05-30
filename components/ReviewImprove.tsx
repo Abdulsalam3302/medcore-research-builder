@@ -27,6 +27,7 @@ import {
 } from "@/lib/eval/scorecard";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge, type BadgeKind } from "./ui/Badge";
+import { InfoHint } from "./ui/InfoHint";
 import { ProgressRing } from "./ui/ProgressRing";
 import { CopyButton } from "./ui/CopyButton";
 import { Spinner } from "./ui/Spinner";
@@ -185,6 +186,15 @@ function SwarmPanel({ report, mode }: { report: SwarmReport; mode: string }) {
       </div>
 
       {/* Per-layer scorecard */}
+      <div className="flex items-center gap-1.5">
+        <span className="text-[11px] uppercase tracking-wide text-med-sub font-semibold">
+          Per-layer scorecard
+        </span>
+        <InfoHint
+          title="What each layer score means"
+          text="Each layer is one review dimension scored 0–100 (e.g. methodology, statistics, clarity). A low layer points you straight at the weakest part of the manuscript — the most efficient place to spend your next revision. Read it alongside the findings below, which say exactly what to fix."
+        />
+      </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {layers.map((layer) => {
           const s = report.scorecard[layer];
@@ -230,8 +240,14 @@ function SwarmPanel({ report, mode }: { report: SwarmReport; mode: string }) {
       {/* Human review reminders */}
       {report.humanReviewRequired?.length > 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3">
-          <div className="text-[11px] uppercase tracking-wide text-amber-800 font-semibold">
-            Human review required
+          <div className="flex items-center gap-1.5">
+            <div className="text-[11px] uppercase tracking-wide text-amber-800 font-semibold">
+              Human review required
+            </div>
+            <InfoHint
+              title="Why human review still matters"
+              text="Automated review can flag patterns, but it cannot confirm that your data are real, your ethics approval is valid, or your clinical claims are sound. These items demand a human expert — a co-author, statistician, or mentor. Treat them as non-negotiable checks the tool deliberately refuses to sign off on for you."
+            />
           </div>
           <ul className="list-disc list-inside text-[12px] text-amber-900 mt-1">
             {report.humanReviewRequired.map((h, i) => (
@@ -344,6 +360,10 @@ export function ReviewImprove({ project }: { project: ProjectState }) {
               1
             </span>
             <h3 className="text-sm font-semibold text-med-ink">Initial score (instant, deterministic)</h3>
+            <InfoHint
+              title="Why a baseline first?"
+              text="This is a fast, rule-based read of your draft computed locally — no AI. It gives you a fixed starting line. Capturing it before the peer-review pass is what lets you prove improvement: same yardstick, before and after, so any gain is real and not just a re-worded opinion."
+            />
           </div>
           <ScorePanel title="Quick heuristic evaluation" ev={initial} />
         </section>
@@ -355,6 +375,10 @@ export function ReviewImprove({ project }: { project: ProjectState }) {
               2
             </span>
             <h3 className="text-sm font-semibold text-med-ink">AI swarm review</h3>
+            <InfoHint
+              title="What the swarm checks"
+              text="A set of specialist agents each take one lens — methodology, statistics, literature, integrity, clarity, reproducibility — the way a real peer-review panel divides labour. Splitting the job catches issues a single pass misses. It is an aid, not a verdict: it cannot guarantee acceptance or originality, and its findings still need your judgement."
+            />
           </div>
           <p className="text-[12px] text-med-sub">
             Runs the specialist peer-review agents (methodology, statistics, literature, integrity,
@@ -393,6 +417,10 @@ export function ReviewImprove({ project }: { project: ProjectState }) {
                 3
               </span>
               <h3 className="text-sm font-semibold text-med-ink">Final score (swarm-adjusted)</h3>
+              <InfoHint
+                title="Why re-score?"
+                text="The final score re-runs the same baseline metric but folds the swarm's critical and major findings into the relevant dimensions. Comparing it against your initial score is the proof of improvement — and because serious findings drag the number down, a clean quick score can't hide a real problem the review surfaced."
+              />
             </div>
 
             <div
