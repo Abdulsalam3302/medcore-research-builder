@@ -11,6 +11,7 @@ import {
 import { diffStrings } from "@/lib/textDiff";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
+import { InfoHint } from "./ui/InfoHint";
 
 const SECTIONS: Array<keyof ProjectState["sections"]> = [
   "introduction",
@@ -57,19 +58,33 @@ export function VersionHistory({
     <div className="grid lg:grid-cols-[320px_1fr] gap-5">
       <Card>
         <CardHeader
-          title="Snapshots"
+          title={
+            <InfoHint
+              title="Why keep snapshots?"
+              text="A snapshot freezes your whole project at a point in time. They let you recover after a bad edit or accidental overwrite and compare an earlier draft against your current text. The app saves automatic snapshots roughly every 30 minutes; add manual ones with a label before any big rewrite so you have a clean point to return to."
+              side="right"
+            >
+              Snapshots
+            </InfoHint>
+          }
           subtitle={`${snaps.length} saved · auto every ~30 min, plus manual`}
           right={
-            <button
-              className="btn-primary text-[12px]"
-              onClick={() => {
-                addSnapshot(project, label.trim() || "Manual snapshot", false);
-                setLabel("");
-                refresh();
-              }}
+            <InfoHint
+              title="Manual snapshot, your label"
+              text="Saves the current project state now with the label above (or 'Manual snapshot' if blank). Take one before restoring, merging, or reworking a section so you always have a way back."
+              side="left"
             >
-              Save now
-            </button>
+              <button
+                className="btn-primary text-[12px]"
+                onClick={() => {
+                  addSnapshot(project, label.trim() || "Manual snapshot", false);
+                  setLabel("");
+                  refresh();
+                }}
+              >
+                Save now
+              </button>
+            </InfoHint>
           }
         />
         <CardBody className="grid gap-3">
@@ -122,7 +137,15 @@ export function VersionHistory({
       <div className="grid gap-4">
         <Card>
           <CardHeader
-            title="Compare to current draft"
+            title={
+              <InfoHint
+                title="See exactly what changed"
+                text="This shows a word-level diff between the selected snapshot and your current draft for one section. Struck-through red text was removed and green text was added since the snapshot — a quick way to review what you (or a co-author) changed before deciding whether to keep or restore it."
+                side="right"
+              >
+                Compare to current draft
+              </InfoHint>
+            }
             subtitle={
               selected
                 ? `${selected.label} · ${new Date(selected.createdAt).toLocaleString()}`
@@ -144,20 +167,26 @@ export function VersionHistory({
                       </option>
                     ))}
                   </select>
-                  <button
-                    className="btn-secondary text-[12px]"
-                    onClick={() => {
-                      if (
-                        confirm(
-                          "Restore this snapshot? Your current draft will be replaced (you can snapshot it first).",
-                        )
-                      ) {
-                        onRestore(selected.state);
-                      }
-                    }}
+                  <InfoHint
+                    title="Restore replaces your draft"
+                    text="Restoring rolls your whole project back to this snapshot, discarding any newer edits. The app asks you to confirm and lets you snapshot the current state first — do that if there's recent work you don't want to lose."
+                    side="bottom"
                   >
-                    Restore
-                  </button>
+                    <button
+                      className="btn-secondary text-[12px]"
+                      onClick={() => {
+                        if (
+                          confirm(
+                            "Restore this snapshot? Your current draft will be replaced (you can snapshot it first).",
+                          )
+                        ) {
+                          onRestore(selected.state);
+                        }
+                      }}
+                    >
+                      Restore
+                    </button>
+                  </InfoHint>
                   <button
                     className="btn-ghost text-rose-700 text-[12px]"
                     onClick={() => {

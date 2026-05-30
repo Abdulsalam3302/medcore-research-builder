@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Card, CardHeader, CardBody } from "./ui/Card";
 import { Badge, type BadgeKind } from "./ui/Badge";
 import { CopyButton } from "./ui/CopyButton";
+import { InfoHint } from "./ui/InfoHint";
 import {
   researchSkills,
   skillsByArea,
@@ -96,7 +97,15 @@ export function ResearchSkills() {
   return (
     <Card>
       <CardHeader
-        title="Research Skills Library"
+        title={
+          <span className="inline-flex items-center gap-1.5">
+            Research Skills Library
+            <InfoHint
+              title="What this library is for"
+              text="A reference you can dip into while you work. Skills are step-by-step how-tos for concrete research tasks (e.g. sample size, responding to reviewers); Tips & Methods are shorter principles explaining why a practice matters and how to apply it. Use them to learn the craft and sanity-check your own approach — they don't change your manuscript."
+            />
+          </span>
+        }
         subtitle={
           tab === "skills"
             ? `${totalSkills} skills across ${skillAreas.length} areas`
@@ -294,7 +303,10 @@ function SkillCard({
           )}
 
           {skill.promptTemplate && (
-            <Section title="Reusable prompt template">
+            <Section
+              title="Reusable prompt template"
+              info="Copy this template into the LLM-powered tool you're using, then replace the bracketed placeholders with your own study details. It's a starting structure to get a useful first draft — always review and correct the output against your data before relying on it."
+            >
               <div className="grid gap-2">
                 <pre className="whitespace-pre-wrap text-xs bg-slate-50 border border-med-line rounded-lg p-3 text-med-inkSoft">
                   {skill.promptTemplate}
@@ -356,11 +368,20 @@ function TipCard({
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  info,
+  children,
+}: {
+  title: string;
+  info?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-med-sub mb-1.5">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-med-sub mb-1.5 inline-flex items-center gap-1.5">
         {title}
+        {info && <InfoHint text={info} />}
       </div>
       {children}
     </div>

@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import type { ProjectState } from "@/lib/types";
 import type { ProtocolReadinessItem, ProtocolStatus } from "@/lib/lifecycle";
 import { Badge } from "./ui/Badge";
+import { InfoHint } from "./ui/InfoHint";
 import { buildDocumentSkeleton } from "@/lib/protocol/generator";
 import { downloadAsFile } from "@/lib/store";
 
@@ -109,7 +110,13 @@ export function ProtocolProposalAvailability({ project }: { project: ProjectStat
         <div className="card-header">
           <div>
             <div className="eyebrow">Protocol & Proposal Readiness</div>
-            <h2 className="section-title text-[16px]">Document readiness ladder</h2>
+            <h2 className="section-title text-[16px] inline-flex items-center gap-1.5">
+              Document readiness ladder
+              <InfoHint
+                title="Why each document matters"
+                text="These are the planning documents that protect a study before any data is collected. The protocol and proposal define and justify the work; the statistical analysis plan (SAP) pre-specifies outcomes and models so results aren't cherry-picked; the data dictionary defines every variable so data stays usable and reproducible; ethics/IRB approval and consent protect participants; and registration (ClinicalTrials.gov, PROSPERO) commits your plan publicly to reduce reporting bias. Settling these early prevents costly ethics, methods, and submission problems later."
+              />
+            </h2>
           </div>
           <Badge kind={score >= 75 ? "good" : score >= 50 ? "info" : "warn"}>
             {score}% ready
@@ -124,9 +131,25 @@ export function ProtocolProposalAvailability({ project }: { project: ProjectStat
               <thead className="bg-slate-50">
                 <tr>
                   <th className="text-left px-3 py-2 font-semibold text-med-ink">Document</th>
-                  <th className="text-left px-3 py-2 font-semibold text-med-ink">Status</th>
+                  <th className="text-left px-3 py-2 font-semibold text-med-ink">
+                    <span className="inline-flex items-center gap-1.5">
+                      Status
+                      <InfoHint
+                        title="Track your own progress"
+                        text="Set where each document stands — from Not started through Needed, Draft available, Uploaded, to Complete. This is your self-assessment to keep the team aligned; it reflects what you tell it, not an automatic check of the document's quality or approval."
+                      />
+                    </span>
+                  </th>
                   <th className="text-left px-3 py-2 font-semibold text-med-ink">Guidance</th>
-                  <th className="text-left px-3 py-2 font-semibold text-med-ink">Actions</th>
+                  <th className="text-left px-3 py-2 font-semibold text-med-ink">
+                    <span className="inline-flex items-center gap-1.5">
+                      Actions
+                      <InfoHint
+                        title="Upload vs generate skeleton"
+                        text="Upload attaches a document you've already written (the filename is recorded locally so you can track it). Generate skeleton creates a starter outline from your project details to write into — it is a scaffold only, never a finished or approved document. Anything generated still needs full human and ethics review before use."
+                      />
+                    </span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -234,7 +257,13 @@ export function ProtocolProposalAvailability({ project }: { project: ProjectStat
 
       <section className="card">
         <div className="card-header">
-          <h3 className="section-title text-[15px]">Study-design-aware protocol guidance</h3>
+          <h3 className="section-title text-[15px] inline-flex items-center gap-1.5">
+            Study-design-aware protocol guidance
+            <InfoHint
+              title="Tailored to your design"
+              text="Different study designs follow different reporting guidelines and registries. Pick your design to see which standards apply (e.g. SPIRIT/CONSORT for trials, PRISMA-P for systematic reviews, STROBE for observational studies) and what to prepare. Matching your protocol to the right guideline early makes later reporting and submission far smoother."
+            />
+          </h3>
         </div>
         <div className="p-5 grid gap-3">
           <div className="flex flex-wrap gap-2">

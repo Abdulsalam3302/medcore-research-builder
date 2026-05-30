@@ -2,7 +2,24 @@
 
 import type { ProjectState } from "@/lib/types";
 import { LogoWordmark } from "./ui/Logo";
+import { InfoHint } from "./ui/InfoHint";
 import { APP_VERSION } from "@/lib/constants";
+
+/** What each phase of the journey accomplishes — shown as a hover explainer. */
+const PHASE_HELP: Record<string, string> = {
+  "Pre-Research":
+    "Lay the groundwork before you write: define the question and feasibility, draft a protocol, pick the study design (which dictates the reporting guideline), and explore the literature and gap. Decisions here prevent expensive rework later.",
+  "Intra-Research":
+    "Build the manuscript section by section with guideline-aware drafting. Language editing and cross-section coherence checks run by default, so each section stays clear and consistent with the others.",
+  "Post-Research":
+    "Prepare a submission-ready package: verify references, find and compare target journals, and pass the final quality and compliance gates before you submit.",
+  "Quality & Empowerment":
+    "Sharpen and verify: run the AI peer-review swarm and re-score your manuscript, and tap the skills, tips, and tools that level up your craft.",
+  "Post-Publication":
+    "Extend impact after acceptance: create responsible outreach assets, then export everything for submission and your records.",
+  Platform:
+    "Platform information: product news and updates, and the mission, vision, and principles behind MedCore.",
+};
 
 export type LifecycleKey =
   | "launch"
@@ -86,7 +103,10 @@ export function LifecycleNavigation({
       <nav aria-label="Research lifecycle" className="px-3 py-4 flex-1 overflow-y-auto space-y-5">
         {Object.entries(groups).map(([phase, items]) => (
           <section key={phase}>
-            <div className="mc-eyebrow px-2 pb-1.5 text-[10.5px] text-[var(--mc-ink-400)]">{phase}</div>
+            <div className="mc-eyebrow px-2 pb-1.5 text-[10.5px] text-[var(--mc-ink-400)] inline-flex items-center gap-1">
+              {phase}
+              {PHASE_HELP[phase] && <InfoHint side="right" title={`${phase} phase`} text={PHASE_HELP[phase]} />}
+            </div>
             <div className="space-y-1">
               {items.map((item) => {
                 const isActive = active === item.key;

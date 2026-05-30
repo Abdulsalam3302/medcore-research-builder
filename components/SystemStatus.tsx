@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Badge } from "./ui/Badge";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Spinner } from "./ui/Spinner";
+import { InfoHint } from "./ui/InfoHint";
 import { APP_VERSION } from "@/lib/constants";
 
 type StatusPayload = {
@@ -121,7 +122,15 @@ export function SystemStatus() {
   return (
     <Card>
       <CardHeader
-        title="System status"
+        title={
+          <span className="inline-flex items-center gap-1.5">
+            System status
+            <InfoHint
+              title="What these indicators mean"
+              text="Each row shows whether an integration is configured on the server (via API keys or contact emails), not the status of your manuscript or data. A green OK means that source is reachable; a dash means it needs setup. Scholarly databases work without an LLM key, but drafting and review features need one."
+            />
+          </span>
+        }
         subtitle={`Integration health for v${data?.version || APP_VERSION}. Scholarly APIs work without LLM; drafting features need an LLM key.`}
         right={
           loading ? (

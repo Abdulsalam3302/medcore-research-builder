@@ -14,6 +14,7 @@ import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { Spinner } from "./ui/Spinner";
 import { CopyButton } from "./ui/CopyButton";
+import { InfoHint } from "./ui/InfoHint";
 
 type SectionKey =
   | "introduction"
@@ -49,14 +50,19 @@ function SignalList({
   title,
   signals,
   disclaimer,
+  hint,
 }: {
   title: string;
   signals: AdvisorySignal[];
   disclaimer: string;
+  hint?: { title: string; text: string };
 }) {
   return (
     <div className="grid gap-2">
-      <div className="label">{title}</div>
+      <div className="label inline-flex items-center gap-1.5">
+        {title}
+        {hint && <InfoHint title={hint.title} text={hint.text} />}
+      </div>
       <ul className="grid gap-1.5">
         {signals.map((s) => (
           <li
@@ -138,7 +144,15 @@ export function LanguageStudio({ project }: { project: ProjectState }) {
     <div className="grid gap-5">
       <Card>
         <CardHeader
-          title="Language Studio"
+          title={
+            <span className="inline-flex items-center gap-2">
+              Language Studio
+              <InfoHint
+                title="Editing must preserve meaning"
+                text="A good copy-edit improves clarity, grammar, tone, and readability without changing what the science says — every number, statistic, citation, and claim must survive intact. The AI-pattern and originality panels are heuristic aids to flag stylistic and sourcing concerns; they are advisory only and never guarantee AI-undetectability or freedom from plagiarism, and they do not replace your own integrity checks and citation work."
+              />
+            </span>
+          }
           subtitle="Academic language editing for clarity, grammar, tone and readability — meaning preserved. Includes heuristic AI-pattern and originality advisories."
         />
         <CardBody className="grid gap-3">
@@ -203,10 +217,14 @@ export function LanguageStudio({ project }: { project: ProjectState }) {
             >
               {busy && <Spinner />} Run language edit
             </button>
-            <span className="text-xs text-med-sub">
+            <span className="text-xs text-med-sub inline-flex items-center gap-1.5">
               Source readability — Flesch {sourceReadability.flesch}, grade{" "}
               {sourceReadability.fleschKincaidGrade}, avg sentence{" "}
               {sourceReadability.avgSentenceLength} words
+              <InfoHint
+                title="What these readability numbers mean"
+                text="Flesch Reading Ease runs 0–100 (higher = easier); Flesch–Kincaid grade estimates the US school grade needed to follow the text; average sentence length tracks how dense the prose is. Academic writing is naturally complex, but very long sentences and a high grade often signal passages worth simplifying. These are guides, not targets — clarity and accuracy come first."
+              />
             </span>
             {err && (
               <div role="alert" className="text-sm text-med-bad">
@@ -228,11 +246,19 @@ export function LanguageStudio({ project }: { project: ProjectState }) {
             title="AI-pattern signals"
             signals={aiPatterns.signals}
             disclaimer={aiPatterns.disclaimer}
+            hint={{
+              title: "Heuristic, not a detector",
+              text: "These flag stylistic tics often associated with AI-generated prose (formulaic transitions, hedging boilerplate, low lexical variety) so you can revise them for a more natural human voice. They are pattern heuristics only — they cannot prove text was or was not AI-written, and reducing them is no guarantee of passing any AI detector. Disclose AI assistance per your journal's policy.",
+            }}
           />
           <SignalList
             title="Originality / citation signals"
             signals={originality.signals}
             disclaimer={originality.disclaimer}
+            hint={{
+              title: "An integrity prompt, not a plagiarism scan",
+              text: "These surface passages that may need a citation or look closely paraphrased, prompting you to check sourcing and attribution. They do not compare your text against any database, so they cannot confirm originality or guarantee zero plagiarism — run a proper similarity check and cite every source you relied on.",
+            }}
           />
         </CardBody>
       </Card>
@@ -240,7 +266,15 @@ export function LanguageStudio({ project }: { project: ProjectState }) {
       {result && (
         <Card>
           <CardHeader
-            title="Edited text"
+            title={
+              <span className="inline-flex items-center gap-2">
+                Edited text
+                <InfoHint
+                  title="Verify before you accept"
+                  text="An automated edit can subtly shift meaning or drop a qualifier. Read the edited version against your original and confirm that every number, unit, statistic, citation, and claim is unchanged before adopting it — you remain accountable for accuracy."
+                />
+              </span>
+            }
             subtitle="Meaning-preserving copy-edit. Review every change before accepting."
             right={<CopyButton text={result.editedText} label="Copy edited text" />}
           />

@@ -6,6 +6,7 @@ import { Card, CardBody, CardHeader } from "./ui/Card";
 import { complianceToMarkdown, projectToMarkdown, referencesToCSV } from "@/lib/export";
 import { complianceToDocxBlob, downloadBlob, projectToDocxBlob } from "@/lib/docx";
 import { downloadAsFile } from "@/lib/store";
+import { InfoHint } from "./ui/InfoHint";
 
 export function ExportCenter({
   project,
@@ -47,7 +48,15 @@ export function ExportCenter({
     <div className="grid gap-5">
       <Card>
         <CardHeader
-          title="Export Center"
+          title={
+            <InfoHint
+              title="Pick the right format"
+              text="Each format serves a different purpose: DOCX is what most journals want for submission; Markdown and CSV are portable plain-text for git, pandoc, or spreadsheets; Project JSON is a complete snapshot for backup or moving your work to another device. Everything is generated in your browser — nothing is uploaded unless you choose to share it."
+              side="right"
+            >
+              Export Center
+            </InfoHint>
+          }
           subtitle="Download your manuscript and verification artifacts as Word (DOCX). Nothing leaves your browser unless you export it."
         />
         <CardBody className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -106,11 +115,37 @@ export function ExportCenter({
               if (confirm("Reset the project? Local drafts will be lost.")) onReset();
             }}
           />
+          <div className="md:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-med-sub">
+            <InfoHint
+              title="Back up before big changes"
+              text="Project JSON captures your entire project state. Export it before resetting, importing, or merging — it's the only way to transfer your work to another device or recover it later. Import replaces the current draft entirely, so save a copy first."
+              side="top"
+            >
+              <span className="font-medium text-med-ink">Backup &amp; transfer</span>
+            </InfoHint>
+            <InfoHint
+              title="Reset is destructive"
+              text="Reset permanently wipes all local drafts in this browser and cannot be undone. There's no server copy — if you might need this work again, export the Project JSON first."
+              side="top"
+            >
+              <span className="font-medium text-rose-700">Reset is permanent</span>
+            </InfoHint>
+          </div>
         </CardBody>
       </Card>
 
       <Card>
-        <CardHeader title="What's in the export?" />
+        <CardHeader
+          title={
+            <InfoHint
+              title="Submission-ready, with provenance"
+              text="The DOCX bundles your manuscript together with the reporting-guideline checklist and reference verification details, so a reviewer can trace every claim. Use it as a strong starting draft — confirm formatting against your target journal's author instructions before you submit."
+              side="right"
+            >
+              What&apos;s in the export?
+            </InfoHint>
+          }
+        />
         <CardBody className="text-sm text-med-sub grid gap-2">
           <ol className="list-decimal list-inside space-y-1">
             <li>Selected research type and reporting guideline.</li>

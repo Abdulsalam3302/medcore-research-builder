@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { UploadedDataProfile } from "@/lib/lifecycle";
+import { InfoHint } from "./ui/InfoHint";
 
 const ALLOWED = ".csv,.tsv,.xlsx,.json,.png,.jpg,.jpeg,.webp,.pdf,.docx";
 
@@ -110,29 +111,50 @@ export function FileResourceManager({
       <div className="card-header">
         <div>
           <div className="eyebrow">File resources</div>
-          <h3 className="section-title text-[15px]">Upload data, media, and supporting files</h3>
+          <h3 className="section-title text-[15px]">
+            <InfoHint
+              title="Upload de-identified data only"
+              text="Files stay in your browser, but you are still responsible for what you load. Remove direct identifiers (names, MRNs, dates of birth, contact details, addresses) before uploading — share only data that cannot be traced to an individual. This tool reads column headers to help describe your dataset; it is not a substitute for proper de-identification."
+              side="right"
+            >
+              Upload data, media, and supporting files
+            </InfoHint>
+          </h3>
         </div>
       </div>
       <div className="p-5 grid gap-3">
         <p className="text-sm text-med-sub">
           Supports CSV, TSV, XLSX, JSON, and common media files. Please upload de-identified data only.
         </p>
-        <label className="btn-secondary cursor-pointer w-fit">
-          Upload files
-          <input
-            type="file"
-            className="hidden"
-            multiple
-            accept={ALLOWED}
-            onChange={(e) => {
-              void onFilesSelected(e.target.files);
-              // Allow re-selecting the same file again.
-              e.target.value = "";
-            }}
+        <InfoHint
+          title="Strip identifiers first"
+          text="CSV/TSV/JSON files are parsed for a column preview; other types (XLSX, PDF, DOCX, images) are listed but not inspected. Either way, the file is your responsibility — remove personally identifiable information before uploading, because even a column header like 'patient_name' signals data that shouldn't be here."
+          side="right"
+        >
+          <label className="btn-secondary cursor-pointer w-fit">
+            Upload files
+            <input
+              type="file"
+              className="hidden"
+              multiple
+              accept={ALLOWED}
+              onChange={(e) => {
+                void onFilesSelected(e.target.files);
+                // Allow re-selecting the same file again.
+                e.target.value = "";
+              }}
+            />
+          </label>
+        </InfoHint>
+        <div className="text-xs text-med-sub inline-flex flex-wrap items-center gap-1">
+          <span>
+            Files: {summary.files} · Columns detected: {summary.cols} · Warnings: {summary.warnings}
+          </span>
+          <InfoHint
+            title="What column inference does"
+            text="For tabular files, MedCore reads the header row and a sample value per column to guess each variable's type — numeric, date, text, or categorical — and flags headers that look identifiable. It's a best-effort heuristic from one sample row, so treat the detected types and warnings as hints to check, not definitive classifications."
+            side="top"
           />
-        </label>
-        <div className="text-xs text-med-sub">
-          Files: {summary.files} · Columns detected: {summary.cols} · Warnings: {summary.warnings}
         </div>
         <div className="grid gap-2">
           {profiles.map((p) => (

@@ -17,6 +17,7 @@ import {
   IconSpark,
   IconBolt,
 } from "./ui/Icon";
+import { InfoHint } from "./ui/InfoHint";
 
 type IconCmp = ComponentType<{ size?: number; className?: string }>;
 type Target =
@@ -162,7 +163,13 @@ export function Overview({
         <div className="flex items-end justify-between mb-3">
           <div>
             <div className="eyebrow">Workflow</div>
-            <h2 className="section-title mt-0.5">Build the manuscript, step by step</h2>
+            <h2 className="section-title mt-0.5 inline-flex items-center gap-1.5">
+              Build the manuscript, step by step
+              <InfoHint
+                title="How the workflow works"
+                text="These seven steps are independent — you can start anywhere and return later. The status badge on each card reflects what you've drafted so far, drawn from your project on this device, not a measure of quality."
+              />
+            </h2>
           </div>
           <span className="muted hidden md:block">
             Each step is independent — pick up where you left off.
@@ -410,7 +417,13 @@ function PrinciplesCard() {
         </div>
         <div>
           <div className="eyebrow">Core principles</div>
-          <h3 className="section-title mt-0.5">Built for rigour, not for shortcuts</h3>
+          <h3 className="section-title mt-0.5 inline-flex items-center gap-1.5">
+            Built for rigour, not for shortcuts
+            <InfoHint
+              title="Why these guardrails matter"
+              text="MedCore drafts and checks, but it never invents statistics, sample sizes, or citations — missing items are flagged for you to supply. These tools assist your work; they do not replace your judgment, your co-authors, or formal peer and ethics review."
+            />
+          </h3>
           <div className="mt-3 grid sm:grid-cols-3 gap-4">
             {items.map((it) => (
               <div key={it.title}>

@@ -14,6 +14,7 @@ import {
   type MergeChoice,
   type MergePreviewItem,
 } from "@/lib/share";
+import { InfoHint } from "./ui/InfoHint";
 
 export function Collaboration({
   project,
@@ -84,10 +85,28 @@ export function Collaboration({
   return (
     <div className="grid gap-5">
       <Card>
-        <CardHeader title="Share by link" subtitle="Inline link embeds the entire project (including any PII) directly in the URL. The private link stores it server-side and shares only a token." />
+        <CardHeader
+          title={
+            <InfoHint
+              title="Two ways to share"
+              text="An inline link embeds your entire project — including any names or PII it contains — directly in the URL. Anyone who sees the link (browser history, chat logs, proxies) can read everything. A private link instead stores the project on the server and shares only a short token, so the data isn't exposed in the URL. Prefer the private link when your project holds anything sensitive."
+              side="right"
+            >
+              Share by link
+            </InfoHint>
+          }
+          subtitle="Inline link embeds the entire project (including any PII) directly in the URL. The private link stores it server-side and shares only a token."
+        />
         <CardBody className="grid gap-3">
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-med-sub mb-1">Inline link (data in URL)</div>
+            <div className="text-[11px] uppercase tracking-wide text-med-sub mb-1 inline-flex items-center gap-1">
+              Inline link (data in URL)
+              <InfoHint
+                title="Everything is in the URL"
+                text="This link encodes the whole project into the web address itself. It works with no server and never expires, but the trade-off is privacy: the full content travels wherever the link goes. Don't post it publicly if your project contains identifiable or unpublished material."
+                side="right"
+              />
+            </div>
             <div className="flex items-center gap-2">
               <input className="input text-[12.5px] font-mono" value={link} readOnly />
               <CopyButton text={link} label="Copy" />
@@ -107,7 +126,14 @@ export function Collaboration({
           </div>
 
           <div className="border-t border-med-line pt-3">
-            <div className="text-[11px] uppercase tracking-wide text-med-sub mb-1">Private link (data not in URL)</div>
+            <div className="text-[11px] uppercase tracking-wide text-med-sub mb-1 inline-flex items-center gap-1">
+              Private link (data not in URL)
+              <InfoHint
+                title="Token, not data"
+                text="The project is stored server-side and the link carries only a short token, so the URL itself reveals nothing. This needs cloud storage to be configured; if it isn't, MedCore falls back to an inline link. Server copies here expire after 7 days — treat sharing as temporary, not as a backup."
+                side="right"
+              />
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
@@ -146,7 +172,18 @@ export function Collaboration({
       </Card>
 
       <Card>
-        <CardHeader title="Receive a project (paste JSON)" subtitle="Or paste a co-author's exported JSON below." />
+        <CardHeader
+          title={
+            <InfoHint
+              title="Bring in a co-author's work"
+              text="Paste the JSON a collaborator exported (or that arrived via a share link) to compare it against your own draft field by field. Loading it here only previews a merge — nothing changes until you confirm. This is local-only; it doesn't submit anything to a journal."
+              side="right"
+            >
+              Receive a project (paste JSON)
+            </InfoHint>
+          }
+          subtitle="Or paste a co-author's exported JSON below."
+        />
         <CardBody className="grid gap-3">
           <textarea
             className="textarea min-h-[120px] font-mono text-[12px]"
@@ -198,7 +235,15 @@ function MergeView({
   return (
     <Card>
       <CardHeader
-        title="Merge preview"
+        title={
+          <InfoHint
+            title="Merge overwrites — choose per field"
+            text="For each field you pick a single winner: your local text or the incoming remote text. The default is whichever is longer, but length isn't quality — read both sides before deciding. Applying the merge replaces the chosen fields outright and can't be undone, so export or snapshot your project first."
+            side="right"
+          >
+            Merge preview
+          </InfoHint>
+        }
         subtitle="Pick a winner per field. Default = the longer side. Nothing applies until you confirm."
         right={
           <button type="button" className="btn-primary" onClick={onApply}>

@@ -13,6 +13,7 @@ import { ALL_AGENTS, AGENT_LABELS } from "@/lib/swarm/agents";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge, type BadgeKind } from "./ui/Badge";
 import { Spinner } from "./ui/Spinner";
+import { InfoHint } from "./ui/InfoHint";
 
 const LAYERS = ["quality", "safety", "literature", "peer-review"] as const;
 
@@ -137,7 +138,15 @@ export function ResearchSwarm({ project }: { project: ProjectState }) {
     <div className="grid gap-5">
       <Card>
         <CardHeader
-          title="AI peer-review swarm"
+          title={
+            <span className="inline-flex items-center gap-1.5">
+              AI peer-review swarm
+              <InfoHint
+                title="What the swarm does"
+                text="Each agent inspects your manuscript through one lens: methodology checks study design, statistics checks analyses and reporting, literature checks how your work sits against prior evidence, peer review and editorial weigh overall soundness and fit, integrity looks for fabrication or overstatement risks, clarity reads for writing, and reproducibility checks whether methods could be repeated. It's a structured second read to catch issues early — it does not replace formal human peer review or ethics review."
+              />
+            </span>
+          }
           subtitle="A swarm of specialist agents — methodology, statistics, literature, peer review, editorial, integrity, clarity, reproducibility — reviews your manuscript through layered quality and safety lenses. Folds in the deterministic coherence engine."
           right={
             report ? (
@@ -149,8 +158,12 @@ export function ResearchSwarm({ project }: { project: ProjectState }) {
         />
         <CardBody className="grid gap-4">
           <fieldset className="grid gap-2" disabled={busy}>
-            <legend className="text-xs font-semibold uppercase tracking-wide text-med-sub">
+            <legend className="text-xs font-semibold uppercase tracking-wide text-med-sub inline-flex items-center gap-1.5">
               Agents
+              <InfoHint
+                title="Pick which reviewers run"
+                text="Tick the lenses you want for this pass — run all for a broad review, or just a few (e.g. statistics and integrity) to focus. Fewer agents run faster and cost fewer LLM calls. You can re-run with a different selection any time."
+              />
             </legend>
             <div className="flex flex-wrap gap-2">
               {ALL_AGENTS.map((role) => (
@@ -190,12 +203,19 @@ export function ResearchSwarm({ project }: { project: ProjectState }) {
           </div>
 
           <div
-            className="text-[11px] text-med-sub border border-med-line rounded p-2 bg-white/40"
+            className="text-[11px] text-med-sub border border-med-line rounded p-2 bg-white/40 flex items-start gap-1.5"
             role="note"
           >
-            AI assistance — not a substitute for human peer review. Findings may be
-            incomplete or wrong; verify every clinical claim, statistic, and citation
-            against source data before acting on them.
+            <span>
+              AI assistance — not a substitute for human peer review. Findings may be
+              incomplete or wrong; verify every clinical claim, statistic, and citation
+              against source data before acting on them.
+            </span>
+            <InfoHint
+              side="top"
+              title="Two ways this runs"
+              text="With an LLM key configured, the specialist agents run and write tailored findings. Without one — or if every agent fails — it falls back to offline coherence-only mode: a deterministic check for internal consistency, no AI reasoning. Either way, a qualified human must still do the real peer and ethics review before you act on the output."
+            />
           </div>
         </CardBody>
       </Card>
@@ -228,7 +248,15 @@ export function ResearchSwarm({ project }: { project: ProjectState }) {
           {/* Human-review panel — prominent, safety-first. */}
           <Card>
             <CardHeader
-              title="Requires human review"
+              title={
+                <span className="inline-flex items-center gap-1.5">
+                  Requires human review
+                  <InfoHint
+                    title="Why this list matters most"
+                    text="These are claims the AI cannot confirm — things like whether a statistic matches the source data, whether ethics approval is in place, or whether a clinical interpretation is sound. Treat them as a to-do list for you and your co-authors, not findings the tool has resolved."
+                  />
+                </span>
+              }
               subtitle="The swarm cannot verify these — a qualified human must."
               right={<Badge kind="bad">{report.humanReviewRequired.length}</Badge>}
             />
@@ -248,7 +276,18 @@ export function ResearchSwarm({ project }: { project: ProjectState }) {
 
           {/* Scorecard per layer. */}
           <Card>
-            <CardHeader title="Layered scorecard" subtitle="0–100 per quality/safety layer." />
+            <CardHeader
+              title={
+                <span className="inline-flex items-center gap-1.5">
+                  Layered scorecard
+                  <InfoHint
+                    title="How to read the scores"
+                    text="Each layer gets a rough 0–100 from the agents that ran — higher means fewer or less severe issues raised in that lens. Use it to spot which areas need the most attention, not as a publishable grade or a guarantee of quality. A high score still requires human peer review."
+                  />
+                </span>
+              }
+              subtitle="0–100 per quality/safety layer."
+            />
             <CardBody>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {LAYERS.map((layer) => {

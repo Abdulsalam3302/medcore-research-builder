@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ExpandedNotes } from "@/lib/types";
 import { PlotlyPreview } from "./PlotlyPreview";
 import { CopyButton } from "./ui/CopyButton";
+import { InfoHint } from "./ui/InfoHint";
 import {
   buildBaselineTableScaffold,
   type BaselineTableVariable,
@@ -43,7 +44,14 @@ export function StatsAndFigures({
       {!embedded && (
         <div>
           <div className="eyebrow">Stats & figures</div>
-          <h1 className="display-title">Statistical analysis & figure specs</h1>
+          <h1 className="display-title inline-flex items-center gap-2">
+            Statistical analysis & figure specs
+            <InfoHint
+              side="bottom"
+              title="Why analysis and figures together"
+              text="Your analysis plan and your figures should answer the same question. Choosing the test from the outcome type and design — and then a figure that shows that estimate with its uncertainty — keeps results, captions, and claims aligned. Treat outputs here as a quick check; re-run confirmatory analyses in R/Stata/Python."
+            />
+          </h1>
           <p className="muted mt-1">
             Run quick descriptives and classical tests, generate Plotly-compatible
             figure specs, and get test recommendations from study design. For
@@ -99,21 +107,37 @@ function PublicationMetaBlock({ meta }: { meta: FigurePublicationMeta }) {
   return (
     <div className="border border-med-line rounded-lg p-3 space-y-3 bg-slate-50/40">
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="text-sm font-semibold text-med-ink">
+        <div className="text-sm font-semibold text-med-ink inline-flex items-center gap-1.5">
           Recommended figure: {meta.figureType}
+          <InfoHint
+            title="Why this figure type fits"
+            text="A figure should match the estimate it displays: forest plots show effect sizes with CIs across studies/subgroups, Kaplan–Meier curves show time-to-event, box/violin plots show distributions, and scatter shows associations. Choosing the form that encodes your actual estimate and its uncertainty lets readers judge the result, not just its direction."
+          />
         </div>
         <CopyButton text={meta.combinedMarkdown} label="Copy all" />
       </div>
       <div>
         <div className="flex items-center justify-between gap-2">
-          <div className="label">Caption</div>
+          <div className="label inline-flex items-center gap-1.5">
+            Caption
+            <InfoHint
+              title="A caption must stand alone"
+              text="Readers and reviewers often read figures out of context, so the caption has to be self-contained: what is shown, the sample size (n), the test or model used, and what the error bars/shaded bands represent (SD, SEM, or 95% CI — they are not interchangeable). Without these, the figure cannot be interpreted."
+            />
+          </div>
           <CopyButton text={meta.caption} label="Copy caption" />
         </div>
         <p className="text-sm text-med-ink">{meta.caption}</p>
       </div>
       <div>
         <div className="flex items-center justify-between gap-2">
-          <div className="label">Legend</div>
+          <div className="label inline-flex items-center gap-1.5">
+            Legend
+            <InfoHint
+              title="Legends decode the symbols"
+              text="The legend maps every colour, marker, line style, and group to its meaning so the plot is unambiguous. Keep group labels identical to those in your text and tables so readers can cross-reference without guessing."
+            />
+          </div>
           <CopyButton text={meta.legend} label="Copy legend" />
         </div>
         <p className="text-sm text-med-ink">{meta.legend}</p>
@@ -121,7 +145,13 @@ function PublicationMetaBlock({ meta }: { meta: FigurePublicationMeta }) {
       {meta.footnotes.length > 0 && (
         <div>
           <div className="flex items-center justify-between gap-2">
-            <div className="label">Footnotes</div>
+            <div className="label inline-flex items-center gap-1.5">
+              Footnotes
+              <InfoHint
+                title="Footnotes carry the fine print"
+                text="Footnotes define every abbreviation, state the test/model and any adjustments, note the error-bar type and significance thresholds, and flag exclusions or missing data. Journals require them because they make the figure reproducible and self-explanatory."
+              />
+            </div>
             <CopyButton text={meta.footnotes.join("\n")} label="Copy footnotes" />
           </div>
           <ul className="list-disc list-inside text-xs text-med-sub space-y-1">
@@ -219,6 +249,14 @@ function TwoSample() {
   return (
     <div className="card">
       <div className="card-body space-y-3">
+        <div className="flex items-center gap-2">
+          <InfoHint
+            side="right"
+            title="Independent vs paired"
+            text="Use Welch's t when the two groups are different people (it does not assume equal variances, so it is the safer default). Use paired t when the same subjects are measured twice (pre/post) — pairing removes between-subject variability and is more powerful. Picking the wrong one mis-states your p-value and CI. Report the mean difference with a 95% CI, not only p."
+          />
+          <span className="text-[12px] text-med-sub">Match the test to your design</span>
+        </div>
         <div className="flex gap-2">
           {(["welch_t", "paired_t"] as const).map((m) => (
             <button
@@ -280,7 +318,13 @@ function ChiSquare() {
   return (
     <div className="card">
       <div className="card-body space-y-3">
-        <div className="text-sm muted">Enter a 2×2 contingency table (cell counts).</div>
+        <div className="text-sm muted inline-flex items-center gap-1.5">
+          Enter a 2×2 contingency table (cell counts).
+          <InfoHint
+            title="Chi-square vs Fisher's exact"
+            text="The chi-square test compares observed vs expected counts for a categorical (binary) outcome between groups. Its approximation degrades when any expected cell count is small (a common rule is < 5) — there, use Fisher's exact test instead. Alongside the p-value, report an effect measure such as the risk ratio, odds ratio, or risk difference with a 95% CI."
+          />
+        </div>
         <table className="text-sm">
           <thead>
             <tr>
@@ -341,7 +385,13 @@ function Correlation() {
       <div className="card-body space-y-3">
         <div className="grid md:grid-cols-2 gap-3">
           <div>
-            <label className="label">X values</label>
+            <label className="label inline-flex items-center gap-1.5">
+              X values
+              <InfoHint
+                title="Pearson assumes linearity"
+                text="Pearson's r captures the strength of a linear association between two continuous variables and is sensitive to outliers and non-linearity. If the relationship is monotonic but curved, or values are ordinal/skewed, prefer Spearman's rank correlation. Report r with its 95% CI, and remember correlation is not causation."
+              />
+            </label>
             <textarea className="textarea font-mono" rows={4} value={x} onChange={(e) => setX(e.target.value)} />
           </div>
           <div>
@@ -419,7 +469,13 @@ function Recommender({
       <div className="card-body space-y-3">
         <div className="grid md:grid-cols-2 gap-3">
           <div>
-            <label className="label">Outcome shape</label>
+            <label className="label inline-flex items-center gap-1.5">
+              Outcome shape
+              <InfoHint
+                title="The test follows the data"
+                text="The right test is determined by your outcome type (continuous, binary, count, time-to-event, ordinal…) crossed with your design (independent groups, paired, clustered, repeated measures). Getting this pairing right is what makes the analysis valid — e.g. time-to-event with censoring needs survival methods, and clustered/repeated data need models that account for the correlation."
+              />
+            </label>
             <select
               className="input"
               value={outcome}
@@ -433,7 +489,13 @@ function Recommender({
             </select>
           </div>
           <div>
-            <label className="label">Grouping</label>
+            <label className="label inline-flex items-center gap-1.5">
+              Grouping
+              <InfoHint
+                title="Design dictates the structure"
+                text="How units relate — independent, paired/matched, k groups, clustered, or crossover — changes the appropriate test and the degrees of freedom. Paired and clustered designs violate the independence assumption of simple tests, so they require paired or mixed/clustered methods to avoid overstating precision."
+              />
+            </label>
             <select
               className="input"
               value={grouping}
@@ -542,7 +604,13 @@ function FigureSpec() {
     <div className="card">
       <div className="card-body space-y-3">
         <div>
-          <label className="label">Describe the result you want to visualize</label>
+          <label className="label inline-flex items-center gap-1.5">
+            Describe the result you want to visualize
+            <InfoHint
+              title="Describe the estimate, not just the topic"
+              text="Naming the quantity (e.g. pooled hazard ratio with 95% CI across 4 trials) lets the recommender pick a figure that shows that estimate and its uncertainty. The clearer the result, the better the match between figure type, axes, and the claim you will make in the text."
+            />
+          </label>
           <textarea
             className="textarea"
             rows={3}
@@ -653,11 +721,17 @@ function TableScaffold() {
   return (
     <div className="card">
       <div className="card-body space-y-3">
-        <div className="text-sm muted">
-          Generate a manuscript-ready baseline / characteristics table skeleton
-          (Table 1). Cells are author-fillable placeholders in the correct format
-          — n (%) for categorical, mean (SD) / median (IQR) for continuous. No
-          numbers are invented.
+        <div className="text-sm muted inline-flex items-start gap-1.5">
+          <span>
+            Generate a manuscript-ready baseline / characteristics table skeleton
+            (Table 1). Cells are author-fillable placeholders in the correct format
+            — n (%) for categorical, mean (SD) / median (IQR) for continuous. No
+            numbers are invented.
+          </span>
+          <InfoHint
+            title="What Table 1 is for"
+            text="Table 1 describes who was studied and shows the groups were comparable at baseline, so readers can judge confounding and generalisability. The scaffold enforces correct formats — n (%) for categorical, mean (SD) for symmetric and median (IQR) for skewed continuous variables — and leaves cells blank because the values must come from your own data, not be invented."
+          />
         </div>
         <div>
           <label className="label">Table title</label>
@@ -686,6 +760,10 @@ function TableScaffold() {
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={includeP} onChange={(e) => setIncludeP(e.target.checked)} />
           Include a p-value column
+          <InfoHint
+            title="Baseline p-values are often discouraged"
+            text="In randomised trials, any baseline imbalance is by definition due to chance, so CONSORT and many journals advise against p-values in Table 1 — describe and adjust for imbalance instead. In observational studies a baseline comparison can be informative. If you include p, footnote the exact test used for each variable."
+          />
         </label>
         {includeP && (
           <div>

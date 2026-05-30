@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { CopyButton } from "./ui/CopyButton";
+import { InfoHint } from "./ui/InfoHint";
 import { downloadAsFile } from "@/lib/store";
 
 type FlowNode = {
@@ -125,7 +126,17 @@ export function FlowDiagramBuilder({ defaultAcronym }: { defaultAcronym?: string
     <div className="grid lg:grid-cols-[420px_1fr] gap-5">
       <div className="grid gap-4">
         <Card>
-          <CardHeader title="Template" />
+          <CardHeader
+            title={
+              <span className="inline-flex items-center gap-2">
+                Template
+                <InfoHint
+                  title="Why a flow diagram is required"
+                  text="Reporting guidelines (CONSORT for RCTs, PRISMA for systematic reviews, STROBE for observational studies) require a participant flow diagram so readers can account for every record or person — how many were assessed, excluded (and why), allocated, lost to follow-up, and analysed. This accountability is central to transparency and to judging attrition and selection bias. Pick the template that matches your study design."
+                />
+              </span>
+            }
+          />
           <CardBody className="grid gap-2">
             {TEMPLATES.map((t) => {
               const active = t.id === tplId;
@@ -152,7 +163,15 @@ export function FlowDiagramBuilder({ defaultAcronym }: { defaultAcronym?: string
 
         <Card>
           <CardHeader
-            title="Steps"
+            title={
+              <span className="inline-flex items-center gap-2">
+                Steps
+                <InfoHint
+                  title="Numbers must reconcile"
+                  text="Main boxes are the down-the-page flow; exclusion boxes branch off and must state how many were dropped and why. The arithmetic has to balance — counts entering a stage minus exclusions should equal counts at the next stage — so reviewers can trace every participant. Replace each (n = ?) with your real figures from your own records."
+                />
+              </span>
+            }
             right={
               <div className="flex gap-1">
                 <button className="btn-ghost text-[11.5px]" onClick={() => addNode("main")}>
@@ -206,7 +225,15 @@ export function FlowDiagramBuilder({ defaultAcronym }: { defaultAcronym?: string
 
       <Card>
         <CardHeader
-          title="Preview"
+          title={
+            <span className="inline-flex items-center gap-2">
+              Preview
+              <InfoHint
+                title="A submission-ready figure"
+                text="Most journals expect the flow diagram as a numbered figure. Export the SVG, fill in every (n = ?), and check the counts add up before submission. It is editable downstream if your journal needs a different house style."
+              />
+            </span>
+          }
           subtitle={`${tpl.acronym} flow diagram — fill in the (n = ?) values from your study.`}
           right={
             <div className="flex items-center gap-2">

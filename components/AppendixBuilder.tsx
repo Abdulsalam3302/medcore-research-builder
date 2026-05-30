@@ -7,6 +7,7 @@ import { Badge } from "./ui/Badge";
 import { Spinner } from "./ui/Spinner";
 import { CopyButton } from "./ui/CopyButton";
 import { needsQuestionnaireAppendix } from "@/lib/alignment";
+import { InfoHint } from "./ui/InfoHint";
 
 const QUESTIONNAIRE_TEMPLATE = `Section A — Demographics
 A1. Age (years):
@@ -151,7 +152,15 @@ export function AppendixBuilder({
     <div className="grid gap-5">
       <Card>
         <CardHeader
-          title="Appendices & Supplementary Material"
+          title={
+            <InfoHint
+              title="Why appendices?"
+              text="Supplementary material keeps the main text within the journal's word and figure limits while still giving reviewers everything they need to judge your work: survey instruments, full protocols, extra tables, and reporting-guideline checklists. Anything that supports the study but would interrupt the narrative belongs here, clearly labelled and referenced from the main text."
+              side="right"
+            >
+              Appendices &amp; Supplementary Material
+            </InfoHint>
+          }
           subtitle="Add survey instruments, questionnaires, supplementary tables, and figures. Each appendix is included in exports and the compliance report."
           right={
             recommended ? (
@@ -183,6 +192,11 @@ export function AppendixBuilder({
             >
               + Add questionnaire template
             </button>
+            <InfoHint
+              title="Include the full instrument"
+              text="Survey and cross-sectional designs should publish the complete questionnaire so reviewers can assess each item's validity and others can replicate it. This drops in a structured starter template — replace the placeholders with your actual items, and cite the source for any validated scale you use."
+              side="bottom"
+            />
             <button
               className="btn-secondary"
               onClick={() => addBlank("instrument", "Appendix B — Validated instrument", "")}
@@ -272,6 +286,11 @@ export function AppendixBuilder({
                 >
                   {busy === "enhance" && busyIndex === i && <Spinner dark />} ✨ AI enhance
                 </button>
+                <InfoHint
+                  title="Polishes wording, not content"
+                  text="AI enhance tidies the language and structure of what you've already written. It's instructed to preserve your content and not to invent response options, scale values, or citations — so an empty or placeholder appendix stays empty. Always re-read the result for accuracy before relying on it."
+                  side="top"
+                />
                 <CopyButton text={a.content} label="Copy" />
               </div>
             </CardBody>

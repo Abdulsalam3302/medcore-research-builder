@@ -2,6 +2,7 @@
 
 import type { ProjectState } from "@/lib/types";
 import { Badge } from "./ui/Badge";
+import { InfoHint } from "./ui/InfoHint";
 
 const categories = [
   "Reporting guideline completeness",
@@ -38,11 +39,24 @@ export function QualityExcellenceGate({ project }: { project: ProjectState }) {
       <div className="card-header">
         <div>
           <div className="eyebrow">Quality & Excellence Gate</div>
-          <h2 className="section-title text-[16px]">Final pre-submission quality checkpoint</h2>
+          <h2 className="section-title text-[16px] inline-flex items-center gap-1.5">
+            Final pre-submission quality checkpoint
+            <InfoHint
+              title="Why a final gate?"
+              text="This is a last self-review across the quality dimensions editors and reviewers screen on. Running it before you submit lets you catch weak spots while you can still fix them — far cheaper than a revise-and-resubmit, and far better than an editor finding them first. It's a structured prompt for your own judgement, not a pass/fail authority."
+            />
+          </h2>
         </div>
-        <Badge kind={overall >= 85 ? "good" : overall >= 70 ? "info" : overall >= 55 ? "warn" : "bad"}>
-          {verdict} · {overall}/100
-        </Badge>
+        <div className="flex items-center gap-1.5">
+          <InfoHint
+            side="left"
+            title="Reading the verdict"
+            text="The verdict aggregates the category scores into an at-a-glance readiness band: 'Ready' (≥85) means no major blockers surfaced this pass; 'Needs minor revision' (70–84) means small gaps; 'Needs major revision' (55–69) means substantive sections need work; 'Not ready' (<55) means core elements are still missing. It reflects checklist-style heuristics only — it does not guarantee acceptance or substitute for peer/expert review."
+          />
+          <Badge kind={overall >= 85 ? "good" : overall >= 70 ? "info" : overall >= 55 ? "warn" : "bad"}>
+            {verdict} · {overall}/100
+          </Badge>
+        </div>
       </div>
       <div className="p-5 grid gap-3">
         <div className="grid md:grid-cols-2 gap-2">
@@ -59,7 +73,13 @@ export function QualityExcellenceGate({ project }: { project: ProjectState }) {
         </div>
 
         <div className="border border-med-line rounded-lg p-3 bg-slate-50">
-          <div className="text-xs font-semibold uppercase tracking-wide text-med-sub mb-1">Top 5 issues to fix</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-med-sub mb-1 inline-flex items-center gap-1.5">
+            Top 5 issues to fix
+            <InfoHint
+              title="Why prioritise these"
+              text="These are the lowest-scoring categories — the ones most likely to draw a reviewer's first criticism. Fixing the weakest few items usually lifts overall readiness faster than polishing what is already strong, so start here."
+            />
+          </div>
           {topIssues.length === 0 ? (
             <div className="text-sm text-emerald-700">No major blockers detected in this pass.</div>
           ) : (
