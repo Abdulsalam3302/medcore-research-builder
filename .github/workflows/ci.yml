@@ -26,6 +26,9 @@ jobs:
           # Build succeeds without real keys; routes are lazy at runtime.
           MINIMAX_API_KEY: ci-placeholder
 
+      - name: Engine E2E (offline, no server)
+        run: npm run test:engines
+
       - name: Start server and smoke test
         run: |
           npm start &

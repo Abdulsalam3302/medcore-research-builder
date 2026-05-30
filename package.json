@@ -14,7 +14,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test:smoke": "node scripts/smoke-test.mjs",
-    "test:auth": "node scripts/auth-multiuser-test.mjs"
+    "test:auth": "node scripts/auth-multiuser-test.mjs",
+    "test:engines": "node scripts/e2e-engines-test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
