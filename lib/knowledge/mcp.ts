@@ -36,6 +36,12 @@ export type MCPServer = {
   confidence: MCPConfidence;
   verifyUrl: string;
   note?: string;
+  /** One friendly sentence a non-technical researcher understands. */
+  plainSummary?: string;
+  /** A single emoji representing the tool/category. */
+  icon?: string;
+  /** A concrete "you'd use this when…" example in plain language. */
+  useCase?: string;
 };
 
 /** Canonical homes we are confident about. */
@@ -55,6 +61,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "established",
     verifyUrl: MCP_SERVERS_REPO,
     note: "Reference/community server in the official MCP servers repo (some reference servers have moved to the archived set; confirm current location).",
+    icon: "🗄️",
+    plainSummary:
+      "Lets an AI assistant safely read your study database and answer questions about it in plain English.",
+    useCase:
+      "You'd use this when you want to ask questions about a REDCap or registry export without writing SQL yourself.",
   },
   {
     id: "sqlite",
@@ -66,6 +77,11 @@ export const mcpServers: MCPServer[] = [
       "Explore a self-contained analysis dataset shipped as a .sqlite file without standing up a database server.",
     confidence: "established",
     verifyUrl: MCP_SERVERS_REPO,
+    icon: "🗄️",
+    plainSummary:
+      "Opens a single-file database so an assistant can explore your dataset with no setup.",
+    useCase:
+      "You'd use this when a colleague hands you a .sqlite data file and you just want to ask it questions.",
   },
   {
     id: "mongodb",
@@ -78,6 +94,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://www.mongodb.com/",
     note: "MongoDB publishes an official MCP server; verify the current package/repo via the vendor site.",
+    icon: "🗄️",
+    plainSummary:
+      "Connects to a flexible document database so an assistant can read free-form study data.",
+    useCase:
+      "You'd use this when your data is stored as JSON-style records, like questionnaire responses or device readings.",
   },
   {
     id: "mysql",
@@ -89,6 +110,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: MCP_SERVERS_REPO,
     note: "Multiple community MySQL MCP servers exist; pick and verify one rather than assuming a single canonical repo.",
+    icon: "🗄️",
+    plainSummary:
+      "Lets an assistant pull data from a common type of institutional database.",
+    useCase:
+      "You'd use this to fetch a cohort or set of measurements from your institution's data warehouse.",
   },
   {
     id: "redis",
@@ -101,6 +127,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://redis.io/",
     note: "Redis has published MCP tooling; confirm the exact server at the vendor site.",
+    icon: "⚡",
+    plainSummary:
+      "A super-fast temporary store an assistant can use to remember things mid-task.",
+    useCase:
+      "You'd use this in a data pipeline to cache results or manage a queue of jobs.",
   },
 
   /* ── Filesystem & version control ────────────────────────────────────── */
@@ -114,6 +145,11 @@ export const mcpServers: MCPServer[] = [
       "Let an assistant read your manuscript drafts, data files, and outputs from a project folder and write revised versions back.",
     confidence: "established",
     verifyUrl: MCP_SERVERS_REPO,
+    icon: "📁",
+    plainSummary:
+      "Gives an assistant safe access to a specific project folder to read and update your files.",
+    useCase:
+      "You'd use this so an assistant can read your draft and data and save revised versions back to your folder.",
   },
   {
     id: "git",
@@ -125,6 +161,11 @@ export const mcpServers: MCPServer[] = [
       "Track and review changes to analysis code and manuscript revisions for reproducibility and provenance.",
     confidence: "established",
     verifyUrl: MCP_SERVERS_REPO,
+    icon: "🕓",
+    plainSummary:
+      "Lets an assistant see the full history of changes to your project files.",
+    useCase:
+      "You'd use this to review what changed in your analysis or manuscript over time.",
   },
   {
     id: "github",
@@ -137,6 +178,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "established",
     verifyUrl: "https://github.com/github/github-mcp-server",
     note: "GitHub maintains an official MCP server (github-mcp-server); a reference variant also exists in the MCP servers repo.",
+    icon: "🐙",
+    plainSummary:
+      "Lets an assistant work with your shared online code project — its files, tasks, and reviews.",
+    useCase:
+      "You'd use this to manage your study's code repository and coordinate with collaborators.",
   },
   {
     id: "gitlab",
@@ -149,6 +195,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: MCP_SERVERS_REPO,
     note: "A GitLab server appears among MCP reference/community servers; verify the current location and maintainer.",
+    icon: "🦊",
+    plainSummary:
+      "Like the GitHub connector, but for teams hosting their code on GitLab instead.",
+    useCase:
+      "You'd use this if your institution runs its own GitLab for project code and docs.",
   },
 
   /* ── Search & web ────────────────────────────────────────────────────── */
@@ -162,6 +213,11 @@ export const mcpServers: MCPServer[] = [
       "Pull the text of a guideline page, a journal author-instructions page, or a public dataset description for summarization.",
     confidence: "established",
     verifyUrl: MCP_SERVERS_REPO,
+    icon: "🌐",
+    plainSummary:
+      "Grabs the readable text from a web page so an assistant can summarize it for you.",
+    useCase:
+      "You'd use this to pull a journal's author-instructions page and have it summarized.",
   },
   {
     id: "brave-search",
@@ -174,6 +230,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "established",
     verifyUrl: MCP_SERVERS_REPO,
     note: "Brave Search server is part of the MCP servers ecosystem; requires a Brave Search API key.",
+    icon: "🔍",
+    plainSummary:
+      "Lets an assistant run web searches for you to scope out a topic.",
+    useCase:
+      "You'd use this for background searches, like finding reporting guidelines or institutional pages.",
   },
   {
     id: "tavily",
@@ -186,6 +247,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://tavily.com/",
     note: "Tavily provides an MCP integration; confirm the current package at the vendor site. Requires an API key.",
+    icon: "🔍",
+    plainSummary:
+      "A web search built for AI that returns clean, quotable extracts instead of messy pages.",
+    useCase:
+      "You'd use this when you want an assistant to gather web context it can cite cleanly.",
   },
   {
     id: "puppeteer-playwright",
@@ -198,6 +264,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: MCP_SERVERS_REPO,
     note: "Both a reference Puppeteer server and Microsoft's Playwright MCP exist; verify which you adopt and its current home.",
+    icon: "🖥️",
+    plainSummary:
+      "Drives a web browser automatically to reach content that a simple page-grab can't.",
+    useCase:
+      "You'd use this for interactive dashboards or pages that only load content after clicking.",
   },
 
   /* ── Biomedical & scientific data ────────────────────────────────────── */
@@ -212,6 +283,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://www.ncbi.nlm.nih.gov/books/NBK25501/",
     note: "An MCP server exists or is readily buildable over the public NCBI E-utilities API; verify a specific community server before relying on it. Respect NCBI rate limits / API key policy.",
+    icon: "📚",
+    plainSummary:
+      "Searches the world's biggest medical-literature database and pulls back abstracts and IDs.",
+    useCase:
+      "You'd use this to run a structured literature search and start a reference list for a review.",
   },
   {
     id: "clinicaltrials",
@@ -224,6 +300,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://clinicaltrials.gov/data-api/api",
     note: "Wraps the official ClinicalTrials.gov API v2; an MCP server exists or is buildable. Verify the specific server.",
+    icon: "🧪",
+    plainSummary:
+      "Looks up registered clinical trials — who's running them, who can join, and what they measure.",
+    useCase:
+      "You'd use this to scope existing trials for a condition and benchmark outcome measures when designing a protocol.",
   },
   {
     id: "biorxiv-medrxiv",
@@ -236,6 +317,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://api.biorxiv.org/",
     note: "Built over the official bioRxiv/medRxiv API. Preprints are NOT peer reviewed — treat findings with caution.",
+    icon: "📰",
+    plainSummary:
+      "Finds the newest preprints (early papers shared before peer review) in biology and medicine.",
+    useCase:
+      "You'd use this to track cutting-edge findings, but remember these papers haven't been peer reviewed yet.",
   },
   {
     id: "europepmc",
@@ -248,6 +334,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://europepmc.org/RestfulWebService",
     note: "Wraps the public Europe PMC RESTful API; an MCP server exists or is buildable. Verify the specific server.",
+    icon: "📚",
+    plainSummary:
+      "A broad literature search that includes full text, preprints, and patents — wider than PubMed alone.",
+    useCase:
+      "You'd use this when you want to cast a wider net than PubMed for your evidence search.",
   },
   {
     id: "openalex",
@@ -260,6 +351,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://docs.openalex.org/",
     note: "Built over the open, free OpenAlex API; an MCP server exists or is buildable. Verify the specific server.",
+    icon: "🕸️",
+    plainSummary:
+      "Maps how papers, authors, and institutions connect, so you can see a whole research landscape.",
+    useCase:
+      "You'd use this to find related work and citation networks around your topic.",
   },
   {
     id: "semantic-scholar",
@@ -272,6 +368,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://www.semanticscholar.org/product/api",
     note: "Wraps the Semantic Scholar Academic Graph API; an MCP server exists or is buildable. Verify the specific server.",
+    icon: "🔬",
+    plainSummary:
+      "Finds influential and related papers and gives you short AI summaries to triage them quickly.",
+    useCase:
+      "You'd use this to discover the most important papers on a topic and skim their gist fast.",
   },
   {
     id: "crossref",
@@ -284,6 +385,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://www.crossref.org/documentation/retrieve-metadata/rest-api/",
     note: "Built over the public Crossref REST API; an MCP server exists or is buildable. Verify the specific server.",
+    icon: "🔖",
+    plainSummary:
+      "Looks up the official details of a paper from its DOI so your citations are accurate.",
+    useCase:
+      "You'd use this to confirm and complete reference details by DOI before finalizing a bibliography.",
   },
   {
     id: "arxiv",
@@ -296,6 +402,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://info.arxiv.org/help/api/index.html",
     note: "Built over the public arXiv API; multiple community MCP servers exist. Verify the specific one.",
+    icon: "📰",
+    plainSummary:
+      "Searches the main preprint archive for math, physics, and AI/methods papers.",
+    useCase:
+      "You'd use this to track new machine-learning or methods papers relevant to AI-for-health work.",
   },
   {
     id: "openfda",
@@ -308,6 +419,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://open.fda.gov/apis/",
     note: "Built over the public openFDA API; an MCP server exists or is buildable. Verify the specific server.",
+    icon: "💊",
+    plainSummary:
+      "Looks up official FDA data on drug labels, side-effect reports, and recalls.",
+    useCase:
+      "You'd use this for drug-safety background or to check a label during clinical research.",
   },
   {
     id: "who-gho",
@@ -320,6 +436,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://www.who.int/data/gho/info/gho-odata-api",
     note: "Built over the WHO GHO OData API; an MCP server exists or is buildable. Verify the specific server.",
+    icon: "🌍",
+    plainSummary:
+      "Pulls global health statistics from the World Health Organization.",
+    useCase:
+      "You'd use this for population-level numbers and global-burden context in your background section.",
   },
   {
     id: "europe-pmc-grist-icite",
@@ -332,6 +453,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://api.reporter.nih.gov/",
     note: "Built over public NIH iCite/RePORTER APIs; an MCP server exists or is buildable. Verify the specific server.",
+    icon: "💰",
+    plainSummary:
+      "Shows how influential a paper is and which NIH grants fund work in your area.",
+    useCase:
+      "You'd use this to gauge a paper's citation impact or scout the funding landscape for a topic.",
   },
 
   /* ── Reasoning & memory ──────────────────────────────────────────────── */
@@ -345,6 +471,11 @@ export const mcpServers: MCPServer[] = [
       "Maintain durable context across a long literature review or project (key papers, definitions, decisions).",
     confidence: "established",
     verifyUrl: MCP_SERVERS_REPO,
+    icon: "🧠",
+    plainSummary:
+      "Gives an assistant a long-term memory so it remembers your project's key facts between sessions.",
+    useCase:
+      "You'd use this on a long review so the assistant keeps track of key papers and decisions over weeks.",
   },
   {
     id: "sequential-thinking",
@@ -356,6 +487,11 @@ export const mcpServers: MCPServer[] = [
       "Break a complex analysis plan or methods-design problem into auditable reasoning steps.",
     confidence: "established",
     verifyUrl: MCP_SERVERS_REPO,
+    icon: "🪜",
+    plainSummary:
+      "Encourages an assistant to think through a hard problem one clear step at a time.",
+    useCase:
+      "You'd use this when planning a complex analysis and want the reasoning laid out you can check.",
   },
   {
     id: "time",
@@ -367,6 +503,11 @@ export const mcpServers: MCPServer[] = [
       "Timestamp analyses and coordinate deadlines/scheduling across collaborator timezones.",
     confidence: "established",
     verifyUrl: MCP_SERVERS_REPO,
+    icon: "⏰",
+    plainSummary:
+      "Tells the assistant the current time and converts between time zones.",
+    useCase:
+      "You'd use this to coordinate deadlines across collaborators in different time zones.",
   },
 
   /* ── Analysis & code execution ───────────────────────────────────────── */
@@ -381,6 +522,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://jupyter.org/",
     note: "Community Jupyter MCP servers exist (e.g. from the Jupyter/datalayer ecosystem); verify the specific server.",
+    icon: "📓",
+    plainSummary:
+      "Lets an assistant run your analysis notebook and read the resulting figures and tables.",
+    useCase:
+      "You'd use this to have an assistant run a notebook and explain the outputs.",
   },
   {
     id: "code-execution",
@@ -392,6 +538,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: MCP_SERVERS_REPO,
     note: "Several community code-execution/sandbox MCP servers exist with differing isolation guarantees; vet sandboxing before use.",
+    icon: "🧮",
+    plainSummary:
+      "Lets an assistant run small bits of code safely to do quick calculations or make a plot.",
+    useCase:
+      "You'd use this for a fast statistic or chart without setting up your own environment.",
   },
   {
     id: "e2b",
@@ -404,6 +555,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://e2b.dev/",
     note: "E2B provides sandbox tooling with MCP integrations; confirm the current package at the vendor site.",
+    icon: "📦",
+    plainSummary:
+      "Runs code in an isolated cloud sandbox, keeping heavier or untrusted analysis off your machine.",
+    useCase:
+      "You'd use this to run AI-generated analysis code safely away from your own computer.",
   },
   {
     id: "wolfram",
@@ -416,6 +572,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://www.wolframalpha.com/",
     note: "Wolfram offers LLM/MCP-compatible tooling; verify the current integration. Requires an API key.",
+    icon: "🧮",
+    plainSummary:
+      "Answers math and computation questions and double-checks calculations for you.",
+    useCase:
+      "You'd use this for a quick unit conversion or a sanity check on a statistical formula.",
   },
 
   /* ── Documents & PDF ─────────────────────────────────────────────────── */
@@ -429,6 +590,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: MCP_SERVERS_REPO,
     note: "Multiple community PDF MCP servers exist with varying extraction quality; verify the specific one for your needs.",
+    icon: "📄",
+    plainSummary:
+      "Pulls the text out of a PDF so an assistant can read and summarize it.",
+    useCase:
+      "You'd use this to extract text from a downloaded paper or protocol PDF for screening.",
   },
   {
     id: "markitdown",
@@ -441,6 +607,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://github.com/microsoft/markitdown",
     note: "Microsoft's MarkItDown ships an MCP server component; verify the current location/usage in the repo.",
+    icon: "📑",
+    plainSummary:
+      "Converts Word, PowerPoint, and PDF files into clean text an assistant can work with.",
+    useCase:
+      "You'd use this to tidy up a mix of documents into one consistent format before analysis.",
   },
   {
     id: "pandoc",
@@ -452,6 +623,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://pandoc.org/",
     note: "Community MCP wrappers around Pandoc exist; verify the specific server. Pandoc itself is the authoritative tool.",
+    icon: "🔄",
+    plainSummary:
+      "Converts a document between formats — like turning your draft into the Word or PDF a journal wants.",
+    useCase:
+      "You'd use this to reformat your manuscript into the exact file type a journal requires.",
   },
 
   /* ── Productivity & collaboration ────────────────────────────────────── */
@@ -466,6 +642,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: MCP_SERVERS_REPO,
     note: "A Slack server appears among MCP reference/community servers; verify current location and required scopes.",
+    icon: "💬",
+    plainSummary:
+      "Lets an assistant read and post in your team's Slack to keep everyone in the loop.",
+    useCase:
+      "You'd use this to post analysis updates or pull team decisions into your work.",
   },
   {
     id: "google-drive",
@@ -478,6 +659,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: MCP_SERVERS_REPO,
     note: "A Google Drive server appears among MCP servers; OAuth setup and scopes vary — verify before use.",
+    icon: "📁",
+    plainSummary:
+      "Lets an assistant find and read files stored in your Google Drive.",
+    useCase:
+      "You'd use this to reach shared datasets and manuscripts kept in your lab's Drive.",
   },
   {
     id: "notion",
@@ -490,6 +676,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://www.notion.so/",
     note: "Notion provides official MCP/API tooling; confirm the current server at the vendor site.",
+    icon: "🗒️",
+    plainSummary:
+      "Lets an assistant read and update your notes and trackers in Notion.",
+    useCase:
+      "You'd use this to keep a study's notes, tasks, and data dictionary current in Notion.",
   },
   {
     id: "google-sheets",
@@ -502,6 +693,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://developers.google.com/sheets/api",
     note: "Community Sheets MCP servers exist over the Google Sheets API; verify the specific server and OAuth scopes.",
+    icon: "📋",
+    plainSummary:
+      "Lets an assistant read and write your shared spreadsheets in Google Sheets.",
+    useCase:
+      "You'd use this to maintain a shared data-collection sheet and pull it in for analysis.",
   },
   {
     id: "zotero-mcp",
@@ -514,6 +710,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://www.zotero.org/support/dev/web_api/v3/start",
     note: "Built over the public Zotero Web API; community MCP servers exist. Verify the specific server.",
+    icon: "📚",
+    plainSummary:
+      "Lets an assistant draw on your personal Zotero reference library while you write.",
+    useCase:
+      "You'd use this so an assistant can cite from the papers you've already collected.",
   },
 
   /* ── Cloud & DevOps ──────────────────────────────────────────────────── */
@@ -528,6 +729,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://github.com/awslabs/mcp",
     note: "AWS Labs maintains a suite of official MCP servers; pick the specific service server and verify in that repo.",
+    icon: "☁️",
+    plainSummary:
+      "Lets an assistant work with your Amazon cloud — like datasets stored in S3 or cloud computing.",
+    useCase:
+      "You'd use this to reach big datasets or run analysis on Amazon's cloud.",
   },
   {
     id: "cloudflare",
@@ -540,6 +746,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://github.com/cloudflare/mcp-server-cloudflare",
     note: "Cloudflare maintains official MCP servers; verify the current repo/package.",
+    icon: "☁️",
+    plainSummary:
+      "Lets an assistant manage lightweight cloud storage and services on Cloudflare.",
+    useCase:
+      "You'd use this to run a small data endpoint behind a research tool or dashboard.",
   },
   {
     id: "docker",
@@ -552,6 +763,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://www.docker.com/",
     note: "Docker-related MCP servers exist (community and official efforts); verify the specific one.",
+    icon: "📦",
+    plainSummary:
+      "Packages an analysis with its exact software so it runs the same way for anyone.",
+    useCase:
+      "You'd use this to recreate the precise environment a published analysis needs.",
   },
   {
     id: "kubernetes",
@@ -564,6 +780,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://kubernetes.io/",
     note: "Several community Kubernetes MCP servers exist with differing permissions models; vet access scope before use.",
+    icon: "⚙️",
+    plainSummary:
+      "Manages large analysis jobs running across many machines.",
+    useCase:
+      "You'd use this to operate scaled-up analysis on an institutional or cloud cluster.",
   },
   {
     id: "sentry",
@@ -576,6 +797,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://sentry.io/",
     note: "Sentry provides MCP tooling; confirm the current server at the vendor site.",
+    icon: "🐞",
+    plainSummary:
+      "Surfaces errors from a tool or pipeline you run so you can fix what's breaking.",
+    useCase:
+      "You'd use this to diagnose failures in a research web tool or data pipeline you operate.",
   },
   {
     id: "everything",
@@ -587,6 +813,11 @@ export const mcpServers: MCPServer[] = [
       "Useful for learning MCP and testing a client; not a data source itself.",
     confidence: "established",
     verifyUrl: MCP_SERVERS_REPO,
+    icon: "🧰",
+    plainSummary:
+      "A demo connector for learning how these tools work — not a real data source.",
+    useCase:
+      "You'd use this only to try out and test how MCP connectors behave.",
   },
   {
     id: "sentry-placeholder-protocol",
@@ -599,6 +830,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "established",
     verifyUrl: MCP_SITE,
     note: "Authoritative spec and SDKs; consult before building a bespoke server for your data source.",
+    icon: "🧱",
+    plainSummary:
+      "The open standard that all the connectors above are built on.",
+    useCase:
+      "You'd use this as the starting point if you wanted to build a custom connector to your own data.",
   },
   {
     id: "obsidian",
@@ -611,6 +847,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://obsidian.md/",
     note: "Community Obsidian MCP servers exist (often via the Local REST API plugin); verify the specific one.",
+    icon: "🗒️",
+    plainSummary:
+      "Lets an assistant search your personal notes vault while you write.",
+    useCase:
+      "You'd use this to surface your own paper summaries and notes during drafting.",
   },
   {
     id: "elasticsearch",
@@ -623,6 +864,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://www.elastic.co/",
     note: "Elastic and community maintainers provide MCP servers; verify the specific server and index access.",
+    icon: "🔍",
+    plainSummary:
+      "Searches a big collection of documents fast, including by meaning, not just exact words.",
+    useCase:
+      "You'd use this to search a large corpus of papers or notes for evidence synthesis.",
   },
   {
     id: "qdrant",
@@ -635,6 +881,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://qdrant.tech/",
     note: "Qdrant provides an MCP server; confirm the current package at the vendor site.",
+    icon: "🧲",
+    plainSummary:
+      "Stores papers by meaning so an assistant can find the most relevant ones by topic, not keywords.",
+    useCase:
+      "You'd use this to power a 'find papers like this one' literature assistant.",
   },
   {
     id: "google-maps",
@@ -647,6 +898,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: MCP_SERVERS_REPO,
     note: "A Google Maps server appears among MCP servers; requires a Maps API key. Verify the current location.",
+    icon: "🗺️",
+    plainSummary:
+      "Finds locations and distances on a map for an assistant.",
+    useCase:
+      "You'd use this to map study sites or work out travel distances for accessibility analyses.",
   },
   {
     id: "datasette",
@@ -659,6 +915,11 @@ export const mcpServers: MCPServer[] = [
     confidence: "likely",
     verifyUrl: "https://datasette.io/",
     note: "Community MCP integrations for Datasette exist; verify the specific server.",
+    icon: "🗄️",
+    plainSummary:
+      "Lets an assistant query open datasets that researchers publish online.",
+    useCase:
+      "You'd use this to explore a public dataset someone shared as a Datasette site.",
   },
 ];
 

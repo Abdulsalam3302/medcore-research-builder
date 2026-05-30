@@ -67,14 +67,6 @@ const ProtocolStudio = dynamic(
   () => import("@/components/ProtocolStudio").then((m) => m.ProtocolStudio),
   { loading: RouteSkeleton, ssr: false },
 );
-const ManuscriptCoherence = dynamic(
-  () => import("@/components/ManuscriptCoherence").then((m) => m.ManuscriptCoherence),
-  { loading: RouteSkeleton, ssr: false },
-);
-const LanguageStudio = dynamic(
-  () => import("@/components/LanguageStudio").then((m) => m.LanguageStudio),
-  { loading: RouteSkeleton, ssr: false },
-);
 const JournalFinder = dynamic(
   () => import("@/components/JournalFinder").then((m) => m.JournalFinder),
   { loading: RouteSkeleton, ssr: false },
@@ -87,12 +79,8 @@ const StatsAndFigures = dynamic(
   () => import("@/components/StatsAndFigures").then((m) => m.StatsAndFigures),
   { loading: RouteSkeleton, ssr: false },
 );
-const ResearchSwarm = dynamic(
-  () => import("@/components/ResearchSwarm").then((m) => m.ResearchSwarm),
-  { loading: RouteSkeleton, ssr: false },
-);
-const ManuscriptScorecard = dynamic(
-  () => import("@/components/ManuscriptScorecard").then((m) => m.ManuscriptScorecard),
+const ReviewImprove = dynamic(
+  () => import("@/components/ReviewImprove").then((m) => m.ReviewImprove),
   { loading: RouteSkeleton, ssr: false },
 );
 const ResearchSkills = dynamic(
@@ -310,22 +298,6 @@ export default function WorkspaceApp() {
               <ReferenceVerifier project={project} update={update} />
               <ReferenceSafetyPanel project={project} />
             </ResearchPhaseShell>
-          ) : active === "coherence" ? (
-            <ResearchPhaseShell
-              phaseLabel="Post-Research Submission"
-              title="Manuscript Coherence"
-              subtitle="One connected manuscript: checks title, sections, results, discussion, and citation order for conflicts."
-            >
-              <ManuscriptCoherence project={project} />
-            </ResearchPhaseShell>
-          ) : active === "language" ? (
-            <ResearchPhaseShell
-              phaseLabel="Post-Research Submission"
-              title="Language Studio"
-              subtitle="Academic language editing, readability, and writing-integrity advisories — meaning preserved, every number intact."
-            >
-              <LanguageStudio project={project} />
-            </ResearchPhaseShell>
           ) : active === "journal-finder" ? (
             <ResearchPhaseShell
               phaseLabel="Post-Research Submission"
@@ -347,21 +319,13 @@ export default function WorkspaceApp() {
               <OriginalityCitationGuard project={project} />
               <ComplianceReport project={project} onJump={(k) => setActive(k as LifecycleKey)} />
             </ResearchPhaseShell>
-          ) : active === "swarm" ? (
+          ) : active === "review" ? (
             <ResearchPhaseShell
               phaseLabel="Quality & Empowerment"
-              title="AI Peer-Review Swarm"
-              subtitle="A swarm of specialist agents (methodologist, statistician, reviewer, editor, integrity officer…) reviews your manuscript across layers of quality and safety."
+              title="Review & Improve"
+              subtitle="Initial score → AI peer-review swarm → final score. Fix issues and re-run to prove your manuscript is getting better."
             >
-              <ResearchSwarm project={project} />
-            </ResearchPhaseShell>
-          ) : active === "scorecard" ? (
-            <ResearchPhaseShell
-              phaseLabel="Quality & Empowerment"
-              title="Manuscript Scorecard"
-              subtitle="Objective, repeatable multi-dimension evaluation. Re-run after edits to prove the draft is getting better."
-            >
-              <ManuscriptScorecard project={project} />
+              <ReviewImprove project={project} />
             </ResearchPhaseShell>
           ) : active === "skills" ? (
             <ResearchPhaseShell
@@ -455,12 +419,9 @@ function MobileTabs({
     { key: "conclusion", label: "Conclusion" },
     { key: "references", label: "Refs" },
     { key: "appendix", label: "Appendix" },
-    { key: "coherence", label: "Coherence" },
-    { key: "language", label: "Language" },
     { key: "journal-finder", label: "Journals" },
     { key: "submission", label: "Submit" },
-    { key: "swarm", label: "Swarm" },
-    { key: "scorecard", label: "Score" },
+    { key: "review", label: "Review" },
     { key: "skills", label: "Skills" },
     { key: "toolkit", label: "Tools" },
     { key: "impact-studio", label: "Impact" },

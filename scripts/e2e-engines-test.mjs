@@ -48,6 +48,8 @@ const FILES = [
   "lib/knowledge/methods.ts",
   "lib/knowledge/opensource.ts",
   "lib/knowledge/mcp.ts",
+  "lib/knowledge/skillchains.ts",
+  "lib/knowledge/integrations.ts",
 ];
 
 const tsconfig = {
@@ -162,7 +164,7 @@ try {
     },
   };
   const ev = evaluateManuscript(strong);
-  if (ev.overall > 0 && ev.dimensions.length === 7 && ["A","B","C","D","F"].includes(ev.grade)) ok(`scorecard evaluates (overall ${ev.overall}, grade ${ev.grade})`); else no("scorecard shape", JSON.stringify({o:ev.overall,g:ev.grade}));
+  if (ev.overall > 0 && ev.dimensions.length >= 10 && ["A","B","C","D","F"].includes(ev.grade)) ok(`scorecard evaluates (overall ${ev.overall}, grade ${ev.grade}, ${ev.dimensions.length} dims)`); else no("scorecard shape", JSON.stringify({o:ev.overall,g:ev.grade,d:ev.dimensions.length}));
   const delta = compareEvaluations(weak, strong);
   if (delta.overallDelta > 0 && delta.verdict.includes("improvement")) ok(`eval proves improvement weak→strong (+${delta.overallDelta}, ${delta.verdict})`); else no("eval delta", JSON.stringify({d:delta.overallDelta,v:delta.verdict}));
 } catch (e) { no("eval run", e.message); }
@@ -188,7 +190,7 @@ try {
   const nTips = methods.researchTips?.length ?? 0;
   const nOss = oss.ossProjects?.length ?? 0;
   const nMcp = mcp.mcpServers?.length ?? 0;
-  if (nSkills >= 100) ok(`skills library loaded (${nSkills})`); else no("skills count", `${nSkills}`);
+  if (nSkills >= 180) ok(`skills library loaded (${nSkills})`); else no("skills count", `${nSkills} (<180)`);
   if (nTips >= 60) ok(`tips/methods loaded (${nTips})`); else no("tips count", `${nTips}`);
   if (nOss >= 18) ok(`open-source registry loaded (${nOss})`); else no("oss count", `${nOss}`);
   if (nMcp >= 40) ok(`MCP registry loaded (${nMcp})`); else no("mcp count", `${nMcp}`);
@@ -200,6 +202,27 @@ try {
   const verified = (oss.ossProjects || []).filter((p) => typeof p.stars === "number" && p.verifiedAt);
   if (verified.length >= 18) ok(`OSS registry GitHub-verified with live stars (${verified.length}/${nOss})`); else no("oss verified", `${verified.length}/${nOss}`);
 } catch (e) { no("knowledge run", e.message); }
+
+// v4: skill chains (epics) + platform integrations
+try {
+  const chains = await load("knowledge/skillchains.js");
+  const nChains = chains.skillChains?.length ?? 0;
+  if (nChains >= 10) ok(`skill chains / epics loaded (${nChains})`); else no("chains", `${nChains}`);
+  const integ = await load("knowledge/integrations.js");
+  const nInteg = integ.platformIntegrations?.length ?? 0;
+  if (nInteg >= 8) ok(`platform integrations documented (${nInteg})`); else no("integrations", `${nInteg}`);
+} catch (e) { no("chains/integrations run", e.message); }
+
+// v4: journals enriched with 2026 data — free-APC + verifiedAt present
+try {
+  const { allJournals } = await load("journals/index.js");
+  const all = allJournals();
+  const freeApc = all.filter((j) => j.freeApc === true).length;
+  const verified2026 = all.filter((j) => j.verifiedAt === "2026-05-30").length;
+  if (all.length >= 60) ok(`journal DB expanded (${all.length} journals)`); else no("journal expand", `${all.length}`);
+  if (freeApc >= 5) ok(`free-APC journals present (${freeApc})`); else no("free-apc", `${freeApc}`);
+  if (verified2026 >= 30) ok(`journals carry 2026 verification (${verified2026})`); else no("verified2026", `${verified2026}`);
+} catch (e) { no("journal v4 run", e.message); }
 
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${pass}/${pass + fail} checks passed`);

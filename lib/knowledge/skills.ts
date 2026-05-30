@@ -23,7 +23,7 @@ export type SkillArea =
   | "peer-review"
   | "productivity";
 
-export type SkillLevel = "beginner" | "intermediate" | "advanced";
+export type SkillLevel = "beginner" | "intermediate" | "advanced" | "expert";
 
 export type ResearchSkill = {
   id: string;
@@ -2523,6 +2523,1124 @@ export const researchSkills: ResearchSkill[] = [
       "Testing baseline differences in a randomized trial.",
     ],
     standards: ["CONSORT"],
+  },
+
+  // ════════════════════════════════════════════════════════════════════════
+  // ADVANCED & EXPERT DEPTH — added to deepen the library
+  // ════════════════════════════════════════════════════════════════════════
+
+  // ──────────────────────────────────────────── ADVANCED META-ANALYSIS (review)
+  {
+    id: "meta-heterogeneity-deep",
+    title: "Diagnose and act on heterogeneity (not just report I-squared)",
+    area: "review",
+    level: "expert",
+    whatYouLearn:
+      "How to characterize between-study heterogeneity with tau-squared and a prediction interval, decide whether pooling is defensible, and choose the right response (subgroup, meta-regression, or no pooling).",
+    steps: [
+      "Report tau-squared (absolute heterogeneity) and a 95% prediction interval, not I-squared alone — I-squared is relative and inflates with study precision.",
+      "Interpret the prediction interval clinically: if it spans benefit and harm, a single summary effect is misleading.",
+      "Pre-specify candidate effect modifiers and probe them with subgroup analysis or meta-regression, requiring ~10 studies per covariate.",
+      "If heterogeneity is unexplained and substantial, present the range and prediction interval rather than over-trusting the pooled point.",
+      "Re-estimate tau-squared with an appropriate method (REML or Paule-Mandel) rather than DerSimonian-Laird by default.",
+    ],
+    pitfalls: [
+      "Treating I-squared as the amount of heterogeneity rather than the proportion of variance due to it.",
+      "Running meta-regression on too few studies, producing spurious 'explanations'.",
+      "Reporting a tidy pooled effect while the prediction interval crosses the null.",
+    ],
+    standards: ["Cochrane", "PRISMA"],
+    promptTemplate:
+      "I have a random-effects meta-analysis with these per-study effects and variances: {data}. Help me report tau-squared and a 95% prediction interval, interpret whether pooling is defensible, and list pre-specified effect modifiers worth probing. Do not invent studies or numbers.",
+  },
+  {
+    id: "meta-regression",
+    title: "Run and report meta-regression rigorously",
+    area: "review",
+    level: "expert",
+    whatYouLearn:
+      "How to use study-level covariates to explain heterogeneity without falling into ecological fallacy or overfitting.",
+    steps: [
+      "Pre-specify covariates in the protocol; limit to roughly one per ten studies.",
+      "Use a mixed-effects (random-effects) meta-regression, reporting the residual tau-squared and R-squared analog.",
+      "Interpret coefficients as associations between study-level characteristics and effect size, not individual-level effects.",
+      "Check for confounding among covariates and report the permutation-test p-value for robustness.",
+    ],
+    pitfalls: [
+      "Aggregation/ecological bias: inferring patient-level relationships from study-level means.",
+      "Fishing across many covariates and reporting only the significant one.",
+    ],
+    standards: ["Cochrane"],
+  },
+  {
+    id: "meta-publication-bias",
+    title: "Assess small-study effects and publication bias correctly",
+    area: "review",
+    level: "expert",
+    whatYouLearn:
+      "How to investigate publication bias with the right tools for your effect measure and number of studies, and how to express the conclusion cautiously.",
+    steps: [
+      "Use a funnel plot and a formal test only with enough studies (typically >=10) and adequate variance in study sizes.",
+      "Match the test to the effect: Egger for continuous/log-ratio measures, Peters or Harbord for binary outcomes to avoid artefactual asymmetry.",
+      "Distinguish publication bias from other causes of asymmetry (true heterogeneity, poor methodology in small studies, chance).",
+      "Consider trim-and-fill or a selection model as sensitivity analyses, framing them as exploratory, not corrective.",
+    ],
+    pitfalls: [
+      "Reading a funnel plot with 5 studies and over-interpreting asymmetry.",
+      "Using Egger's test on a log-odds-ratio outcome where it is biased.",
+      "Presenting trim-and-fill's adjusted estimate as the 'true' effect.",
+    ],
+    standards: ["Cochrane", "PRISMA"],
+  },
+  {
+    id: "meta-grade",
+    title: "Rate certainty of evidence with GRADE",
+    area: "review",
+    level: "expert",
+    whatYouLearn:
+      "How to move from a pooled estimate to a defensible certainty rating by assessing risk of bias, inconsistency, indirectness, imprecision, and publication bias.",
+    steps: [
+      "Start RCT evidence at high certainty and observational evidence at low, then rate down or up per domain.",
+      "Rate down for serious risk of bias, inconsistency (unexplained heterogeneity), indirectness, imprecision (CI crossing a decision threshold or few events), and suspected publication bias.",
+      "Rate up observational evidence for a large effect, dose-response, or when plausible confounding would reduce a demonstrated effect.",
+      "Assemble a Summary of Findings table with absolute effects and the certainty rating per outcome.",
+      "Write the certainty rationale explicitly so a reader can audit each judgment.",
+    ],
+    pitfalls: [
+      "Conflating quality of individual studies with certainty of the body of evidence.",
+      "Rating down twice for the same underlying problem.",
+      "Reporting only relative effects without absolute risk differences in the SoF table.",
+    ],
+    standards: ["GRADE", "Cochrane", "PRISMA"],
+    promptTemplate:
+      "Walk me through a GRADE assessment for this outcome: design {design}, pooled effect {effect}, heterogeneity {heterogeneity}, risk of bias {rob}, event count {events}. For each of the five domains, state the judgment and rationale, then give the overall certainty. Do not invent data.",
+  },
+  {
+    id: "meta-ipd",
+    title: "Plan an individual-participant-data (IPD) meta-analysis",
+    area: "review",
+    level: "expert",
+    whatYouLearn:
+      "How an IPD synthesis differs from aggregate-data meta-analysis and when its extra cost is justified.",
+    steps: [
+      "Justify IPD: harmonized outcome definitions, time-to-event analysis, and patient-level effect modification.",
+      "Choose one-stage (single model with study as a random effect) vs two-stage (analyze each study then pool) and keep the clustering by study.",
+      "Pre-specify a data-sharing and harmonization plan and a risk-of-bias assessment for each contributing dataset.",
+      "Examine treatment-covariate interactions at the patient level, avoiding the aggregation bias of meta-regression.",
+    ],
+    pitfalls: [
+      "Ignoring clustering by study in a one-stage model (treating all patients as one sample).",
+      "Availability bias when only some trials share data.",
+    ],
+    standards: ["PRISMA-IPD", "Cochrane"],
+  },
+  {
+    id: "meta-network",
+    title: "Interpret a network meta-analysis",
+    area: "review",
+    level: "expert",
+    whatYouLearn:
+      "How to combine direct and indirect comparisons across multiple treatments while checking the assumptions that make it valid.",
+    steps: [
+      "Assess transitivity: are the trials similar enough in effect modifiers to support indirect comparison?",
+      "Check consistency between direct and indirect evidence (node-splitting or design-by-treatment interaction).",
+      "Report the network geometry and rank treatments cautiously (SUCRA/rankograms), noting rankings can mislead when CIs overlap.",
+      "Apply GRADE for network meta-analysis to each comparison.",
+    ],
+    pitfalls: [
+      "Trusting a treatment ranking when the credible intervals overlap heavily.",
+      "Combining trials whose populations violate transitivity.",
+    ],
+    standards: ["PRISMA-NMA", "GRADE"],
+  },
+
+  // ──────────────────────────────────────────── CAUSAL INFERENCE (statistics)
+  {
+    id: "causal-dag",
+    title: "Use DAGs to choose an adjustment set",
+    area: "statistics",
+    level: "expert",
+    whatYouLearn:
+      "How to encode causal assumptions in a directed acyclic graph and identify the minimal sufficient adjustment set that blocks confounding without opening collider paths.",
+    steps: [
+      "Draw the exposure, outcome, and every common cause, mediator, and collider you can justify.",
+      "Apply the backdoor criterion: block all backdoor paths by adjusting for confounders only.",
+      "Identify the minimal sufficient adjustment set (a tool like a DAG checker can confirm it).",
+      "Explicitly NOT adjust for mediators (which would estimate a direct effect) or colliders (which induce bias).",
+      "Report the DAG and adjustment set so reviewers can challenge the assumptions, not just the model.",
+    ],
+    pitfalls: [
+      "Adjusting for a collider (e.g., a common effect of exposure and outcome) and creating selection bias.",
+      "Adjusting for a mediator when the target is the total effect.",
+      "Choosing covariates by statistical significance rather than causal role.",
+    ],
+    standards: ["STROBE"],
+    promptTemplate:
+      "Here is my causal question: effect of {exposure} on {outcome}. Candidate variables: {variables}. Help me classify each as confounder, mediator, collider, or competing exposure, and propose a minimal sufficient adjustment set using the backdoor criterion. Flag any variable I should NOT adjust for and why.",
+  },
+  {
+    id: "causal-propensity",
+    title: "Apply propensity score methods correctly",
+    area: "statistics",
+    level: "expert",
+    whatYouLearn:
+      "How to estimate and use a propensity score (matching, weighting, or adjustment), check balance, and report the estimand it targets.",
+    steps: [
+      "Model the propensity (probability of treatment) on pre-treatment confounders only — never post-treatment variables.",
+      "Choose the approach to match the estimand: matching/ATT, IPTW for ATE, or overlap weights for the population with equipoise.",
+      "Assess covariate balance with standardized mean differences (target < 0.1), not significance tests.",
+      "Check positivity/overlap of the score distributions and trim or report the region of common support.",
+      "Use a robust or matched variance estimator and report the effective sample size after weighting.",
+    ],
+    pitfalls: [
+      "Including instruments or post-treatment variables in the propensity model.",
+      "Judging balance with p-values rather than standardized differences.",
+      "Extreme weights from poor overlap inflating variance and bias.",
+    ],
+    standards: ["STROBE"],
+  },
+  {
+    id: "causal-iv",
+    title: "Use instrumental variables to address unmeasured confounding",
+    area: "statistics",
+    level: "expert",
+    whatYouLearn:
+      "How to identify a valid instrument, defend the three core assumptions, and interpret the local (complier) effect it estimates.",
+    steps: [
+      "Defend relevance: the instrument strongly predicts exposure (report the first-stage F; weak if < 10).",
+      "Defend the exclusion restriction: the instrument affects the outcome only through the exposure.",
+      "Defend independence: the instrument is unrelated to unmeasured confounders.",
+      "Estimate with two-stage least squares (or the appropriate analog) and report it as a local average treatment effect among compliers.",
+      "Probe assumptions with falsification/negative-control tests where possible.",
+    ],
+    pitfalls: [
+      "A weak instrument that biases the estimate toward the confounded observational result.",
+      "Interpreting the IV estimate as the population average effect rather than the complier effect.",
+      "Assuming the untestable exclusion restriction without argument.",
+    ],
+    standards: ["STROBE"],
+  },
+  {
+    id: "causal-target-trial",
+    title: "Emulate a target trial from observational data",
+    area: "statistics",
+    level: "expert",
+    whatYouLearn:
+      "How to specify the hypothetical randomized trial you would run, then emulate each component to avoid immortal-time and prevalent-user biases.",
+    steps: [
+      "Write the protocol of the target trial: eligibility, treatment strategies, assignment, follow-up start, outcome, and estimand.",
+      "Align time zero so eligibility, treatment assignment, and follow-up start coincide — this prevents immortal-time bias.",
+      "Use a new-user (incident) design to avoid prevalent-user and depletion-of-susceptibles bias.",
+      "Emulate randomization with adjustment, weighting, or g-methods for time-varying confounding.",
+      "Report the explicit correspondence between each trial component and its emulation.",
+    ],
+    pitfalls: [
+      "Misaligned time zero creating immortal-time bias (the classic 'survivor treatment' advantage).",
+      "Including prevalent users and conditioning on having survived to treatment.",
+    ],
+    standards: ["STROBE", "RECORD"],
+    promptTemplate:
+      "Help me draft a target-trial-emulation protocol for the effect of {treatment strategies} on {outcome} in {population} using {data source}. Specify eligibility, time zero alignment, treatment strategies, the estimand, and the confounding-control approach. Flag immortal-time risks.",
+  },
+  {
+    id: "causal-mediation",
+    title: "Conduct a causal mediation analysis",
+    area: "statistics",
+    level: "expert",
+    whatYouLearn:
+      "How to decompose a total effect into direct and indirect (mediated) components under explicit identification assumptions.",
+    steps: [
+      "Define the estimands: controlled direct effect or natural direct/indirect effects.",
+      "State the four no-unmeasured-confounding assumptions (exposure-outcome, mediator-outcome, exposure-mediator, and no mediator-outcome confounder affected by exposure).",
+      "Model the mediator and outcome, allowing for exposure-mediator interaction.",
+      "Report the proportion mediated with a sensitivity analysis for unmeasured mediator-outcome confounding.",
+    ],
+    pitfalls: [
+      "Using the old Baron-Kenny product method while ignoring exposure-mediator interaction.",
+      "Ignoring a confounder of the mediator-outcome relationship that is affected by exposure.",
+    ],
+    standards: ["STROBE"],
+  },
+  {
+    id: "causal-negative-controls",
+    title: "Use negative controls to detect residual bias",
+    area: "statistics",
+    level: "advanced",
+    whatYouLearn:
+      "How negative-control outcomes and exposures can reveal unmeasured confounding or systematic error in observational studies.",
+    steps: [
+      "Choose a negative-control outcome that the exposure cannot plausibly cause but shares the confounding structure.",
+      "Estimate the 'effect' on the negative control; a non-null result signals residual bias.",
+      "Optionally calibrate your primary estimate using the negative-control distribution.",
+      "Report negative-control findings alongside the primary result.",
+    ],
+    pitfalls: [
+      "Choosing a negative control that does not share the confounders of interest.",
+      "Ignoring a clearly biased negative-control result.",
+    ],
+    standards: ["STROBE"],
+  },
+
+  // ──────────────────────────────────────────── SURVIVAL / TIME-TO-EVENT (statistics)
+  {
+    id: "stats-competing-risks",
+    title: "Handle competing risks in time-to-event analysis",
+    area: "statistics",
+    level: "expert",
+    whatYouLearn:
+      "How to choose between cause-specific hazards and subdistribution (Fine-Gray) models and why naive Kaplan-Meier overestimates incidence under competing events.",
+    steps: [
+      "Identify competing events (e.g., death from another cause) that preclude the event of interest.",
+      "Report cumulative incidence functions, not 1 minus Kaplan-Meier, which overstates risk with competing events.",
+      "Use cause-specific Cox for etiology questions; use Fine-Gray subdistribution hazards for prediction/risk questions.",
+      "State which question you are answering and interpret the hazard ratio accordingly.",
+    ],
+    pitfalls: [
+      "Censoring competing events and using 1-KM, inflating the estimated incidence.",
+      "Interpreting a subdistribution hazard ratio as if it were cause-specific.",
+    ],
+    standards: ["STROBE", "SAMPL"],
+  },
+  {
+    id: "stats-time-varying",
+    title: "Model time-varying covariates and effects",
+    area: "statistics",
+    level: "expert",
+    whatYouLearn:
+      "How to handle covariates that change over follow-up and hazard ratios that are not constant, avoiding time-dependent bias.",
+    steps: [
+      "Use the counting-process (start-stop) data format so a covariate's value applies only to the interval it covers.",
+      "Distinguish a time-varying covariate from a time-varying effect (non-proportional hazards).",
+      "Test proportional hazards (e.g., Schoenfeld residuals); if violated, model an interaction with time or report time-specific effects.",
+      "Avoid conditioning on the future — a covariate measured after baseline must not classify earlier person-time.",
+    ],
+    pitfalls: [
+      "Immortal-time bias from assigning a later treatment status to earlier follow-up.",
+      "Forcing a single hazard ratio when the effect clearly changes over time.",
+    ],
+    standards: ["STROBE", "SAMPL"],
+  },
+  {
+    id: "stats-rmst",
+    title: "Report restricted mean survival time when hazards are non-proportional",
+    area: "statistics",
+    level: "advanced",
+    whatYouLearn:
+      "How to summarize a survival difference without assuming proportional hazards, using restricted mean survival time (RMST).",
+    steps: [
+      "Choose a clinically meaningful time horizon for the restriction.",
+      "Estimate RMST in each arm as the area under the survival curve up to that horizon.",
+      "Report the RMST difference (extra event-free time) with its CI as the effect measure.",
+      "Use RMST when the proportional-hazards assumption fails or curves cross.",
+    ],
+    pitfalls: [
+      "Reporting a hazard ratio when curves cross and the HR is uninterpretable.",
+      "Choosing the time horizon after seeing the curves to favor a result.",
+    ],
+    standards: ["SAMPL"],
+  },
+
+  // ──────────────────────────────────────────── MISSING DATA (statistics)
+  {
+    id: "stats-multiple-imputation",
+    title: "Run multiple imputation that satisfies reviewers",
+    area: "statistics",
+    level: "expert",
+    whatYouLearn:
+      "How to implement and report multiple imputation by chained equations so the analysis is valid under MAR and the uncertainty is propagated.",
+    steps: [
+      "State the missingness mechanism assumption (MAR) and why it is plausible given the design.",
+      "Build the imputation model to be at least as rich as the analysis model, including the outcome and any interactions/non-linearities (congeniality).",
+      "Use enough imputations (a common rule: at least as many as the percentage of incomplete cases) and report the number.",
+      "Pool estimates across imputations with Rubin's rules and report between- vs within-imputation variance where relevant.",
+      "Run a sensitivity analysis departing from MAR (e.g., delta-adjustment or pattern-mixture) for outcomes.",
+    ],
+    pitfalls: [
+      "Omitting the outcome from the imputation model, biasing associations toward the null.",
+      "Imputing then naively averaging point estimates without Rubin's rules (understating uncertainty).",
+      "Claiming MAR without any argument or sensitivity check.",
+    ],
+    standards: ["STROBE", "ICH E9(R1)"],
+    promptTemplate:
+      "Help me document a multiple-imputation plan for {variables} missing under a presumed {mechanism} mechanism, with analysis model {model}. Specify the imputation model, number of imputations, pooling, and a sensitivity analysis departing from MAR. Do not invent missingness rates.",
+  },
+
+  // ──────────────────────────────────────────── PREDICTION MODELS (methods)
+  {
+    id: "methods-prediction-development",
+    title: "Develop a clinical prediction model that will validate",
+    area: "methods",
+    level: "expert",
+    whatYouLearn:
+      "How to develop a prediction model with enough events per variable, sensible predictor handling, shrinkage, and honest internal validation.",
+    steps: [
+      "Estimate the required sample size for development (events per candidate predictor and the new EPV/sample-size criteria), not a rule-of-thumb alone.",
+      "Pre-specify candidate predictors clinically; avoid univariable screening that discards useful predictors.",
+      "Keep continuous predictors continuous (splines), not dichotomized, to preserve information.",
+      "Apply shrinkage/penalization (e.g., ridge/LASSO or a uniform shrinkage factor) to curb optimism.",
+      "Internally validate by bootstrapping the entire modelling process and report the optimism-corrected performance.",
+    ],
+    pitfalls: [
+      "Dichotomizing continuous predictors and losing predictive information.",
+      "Stepwise selection in small data inflating optimism and instability.",
+      "Reporting apparent (training) performance as if it were validated.",
+    ],
+    standards: ["TRIPOD", "TRIPOD+AI"],
+  },
+  {
+    id: "methods-prediction-validation",
+    title: "Validate and present a prediction model (discrimination + calibration)",
+    area: "methods",
+    level: "expert",
+    whatYouLearn:
+      "How to evaluate a model on external data with discrimination, calibration, and clinical utility, and present it for use.",
+    steps: [
+      "Assess discrimination (C-statistic/AUC) AND calibration (calibration plot, calibration-in-the-large and slope) — discrimination alone is insufficient.",
+      "Add a decision-curve analysis to show net benefit across threshold probabilities.",
+      "Validate externally (different time, place, or setting); report case-mix and whether recalibration was needed.",
+      "Present the final model usably: equation, nomogram, or a transparent risk calculator.",
+      "Report following TRIPOD (and TRIPOD+AI for machine-learning models, including data provenance and fairness).",
+    ],
+    pitfalls: [
+      "Reporting AUC but omitting calibration, hiding systematic over/under-prediction.",
+      "Calling temporal split-sample 'external' validation.",
+      "No decision-curve/net-benefit analysis, so clinical usefulness is unknown.",
+    ],
+    standards: ["TRIPOD", "TRIPOD+AI"],
+    promptTemplate:
+      "Help me structure the validation report for my prediction model: outcome {outcome}, validation data {data}, C-statistic {auc}. Remind me which calibration metrics and which clinical-utility analysis to report per TRIPOD, and how to describe external validity. Do not fabricate metrics.",
+  },
+  {
+    id: "methods-ml-rigor",
+    title: "Avoid leakage and overfitting in ML for health research",
+    area: "methods",
+    level: "expert",
+    whatYouLearn:
+      "How to prevent the data-leakage and evaluation errors that make machine-learning health models look far better than they generalize.",
+    steps: [
+      "Split data before any preprocessing; fit scaling, imputation, and feature selection inside cross-validation folds only.",
+      "Keep all records from one patient/site within a single fold to prevent group leakage.",
+      "Use nested cross-validation when tuning hyperparameters to avoid optimistic model selection.",
+      "Report performance with uncertainty, calibration, and a subgroup/fairness breakdown.",
+      "Document data provenance and the intended use following TRIPOD+AI.",
+    ],
+    pitfalls: [
+      "Fitting imputation or feature selection on the whole dataset before splitting (leakage).",
+      "Tuning on the test set and reporting that performance.",
+      "Reporting only AUC with no calibration or fairness assessment.",
+    ],
+    standards: ["TRIPOD+AI"],
+  },
+
+  // ──────────────────────────────────────────── QUALITATIVE RIGOR (methods)
+  {
+    id: "qual-rigor",
+    title: "Demonstrate qualitative rigor (trustworthiness)",
+    area: "methods",
+    level: "advanced",
+    whatYouLearn:
+      "How to establish credibility, transferability, dependability, and confirmability rather than borrowing quantitative validity language.",
+    steps: [
+      "Credibility: use triangulation, member checking, and prolonged engagement where appropriate.",
+      "Transferability: provide thick description of context so readers judge applicability.",
+      "Dependability and confirmability: keep an audit trail and reflexive memos.",
+      "Report against COREQ (interviews/focus groups) or SRQR.",
+    ],
+    pitfalls: [
+      "Reporting inter-rater 'reliability' as if qualitative coding were a measurement test.",
+      "Thin description that prevents readers judging transferability.",
+    ],
+    standards: ["COREQ", "SRQR"],
+  },
+  {
+    id: "qual-reflexivity",
+    title: "Write a reflexivity statement",
+    area: "methods",
+    level: "advanced",
+    whatYouLearn:
+      "How to make the researcher's position, assumptions, and influence on data generation explicit.",
+    steps: [
+      "State your disciplinary background, prior beliefs, and relationship to participants.",
+      "Explain how your position could shape data collection and interpretation.",
+      "Describe steps taken to examine and mitigate that influence (memos, peer debriefing).",
+      "Locate the statement transparently in methods or a dedicated section.",
+    ],
+    pitfalls: [
+      "A token reflexivity sentence with no engagement with actual influence.",
+      "Claiming a 'neutral' stance that denies positionality.",
+    ],
+    standards: ["COREQ", "SRQR"],
+  },
+  {
+    id: "qual-saturation",
+    title: "Justify sample size and saturation in qualitative work",
+    area: "methods",
+    level: "advanced",
+    whatYouLearn:
+      "How to define and evidence data/thematic saturation instead of asserting it.",
+    steps: [
+      "Define the type of saturation used (code, meaning, or theoretical) up front.",
+      "Describe the analytic point at which new data stopped generating new codes/themes.",
+      "Report the sampling strategy (purposive, maximum variation) that supports the claim.",
+      "Avoid claiming saturation as a numeric target unrelated to the data.",
+    ],
+    pitfalls: [
+      "Asserting saturation without any operational definition or evidence.",
+      "Treating a fixed n as proof of saturation.",
+    ],
+    standards: ["SRQR", "COREQ"],
+  },
+  {
+    id: "methods-mixed-methods",
+    title: "Report a mixed-methods design coherently",
+    area: "methods",
+    level: "advanced",
+    whatYouLearn:
+      "How to specify the integration of quantitative and qualitative strands rather than reporting two studies side by side.",
+    steps: [
+      "Name the design (convergent, explanatory-sequential, exploratory-sequential) and its rationale.",
+      "State the timing, priority, and point of integration of the two strands.",
+      "Report integration explicitly (joint displays, meta-inferences), not just parallel results.",
+      "Discuss where the strands converge, diverge, and how you reconcile them.",
+    ],
+    pitfalls: [
+      "Two disconnected analyses with no integration ('quant + qual' not 'mixed').",
+      "No stated rationale for why mixing adds value.",
+    ],
+    standards: ["GRAMMS"],
+  },
+
+  // ──────────────────────────────────────────── DEALING WITH REVIEWERS / REVISION
+  {
+    id: "revision-reviewer-2",
+    title: "Disarm a hostile 'Reviewer 2'",
+    area: "revision",
+    level: "expert",
+    whatYouLearn:
+      "How to turn an aggressive, dismissive, or partly-wrong review into accepted revisions without escalating or capitulating.",
+    steps: [
+      "Read the review twice, then wait a day; separate the substance from the tone.",
+      "Extract every actionable kernel even from rude comments — reviewers are often right about the symptom if wrong about the cause.",
+      "Respond to the strongest version of each criticism (steelman it), with data or citation, never matching the hostility.",
+      "Where the reviewer is factually wrong, correct courteously with evidence and offer a clarifying manuscript edit so future readers are not confused.",
+      "If a reviewer demands an out-of-scope study, explain the scope, offer a feasible analysis, and let the editor adjudicate.",
+    ],
+    pitfalls: [
+      "Mirroring the reviewer's tone or sarcasm in the response.",
+      "Conceding scientifically incorrect demands just to appease.",
+      "Dismissing a rude comment that nonetheless contains a valid point.",
+    ],
+    standards: ["COPE"],
+    promptTemplate:
+      "This reviewer comment is harsh and partly mistaken: \"\"\"{comment}\"\"\". Help me draft a calm, evidence-based response that (1) acknowledges any valid kernel, (2) corrects the error with reasoning, (3) proposes a concrete manuscript change, and (4) defers to the editor where needed. Keep it professional and non-defensive.",
+  },
+  {
+    id: "revision-rebuttal-mastery",
+    title: "Master the rebuttal letter as a persuasive document",
+    area: "revision",
+    level: "expert",
+    whatYouLearn:
+      "How to architect a response letter that makes the editor's accept decision easy: navigable, evidence-led, and visibly complete.",
+    steps: [
+      "Open with a concise summary of the major changes and the overall improvement.",
+      "Reproduce each comment, then respond with: position, what changed, and the exact revised text with location.",
+      "Use formatting (bold for reviewer text, indentation for new manuscript text) so the editor can scan in minutes.",
+      "Quantify your responsiveness ('all 14 comments addressed; 3 new analyses added').",
+      "Close by reaffirming fit and thanking reviewers for specific improvements.",
+    ],
+    pitfalls: [
+      "A wall of unformatted text the editor cannot navigate.",
+      "Vague 'we have revised the text accordingly' with no quote or location.",
+      "Claiming changes the manuscript does not actually contain.",
+    ],
+    standards: ["ICMJE", "COPE"],
+  },
+  {
+    id: "revision-conflicting-reviewers",
+    title: "Reconcile contradictory reviewer demands",
+    area: "revision",
+    level: "expert",
+    whatYouLearn:
+      "How to respond when two reviewers ask for opposite changes without alienating either or the editor.",
+    steps: [
+      "State plainly that the two comments conflict and quote both.",
+      "Explain the scientific trade-off and your reasoned choice.",
+      "Offer a compromise that partially satisfies each where feasible (e.g., main text + supplement).",
+      "Explicitly invite the editor to arbitrate the remaining tension.",
+    ],
+    pitfalls: [
+      "Silently siding with one reviewer and ignoring the other's comment.",
+      "Trying to satisfy both literally and producing an incoherent manuscript.",
+    ],
+    standards: ["COPE"],
+  },
+  {
+    id: "revision-new-analysis-scope",
+    title: "Negotiate requests for new experiments or analyses",
+    area: "revision",
+    level: "advanced",
+    whatYouLearn:
+      "How to decide which additional analyses to run, which to decline, and how to frame each to the editor.",
+    steps: [
+      "Classify each request: cheap-and-strengthening (do it), expensive-but-fair (negotiate), or out-of-scope (decline with rationale).",
+      "Run feasible sensitivity analyses that pre-empt the underlying worry even if not the literal request.",
+      "For declined requests, explain why the existing data answer the question or why the request changes the study's scope.",
+      "Document any analysis as exploratory and pre-empt multiplicity concerns.",
+    ],
+    pitfalls: [
+      "Agreeing to unfunded, infeasible experiments to avoid conflict.",
+      "Declining everything and appearing unresponsive.",
+    ],
+    standards: ["COPE"],
+  },
+  {
+    id: "revision-resubmission-strategy",
+    title: "Plan a strategic resubmission after rejection",
+    area: "revision",
+    level: "expert",
+    whatYouLearn:
+      "How to convert a rejection into a stronger submission elsewhere by triaging feedback, repositioning, and choosing the next venue deliberately.",
+    steps: [
+      "Classify the rejection: desk/scope (reposition and reformat) vs peer-review/substance (fix the science first).",
+      "Implement the legitimate reviewer fixes even though you are moving journals — reviewers talk and rigor compounds.",
+      "Reframe the framing, abstract, and cover letter to the new journal's scope and audience.",
+      "Decide the next venue by fit and likely reviewer pool, not impact factor alone; keep a submission log.",
+      "If resubmitting to the same journal after a 'reject and resubmit', treat it as a new paper that visibly addresses prior concerns.",
+    ],
+    pitfalls: [
+      "Resubmitting unchanged to a near-identical journal and drawing the same reviewers.",
+      "Ignoring substantive critique because 'it was just one reviewer'.",
+    ],
+    standards: ["COPE"],
+  },
+  {
+    id: "revision-appeal",
+    title: "Write a measured appeal of an editorial decision",
+    area: "revision",
+    level: "advanced",
+    whatYouLearn:
+      "How to appeal a rejection when a review contains a clear factual error, without antagonizing the editor.",
+    steps: [
+      "Appeal only for a demonstrable factual/technical error, not because you disagree with the verdict.",
+      "Address the editor respectfully, cite the specific erroneous statement, and provide the evidence.",
+      "State precisely what you request (re-review, second opinion) and acknowledge the editor's final authority.",
+      "Keep it short, factual, and free of grievance.",
+    ],
+    pitfalls: [
+      "Appealing on taste or disappointment rather than a concrete error.",
+      "An emotional tone that hardens the editor's position.",
+    ],
+    standards: ["COPE"],
+  },
+
+  // ──────────────────────────────────────────── IMPACT / FRAMING / GRANTS
+  {
+    id: "writing-significance-statement",
+    title: "Write a compelling significance / impact statement",
+    area: "writing",
+    level: "expert",
+    whatYouLearn:
+      "How to articulate why the work matters to a broad reader in a few sentences without hype, the way high-impact journals and funders require.",
+    steps: [
+      "State the problem and its scale in one sentence a non-specialist grasps.",
+      "State what was unknown and what your work now establishes.",
+      "State the concrete consequence: what changes in understanding, practice, or policy.",
+      "Calibrate certainty to the design — significance is about importance, not overstatement.",
+    ],
+    pitfalls: [
+      "Inflating significance with 'paradigm-shifting' language the data cannot support.",
+      "Describing what you did instead of why it matters.",
+    ],
+    promptTemplate:
+      "Draft a 4-sentence significance statement for a {design} that found {finding}. Sentence 1: the problem and its scale. Sentence 2: the gap. Sentence 3: what we now establish. Sentence 4: the concrete implication. No hype; certainty matched to design.",
+  },
+  {
+    id: "writing-grant-framing",
+    title: "Frame a manuscript to align with a funding narrative",
+    area: "writing",
+    level: "advanced",
+    whatYouLearn:
+      "How to position a paper so it visibly advances the aims of the funding that supported it and seeds the next proposal.",
+    steps: [
+      "Connect the study's contribution to the broader programmatic goal it serves.",
+      "Use language that maps to the funder's mission without overclaiming this single study.",
+      "Highlight the methodological capability built, which strengthens future grant competitiveness.",
+      "State the next logical aim the findings justify (feeding a future application).",
+    ],
+    pitfalls: [
+      "Overclaiming translational impact from an early-stage study.",
+      "Framing so promotional it reads as marketing, not science.",
+    ],
+  },
+  {
+    id: "intro-so-what",
+    title: "Pass the 'so what?' test in the first paragraph",
+    area: "introduction",
+    level: "advanced",
+    whatYouLearn:
+      "How to make the opening establish stakes high enough that an editor reads on, without resorting to cliche.",
+    steps: [
+      "Lead with the concrete consequence of the unsolved problem (clinical, economic, scientific).",
+      "Avoid generic openers ('X is a major public health problem') unless quantified and cited.",
+      "Make the reader feel the cost of the gap before you name it.",
+      "Ensure the stakes you raise are exactly the ones your study addresses.",
+    ],
+    pitfalls: [
+      "A cliche opening sentence editors have read a thousand times.",
+      "Raising stakes the study does not actually speak to.",
+    ],
+  },
+
+  // ──────────────────────────────────────────── OPEN SCIENCE / REPRODUCIBILITY (expert)
+  {
+    id: "repro-registered-report",
+    title: "Submit a Registered Report",
+    area: "reproducibility",
+    level: "expert",
+    whatYouLearn:
+      "How the two-stage Registered Report format works and how it protects against publication bias and HARKing by peer-reviewing the protocol before data collection.",
+    steps: [
+      "Stage 1: submit Introduction, Methods, and analysis plan for peer review before collecting data.",
+      "Address Stage 1 review to earn in-principle acceptance (IPA), which commits the journal to publish regardless of results.",
+      "Collect data and execute exactly the registered analyses; clearly separate pre-registered from exploratory analyses.",
+      "Stage 2: submit the full paper; reviewers check adherence, not whether results are exciting.",
+    ],
+    pitfalls: [
+      "Adding unregistered analyses at Stage 2 without labelling them exploratory.",
+      "Treating IPA as a guarantee even if you deviate from the registered protocol.",
+    ],
+    standards: ["OSF", "Registered Reports"],
+  },
+  {
+    id: "repro-pipeline",
+    title: "Build a reproducible end-to-end analysis pipeline",
+    area: "reproducibility",
+    level: "expert",
+    whatYouLearn:
+      "How to wire raw data to final tables/figures so anyone can reproduce every number with one command.",
+    steps: [
+      "Separate raw (read-only) data from derived data and outputs; never edit raw data in place.",
+      "Script every transformation; eliminate manual spreadsheet steps that cannot be reproduced.",
+      "Use a workflow/build tool (e.g., Make or a workflow manager) so outputs regenerate deterministically.",
+      "Pin the computational environment (lockfile/container) and record seeds.",
+      "Map each manuscript table/figure to the exact script that produces it in a README.",
+    ],
+    pitfalls: [
+      "A manual click-through analysis that cannot be re-run.",
+      "Outputs that silently depend on the order scripts were run.",
+    ],
+    standards: ["TOP Guidelines", "FAIR"],
+  },
+  {
+    id: "repro-data-availability-real",
+    title: "Write a data/code availability statement that holds up",
+    area: "reproducibility",
+    level: "advanced",
+    whatYouLearn:
+      "How to write an availability statement that is specific, honest, and actually actionable rather than a placeholder.",
+    steps: [
+      "State exactly what is available (data, code, materials) and what is restricted, with the reason for any restriction.",
+      "Give the persistent identifier (DOI/accession) and the repository, not a personal website.",
+      "If access is controlled, name the access mechanism, the committee, and the realistic timeline.",
+      "Match the statement to what you have genuinely deposited before submission.",
+    ],
+    pitfalls: [
+      "'Available on reasonable request' with no intent or mechanism to share.",
+      "Linking to a lab website that will rot, instead of an archived DOI.",
+    ],
+    standards: ["FAIR", "ICMJE", "TOP Guidelines"],
+  },
+  {
+    id: "repro-computational-env",
+    title: "Capture the computational environment for the long term",
+    area: "reproducibility",
+    level: "advanced",
+    whatYouLearn:
+      "How to ensure your analysis still runs years later by freezing dependencies and the runtime.",
+    steps: [
+      "Record exact versions of language, packages, and the OS-level dependencies.",
+      "Provide a lockfile and, where feasible, a container image or environment definition.",
+      "Archive the environment specification alongside the code with a DOI.",
+      "Test reproduction on a clean machine before submission.",
+    ],
+    pitfalls: [
+      "Unpinned 'latest' dependencies that change behaviour over time.",
+      "An environment that only works on the original author's laptop.",
+    ],
+    standards: ["FAIR", "TOP Guidelines"],
+  },
+
+  // ──────────────────────────────────────────── ETHICS / AUTHORSHIP (expert edge cases)
+  {
+    id: "ethics-authorship-dispute",
+    title: "Prevent and resolve authorship disputes",
+    area: "ethics",
+    level: "expert",
+    whatYouLearn:
+      "How to use upfront agreements and recognized processes to handle disagreements over who is an author and in what order.",
+    steps: [
+      "Agree authorship and order in writing at project start, revisiting as contributions evolve.",
+      "Apply the four ICMJE criteria to each person; do not trade authorship for funding or seniority.",
+      "Document contributions with CRediT roles so claims are auditable.",
+      "If a dispute persists, escalate to the institution or use COPE guidance/flowcharts rather than unilateral removal.",
+      "Never add or remove an author after submission without all authors' written agreement.",
+    ],
+    pitfalls: [
+      "Gift, guest, or ghost authorship that breaches all four criteria.",
+      "Removing a contributor's name without consent during a dispute.",
+    ],
+    standards: ["ICMJE", "CRediT", "COPE"],
+  },
+  {
+    id: "ethics-credit-roles",
+    title: "Assign CRediT contributor roles precisely",
+    area: "ethics",
+    level: "intermediate",
+    whatYouLearn:
+      "How to map each author to specific CRediT taxonomy roles so contributions are transparent and disputes are pre-empted.",
+    steps: [
+      "Review the 14 CRediT roles (conceptualization, methodology, analysis, writing, etc.).",
+      "Assign each author the specific roles they genuinely performed.",
+      "Confirm everyone listed still meets the ICMJE authorship criteria, with CRediT as a supplement, not a substitute.",
+      "Record the roles in the manuscript's contributorship statement.",
+    ],
+    pitfalls: [
+      "Using CRediT to justify authorship for someone who fails ICMJE criteria.",
+      "Assigning every author every role generically.",
+    ],
+    standards: ["CRediT", "ICMJE"],
+  },
+  {
+    id: "ethics-research-edge-cases",
+    title: "Navigate research-ethics edge cases",
+    area: "ethics",
+    level: "expert",
+    whatYouLearn:
+      "How to handle ambiguous situations: secondary use of data, waiver of consent, vulnerable populations, dual-use concerns, and incidental findings.",
+    steps: [
+      "For secondary data use, confirm the original consent and ethics approval cover the new purpose, or seek a waiver.",
+      "For vulnerable populations, document additional safeguards and justify their inclusion.",
+      "For incidental findings, pre-specify a disclosure plan that respects autonomy and clinical duty.",
+      "For dual-use or sensitive findings, consult institutional and biosafety review before dissemination.",
+      "When in doubt, ask the ethics committee in writing rather than assuming.",
+    ],
+    pitfalls: [
+      "Reusing data for a purpose the original consent never covered.",
+      "Assuming a waiver applies without committee confirmation.",
+    ],
+    standards: ["Declaration of Helsinki", "COPE", "ICMJE"],
+  },
+  {
+    id: "ethics-image-integrity",
+    title: "Ensure image and data integrity",
+    area: "ethics",
+    level: "advanced",
+    whatYouLearn:
+      "How to prepare images and data so they pass integrity screening and meet what journals consider acceptable manipulation.",
+    steps: [
+      "Apply only adjustments that affect the whole image equally (brightness/contrast) and disclose them.",
+      "Never selectively erase, clone, or splice features; keep unprocessed originals.",
+      "Disclose any grouping/cropping of blots or gels with clear delineation.",
+      "Retain raw data and image files to answer post-publication queries.",
+    ],
+    pitfalls: [
+      "Selective enhancement that changes the scientific meaning.",
+      "Undisclosed splicing of lanes or fields.",
+    ],
+    standards: ["COPE", "ICMJE"],
+  },
+
+  // ──────────────────────────────────────────── JOURNAL STRATEGY / SUBMISSION
+  {
+    id: "prod-journal-fit-strategy",
+    title: "Choose the right journal with a fit-and-feasibility matrix",
+    area: "productivity",
+    level: "advanced",
+    whatYouLearn:
+      "How to select a target journal by weighing scope fit, audience, likely acceptance, speed, cost, and indexing, instead of impact factor alone.",
+    steps: [
+      "Shortlist journals that recently published your study type and question.",
+      "Score each on scope fit, audience reach, acceptance likelihood, time-to-decision, APC/cost, and indexing.",
+      "Sanity-check legitimacy (indexing, transparent editorial board) to avoid predatory venues.",
+      "Sequence a primary and two fallback journals before submitting.",
+    ],
+    pitfalls: [
+      "Chasing impact factor into a journal whose scope does not fit (desk reject).",
+      "Submitting to an unindexed/predatory journal that harms the record.",
+    ],
+  },
+  {
+    id: "prod-presubmission-inquiry",
+    title: "Write a presubmission inquiry to an editor",
+    area: "productivity",
+    level: "intermediate",
+    whatYouLearn:
+      "How to ask an editor whether your study fits before investing in full submission, especially for high-impact venues.",
+    steps: [
+      "Summarize the question, design, and headline finding in a short paragraph.",
+      "State explicitly why it matters to this journal's readership.",
+      "Ask directly whether the editors would consider a full submission.",
+      "Keep it brief and free of attachments unless requested.",
+    ],
+    pitfalls: [
+      "Sending the whole manuscript instead of a concise inquiry.",
+      "Overstating the finding to secure interest.",
+    ],
+  },
+  {
+    id: "prod-equator-extension-select",
+    title: "Select the precise EQUATOR guideline and extension",
+    area: "productivity",
+    level: "advanced",
+    whatYouLearn:
+      "How to pick not just the base reporting guideline but the correct extension for your design's specifics.",
+    steps: [
+      "Classify the design precisely (e.g., cluster RCT, pilot/feasibility, non-inferiority, AI intervention).",
+      "Start from the base guideline (CONSORT/STROBE/PRISMA/etc.).",
+      "Identify the matching extension (e.g., CONSORT cluster, CONSORT-AI, PRISMA-S, SPIRIT-AI, STARD-AI, PRISMA-ScR).",
+      "Adopt both the base checklist and the extension from the planning stage.",
+    ],
+    pitfalls: [
+      "Using only base CONSORT for a cluster or AI trial and missing extension items.",
+      "Choosing an extension that does not match the actual design.",
+    ],
+    standards: ["EQUATOR", "CONSORT", "SPIRIT", "PRISMA"],
+  },
+
+  // ──────────────────────────────────────────── STATISTICS (further expert)
+  {
+    id: "stats-estimand",
+    title: "Define the estimand before the analysis (ICH E9(R1))",
+    area: "statistics",
+    level: "expert",
+    whatYouLearn:
+      "How to specify the precise quantity to be estimated — including how intercurrent events are handled — before choosing any analysis method.",
+    steps: [
+      "Specify the five estimand attributes: population, treatment, endpoint, intercurrent-event strategy, and summary measure.",
+      "Choose an intercurrent-event strategy (treatment-policy, hypothetical, composite, while-on-treatment, principal-stratum) and justify it clinically.",
+      "Align the main analysis and sensitivity analyses to the chosen estimand.",
+      "State the estimand in the protocol/SAP so the analysis answers a pre-defined question.",
+    ],
+    pitfalls: [
+      "Jumping to 'ITT vs per-protocol' without first defining the estimand.",
+      "Letting the available analysis define the question after the fact.",
+    ],
+    standards: ["ICH E9(R1)"],
+  },
+  {
+    id: "stats-cluster-design",
+    title: "Account for clustering in design and analysis",
+    area: "statistics",
+    level: "expert",
+    whatYouLearn:
+      "How to design and analyze cluster-randomized and multilevel data so the intracluster correlation is respected throughout.",
+    steps: [
+      "Inflate the sample size by the design effect (1 + (m-1)*ICC) for cluster designs.",
+      "Analyze with a mixed-effects model or GEE that accounts for within-cluster correlation.",
+      "Report the ICC and the number of clusters, not just the number of individuals.",
+      "Beware too few clusters, which undermines the analysis regardless of total n.",
+    ],
+    pitfalls: [
+      "Analyzing cluster data as if observations were independent (false precision).",
+      "Many individuals but too few clusters to support the model.",
+    ],
+    standards: ["CONSORT cluster", "SAMPL"],
+  },
+  {
+    id: "stats-interrupted-time-series",
+    title: "Analyze an interrupted time series",
+    area: "statistics",
+    level: "advanced",
+    whatYouLearn:
+      "How to evaluate a population-level intervention using segmented regression while handling trend, autocorrelation, and seasonality.",
+    steps: [
+      "Model level and slope changes at the intervention point with segmented regression.",
+      "Test and adjust for autocorrelation in the residuals.",
+      "Account for seasonality and any concurrent events that threaten the inference.",
+      "Use enough pre- and post-intervention points to estimate trends reliably.",
+    ],
+    pitfalls: [
+      "Ignoring autocorrelation and overstating precision.",
+      "Too few time points to distinguish a level change from noise.",
+    ],
+    standards: ["SAMPL"],
+  },
+  {
+    id: "stats-dag-table-two",
+    title: "Avoid the Table 2 fallacy",
+    area: "statistics",
+    level: "expert",
+    whatYouLearn:
+      "How to interpret a multivariable model's coefficients correctly, recognizing that adjustment coefficients for covariates are not all causal effects.",
+    steps: [
+      "Recognize that a single model can validly estimate the effect of the exposure but not simultaneously of every covariate.",
+      "Do not present every adjustment-variable coefficient as a causal effect with the same interpretation.",
+      "Report the primary effect estimate prominently; treat covariate coefficients as adjustment, not findings.",
+      "Use a DAG to state which single effect the model is designed to estimate.",
+    ],
+    pitfalls: [
+      "Interpreting a confounder's coefficient as its causal effect on the outcome.",
+      "Listing all coefficients with equal causal weight in 'Table 2'.",
+    ],
+    standards: ["STROBE"],
+  },
+
+  // ──────────────────────────────────────────── FIGURES (advanced)
+  {
+    id: "fig-calibration-plot",
+    title: "Build and read a calibration plot",
+    area: "figures",
+    level: "advanced",
+    whatYouLearn:
+      "How to display agreement between predicted and observed risk for a prediction model.",
+    steps: [
+      "Plot observed outcome frequency against predicted probability, with a smoothed (loess) curve.",
+      "Add the 45-degree line of perfect calibration and a histogram of predicted risks.",
+      "Report calibration-in-the-large and the calibration slope alongside the plot.",
+      "Avoid only coarse decile grouping, which can hide miscalibration.",
+    ],
+    pitfalls: [
+      "Showing discrimination (ROC) but never calibration.",
+      "Relying on the Hosmer-Lemeshow test alone, which is insensitive and arbitrary.",
+    ],
+    standards: ["TRIPOD"],
+  },
+  {
+    id: "fig-decision-curve",
+    title: "Present a decision-curve (net benefit) analysis",
+    area: "figures",
+    level: "expert",
+    whatYouLearn:
+      "How to show whether using a model or marker improves clinical decisions across a range of threshold probabilities.",
+    steps: [
+      "Plot net benefit against threshold probability for the model, treat-all, and treat-none strategies.",
+      "Identify the threshold range where the model adds net benefit.",
+      "Interpret net benefit in terms of the harm-benefit trade-off the threshold encodes.",
+      "Report it as a complement to discrimination and calibration, not a replacement.",
+    ],
+    pitfalls: [
+      "Claiming clinical utility from AUC alone without net benefit.",
+      "Reading net benefit outside a clinically plausible threshold range.",
+    ],
+    standards: ["TRIPOD"],
+  },
+
+  // ──────────────────────────────────────────── WRITING (advanced)
+  {
+    id: "writing-storyline",
+    title: "Build a single-sentence storyline (the spine)",
+    area: "writing",
+    level: "advanced",
+    whatYouLearn:
+      "How to articulate the one-sentence argument that every section must serve, so the manuscript reads as one coherent story.",
+    steps: [
+      "Write the paper's claim in one sentence: in X, we show Y, which means Z.",
+      "Check every section advances that single claim; cut what does not.",
+      "Ensure the title, abstract, and conclusion all express the same spine.",
+      "Use the spine to arbitrate inclusion of every figure and analysis.",
+    ],
+    pitfalls: [
+      "A paper with two competing stories that dilutes both.",
+      "Sections that are individually fine but do not serve one argument.",
+    ],
+  },
+  {
+    id: "writing-revise-in-passes",
+    title: "Revise in structured passes, not all at once",
+    area: "writing",
+    level: "intermediate",
+    whatYouLearn:
+      "How to separate structural, paragraph, sentence, and proofreading edits so each is done well.",
+    steps: [
+      "Pass 1: structure — reverse-outline and fix section/paragraph order.",
+      "Pass 2: paragraphs — one idea each, topic sentence first.",
+      "Pass 3: sentences — active voice, cohesion, concision.",
+      "Pass 4: surface — numbers, citations, typos, formatting.",
+    ],
+    pitfalls: [
+      "Polishing sentences before the structure is settled, then cutting them.",
+      "Trying to fix everything in one read and missing structural problems.",
+    ],
+  },
+
+  // ──────────────────────────────────────────── PEER REVIEW (expert)
+  {
+    id: "peer-review-reproducibility",
+    title: "Appraise reproducibility and transparency as a reviewer",
+    area: "peer-review",
+    level: "advanced",
+    whatYouLearn:
+      "How to evaluate whether a manuscript's data, code, and reporting would let others reproduce the work.",
+    steps: [
+      "Check the data/code availability statement is specific and actionable.",
+      "Verify the reporting guideline checklist is completed and matches the text.",
+      "Look for pre-registration and whether the analyses match it.",
+      "Flag any result that cannot be traced to a described method.",
+    ],
+    pitfalls: [
+      "Reviewing only the narrative and ignoring transparency artefacts.",
+      "Accepting 'available on request' as adequate.",
+    ],
+    standards: ["TOP Guidelines", "COPE"],
+  },
+  {
+    id: "peer-detect-misconduct",
+    title: "Recognize and report suspected misconduct as a reviewer",
+    area: "peer-review",
+    level: "expert",
+    whatYouLearn:
+      "How to spot signs of fabrication, falsification, plagiarism, or image manipulation and escalate appropriately.",
+    steps: [
+      "Note implausible precision, duplicated images, or statistics that cannot arise from the described design.",
+      "Do not accuse in the review; describe the concern factually to the editor confidentially.",
+      "Let the editor and journal follow the COPE process; your role is to flag, not adjudicate.",
+      "Keep the manuscript confidential throughout.",
+    ],
+    pitfalls: [
+      "Making a public accusation rather than a confidential editor note.",
+      "Ignoring a clear integrity signal because it is uncomfortable.",
+    ],
+    standards: ["COPE Ethical Guidelines for Peer Reviewers"],
+  },
+
+  // ──────────────────────────────────────────── ABSTRACT / DISCUSSION (advanced extras)
+  {
+    id: "abstract-prisma",
+    title: "Write a PRISMA-compliant systematic review abstract",
+    area: "abstract",
+    level: "advanced",
+    whatYouLearn:
+      "How to report a review's objective, eligibility, sources, synthesis, included-study count, and certainty within the abstract structure.",
+    steps: [
+      "State the objective and eligibility criteria explicitly.",
+      "Report sources searched and the last search date.",
+      "Report the number of included studies/participants and the main synthesized effect with CI.",
+      "State the certainty of evidence (GRADE) and the registration number.",
+    ],
+    pitfalls: [
+      "Omitting the number of included studies or the search date.",
+      "Reporting a pooled effect without heterogeneity or certainty.",
+    ],
+    standards: ["PRISMA for Abstracts", "GRADE"],
+  },
+  {
+    id: "discussion-evidence-to-recommendation",
+    title: "Move from evidence to a calibrated recommendation",
+    area: "discussion",
+    level: "expert",
+    whatYouLearn:
+      "How to translate findings into a practice or policy implication scaled to the certainty of the evidence.",
+    steps: [
+      "State the implication explicitly tied to the certainty (e.g., GRADE) of the evidence.",
+      "Distinguish what the evidence supports now from what requires confirmation.",
+      "Consider values, preferences, and the balance of benefits and harms before recommending.",
+      "Avoid a strong recommendation from low-certainty evidence.",
+    ],
+    pitfalls: [
+      "A strong 'clinicians should' from a single underpowered study.",
+      "Ignoring harms and costs when recommending a practice change.",
+    ],
+    standards: ["GRADE"],
   },
 ];
 

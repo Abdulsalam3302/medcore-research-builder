@@ -648,6 +648,38 @@ export function SectionBuilder({
                 </CardBody>
               </Card>
             )}
+            {(feedback.languageNotes?.length ?? 0) > 0 && (
+              <Card>
+                <CardHeader
+                  title="Language editing applied"
+                  subtitle="Clarity, flow, and academic register improved by default — meaning preserved."
+                  right={<Badge kind="info">{feedback.languageNotes!.length}</Badge>}
+                />
+                <CardBody>
+                  <ul className="text-sm text-med-sub list-disc list-inside grid gap-1">
+                    {feedback.languageNotes!.map((m, i) => (
+                      <li key={i}>{m}</li>
+                    ))}
+                  </ul>
+                </CardBody>
+              </Card>
+            )}
+            {(feedback.coherenceNotes?.length ?? 0) > 0 && (
+              <Card>
+                <CardHeader
+                  title="Coherence checks"
+                  subtitle="Consistency with title, objective, design, and sibling sections."
+                  right={<Badge kind="warn">{feedback.coherenceNotes!.length}</Badge>}
+                />
+                <CardBody>
+                  <ul className="text-sm text-med-sub list-disc list-inside grid gap-1">
+                    {feedback.coherenceNotes!.map((m, i) => (
+                      <li key={i}>{m}</li>
+                    ))}
+                  </ul>
+                </CardBody>
+              </Card>
+            )}
           </>
         )}
       </div>

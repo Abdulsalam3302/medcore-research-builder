@@ -17,12 +17,9 @@ export type LifecycleKey =
   | "conclusion"
   | "references"
   | "appendix"
-  | "coherence"
-  | "language"
   | "journal-finder"
   | "submission"
-  | "swarm"
-  | "scorecard"
+  | "review"
   | "toolkit"
   | "skills"
   | "impact-studio"
@@ -50,13 +47,10 @@ const NAV_ITEMS: NavItem[] = [
   { key: "references", label: "References", phase: "Intra-Research" },
   { key: "appendix", label: "Appendix (optional)", phase: "Intra-Research" },
 
-  { key: "coherence", label: "Manuscript Coherence", phase: "Post-Research" },
-  { key: "language", label: "Language Studio", phase: "Post-Research" },
   { key: "journal-finder", label: "Journal Finder", phase: "Post-Research" },
   { key: "submission", label: "Submission & Quality", phase: "Post-Research" },
 
-  { key: "swarm", label: "AI Peer-Review Swarm", phase: "Quality & Empowerment" },
-  { key: "scorecard", label: "Manuscript Scorecard", phase: "Quality & Empowerment" },
+  { key: "review", label: "Review & Improve (score + AI swarm)", phase: "Quality & Empowerment" },
   { key: "skills", label: "Research Skills & Tips", phase: "Quality & Empowerment" },
   { key: "toolkit", label: "Tools & MCP Directory", phase: "Quality & Empowerment" },
 

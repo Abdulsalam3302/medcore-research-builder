@@ -41,6 +41,12 @@ export type OSSProject = {
   stars?: number;
   /** Date (YYYY-MM-DD) the entry was verified against the live source. */
   verifiedAt?: string;
+  /** One friendly sentence a non-technical researcher understands. */
+  plainSummary?: string;
+  /** A single emoji representing the tool/category. */
+  icon?: string;
+  /** A concrete "you'd use this when…" example in plain language. */
+  useCase?: string;
 };
 
 export const ossProjects: OSSProject[] = [
@@ -61,6 +67,11 @@ export const ossProjects: OSSProject[] = [
     note: "Canonical repo SakanaAI/AI-Scientist; a follow-up SakanaAI/AI-Scientist-v2 also exists. GitHub reports its primary language as Jupyter Notebook.",
     stars: 13828,
     verifiedAt: "2026-05-30",
+    icon: "🤖",
+    plainSummary:
+      "An experimental robot-scientist that can dream up an idea, run the experiment, and write a draft paper on its own.",
+    useCase:
+      "You're curious how far AI can take a whole research project end to end, or want a starting point for building your own research assistant.",
   },
   {
     id: "allennlp-olmo",
@@ -78,6 +89,11 @@ export const ossProjects: OSSProject[] = [
     note: "Verified against the flagship allenai/OLMo repo (modeling, training, eval, inference). AI2 also maintains related repos such as allenai/dolma and allenai/olmocr; stars/url here reflect OLMo specifically.",
     stars: 6513,
     verifiedAt: "2026-05-30",
+    icon: "🧠",
+    plainSummary:
+      "Fully open AI language models where the weights, data, and training code are all public so anyone can inspect them.",
+    useCase:
+      "You need an AI model you can study and reproduce transparently, rather than a closed black box.",
   },
 
   /* ── Literature & reference management ────────────────────────────────── */
@@ -96,6 +112,11 @@ export const ossProjects: OSSProject[] = [
     verifyUrl: "https://github.com/zotero/zotero",
     stars: 14330,
     verifiedAt: "2026-05-30",
+    icon: "📚",
+    plainSummary:
+      "Finds, saves, and organizes the papers you cite, and builds your bibliography automatically.",
+    useCase:
+      "You're collecting sources for a review and want one tidy library that can spit out a formatted reference list.",
   },
   {
     id: "jabref",
@@ -112,6 +133,11 @@ export const ossProjects: OSSProject[] = [
     verifyUrl: "https://github.com/JabRef/jabref",
     stars: 4347,
     verifiedAt: "2026-05-30",
+    icon: "🗂️",
+    plainSummary:
+      "Keeps your references in the BibTeX format that LaTeX manuscripts use, and fills in details from a DOI or PMID.",
+    useCase:
+      "You write in LaTeX and want a clean, reusable reference database for your papers.",
   },
 
   /* ── Systematic review & evidence synthesis ──────────────────────────── */
@@ -131,6 +157,11 @@ export const ossProjects: OSSProject[] = [
     note: "Canonical repo mjwestgate/revtools (maintained by Martin Westgate; homepage revtools.net). A small but real, confirmed project; last pushed 2023.",
     stars: 57,
     verifiedAt: "2026-05-30",
+    icon: "🔎",
+    plainSummary:
+      "Helps you sift through thousands of search results for a systematic review by grouping and visualizing them.",
+    useCase:
+      "You imported a huge pile of references and need to screen and de-duplicate them faster.",
   },
   {
     id: "metafor",
@@ -148,6 +179,11 @@ export const ossProjects: OSSProject[] = [
     note: "Canonical repo wviechtb/metafor (homepage metafor-project.org); also distributed via CRAN. The de-facto open meta-analysis package, though its GitHub star count is modest.",
     stars: 297,
     verifiedAt: "2026-05-30",
+    icon: "📊",
+    plainSummary:
+      "Combines the results of many studies into one pooled answer, with the classic forest and funnel plots.",
+    useCase:
+      "You're running a meta-analysis and need to compute a combined effect size and check for publication bias.",
   },
 
   /* ── Reproducible research & notebooks ───────────────────────────────── */
@@ -167,6 +203,11 @@ export const ossProjects: OSSProject[] = [
     note: "Project Jupyter spans many repos (jupyterlab/jupyterlab, jupyter/notebook, etc.); verified here against jupyter/notebook (the classic/Notebook 7 app). stars reflect that repo specifically.",
     stars: 13171,
     verifiedAt: "2026-05-30",
+    icon: "📓",
+    plainSummary:
+      "A digital lab notebook that mixes live code, charts, and notes so others can re-run your analysis step by step.",
+    useCase:
+      "You want to share an analysis where reviewers can reproduce every figure and number from the data.",
   },
   {
     id: "quarto",
@@ -184,6 +225,11 @@ export const ossProjects: OSSProject[] = [
     note: "Canonical repo quarto-dev/quarto-cli. GitHub reports the primary language as JavaScript (TypeScript/Lua also present).",
     stars: 5683,
     verifiedAt: "2026-05-30",
+    icon: "📄",
+    plainSummary:
+      "Turns your writing plus code into a polished article, report, or slides — exporting to Word, PDF, or web.",
+    useCase:
+      "You want a single document that runs your analysis and produces a submission-ready manuscript.",
   },
 
   /* ── Statistics ──────────────────────────────────────────────────────── */
@@ -202,6 +248,11 @@ export const ossProjects: OSSProject[] = [
     verifyUrl: "https://www.r-project.org/",
     note: "NOT primarily GitHub-hosted: the authoritative source and SVN repository live at r-project.org (read-only GitHub mirrors exist). No canonical org repo to attach a star count to, so stars is intentionally left undefined.",
     verifiedAt: "2026-05-30",
+    icon: "📐",
+    plainSummary:
+      "The free statistics language that powers most biostatistics and epidemiology, with thousands of add-on packages.",
+    useCase:
+      "You need rigorous, reproducible statistical analysis (regression, survival, mixed models) with publication-quality output.",
   },
   {
     id: "statsmodels",
@@ -218,6 +269,11 @@ export const ossProjects: OSSProject[] = [
     verifyUrl: "https://github.com/statsmodels/statsmodels",
     stars: 11435,
     verifiedAt: "2026-05-30",
+    icon: "📈",
+    plainSummary:
+      "A Python toolbox for statistical models and tests that prints detailed result tables ready for a paper.",
+    useCase:
+      "You analyze data in Python and need trustworthy regression, GLM, or hypothesis-test results with full summaries.",
   },
   {
     id: "scipy",
@@ -234,6 +290,11 @@ export const ossProjects: OSSProject[] = [
     verifyUrl: "https://github.com/scipy/scipy",
     stars: 14725,
     verifiedAt: "2026-05-30",
+    icon: "🧮",
+    plainSummary:
+      "The math engine behind Python science — statistical tests, curve fitting, and number crunching.",
+    useCase:
+      "You need a quick t-test, a distribution, or a curve fit as part of a Python analysis.",
   },
   {
     id: "jasp",
@@ -251,6 +312,11 @@ export const ossProjects: OSSProject[] = [
     note: "Canonical repo jasp-stats/jasp-desktop. GitHub reports the primary language as C++ (R modules also present).",
     stars: 964,
     verifiedAt: "2026-05-30",
+    icon: "🖱️",
+    plainSummary:
+      "Point-and-click statistics software for people who don't want to write code, with results formatted for journals.",
+    useCase:
+      "You're a clinician who wants proper statistics (including Bayesian) without learning to program.",
   },
 
   /* ── Data visualization ──────────────────────────────────────────────── */
@@ -269,6 +335,11 @@ export const ossProjects: OSSProject[] = [
     verifyUrl: "https://github.com/matplotlib/matplotlib",
     stars: 22845,
     verifiedAt: "2026-05-30",
+    icon: "📉",
+    plainSummary:
+      "Makes precise, print-quality charts in Python that meet strict journal figure requirements.",
+    useCase:
+      "You need a high-resolution figure (with exact labels and export format) that a journal will accept.",
   },
   {
     id: "plotly",
@@ -286,6 +357,11 @@ export const ossProjects: OSSProject[] = [
     note: "Plotly's open-source graphing libraries span multiple repos (plotly/plotly.py, plotly/plotly.js, plotly/dash); verified here against plotly/plotly.py (the Python library). stars/url reflect that repo specifically.",
     stars: 18562,
     verifiedAt: "2026-05-30",
+    icon: "📊",
+    plainSummary:
+      "Builds interactive charts you can hover and zoom — great for online supplements and dashboards.",
+    useCase:
+      "You want a clickable, explorable figure for an online appendix rather than a static image.",
   },
   {
     id: "ggplot2",
@@ -302,6 +378,11 @@ export const ossProjects: OSSProject[] = [
     verifyUrl: "https://github.com/tidyverse/ggplot2",
     stars: 6939,
     verifiedAt: "2026-05-30",
+    icon: "🎨",
+    plainSummary:
+      "The go-to way to make clean, consistent statistical graphics in R from your data.",
+    useCase:
+      "You analyze in R and want elegant, reproducible figures that flow straight from your data tables.",
   },
 
   /* ── Machine learning ────────────────────────────────────────────────── */
@@ -320,6 +401,11 @@ export const ossProjects: OSSProject[] = [
     verifyUrl: "https://github.com/scikit-learn/scikit-learn",
     stars: 66202,
     verifiedAt: "2026-05-30",
+    icon: "🤖",
+    plainSummary:
+      "A friendly toolkit of classic machine-learning methods for prediction, classification, and clustering.",
+    useCase:
+      "You want to build and properly validate a predictive model (e.g. a risk score or biomarker classifier).",
   },
   {
     id: "pytorch",
@@ -336,6 +422,11 @@ export const ossProjects: OSSProject[] = [
     verifyUrl: "https://github.com/pytorch/pytorch",
     stars: 100273,
     verifiedAt: "2026-05-30",
+    icon: "🔥",
+    plainSummary:
+      "The engine most researchers use to build and train deep-learning (neural network) models.",
+    useCase:
+      "You're training a deep-learning model for medical images, genomics, or clinical prediction.",
   },
   {
     id: "hf-transformers",
@@ -352,6 +443,11 @@ export const ossProjects: OSSProject[] = [
     verifyUrl: "https://github.com/huggingface/transformers",
     stars: 161065,
     verifiedAt: "2026-05-30",
+    icon: "🤗",
+    plainSummary:
+      "A library of thousands of ready-made AI models you can apply to text, images, or audio.",
+    useCase:
+      "You want to use or fine-tune a state-of-the-art (including biomedical) AI model to classify or summarize papers.",
   },
 
   /* ── Biomedical NLP ──────────────────────────────────────────────────── */
@@ -370,6 +466,11 @@ export const ossProjects: OSSProject[] = [
     verifyUrl: "https://github.com/explosion/spaCy",
     stars: 33620,
     verifiedAt: "2026-05-30",
+    icon: "💬",
+    plainSummary:
+      "Reads text the way a computer can understand it — splitting sentences and spotting names, places, and terms.",
+    useCase:
+      "You want to automatically pull structured facts out of clinical notes or abstracts at scale.",
   },
   {
     id: "scispacy",
@@ -386,6 +487,11 @@ export const ossProjects: OSSProject[] = [
     verifyUrl: "https://github.com/allenai/scispacy",
     stars: 1959,
     verifiedAt: "2026-05-30",
+    icon: "🧬",
+    plainSummary:
+      "A version of spaCy trained on medical text that recognizes diseases, drugs, and genes and links them to official lists.",
+    useCase:
+      "You're mining lots of papers and need to detect biomedical terms and match them to standard ontologies.",
   },
 
   /* ── Reproducibility & workflows ─────────────────────────────────────── */
@@ -404,6 +510,11 @@ export const ossProjects: OSSProject[] = [
     verifyUrl: "https://github.com/iterative/dvc",
     note: "Highly confident the canonical repo is iterative/dvc (referenced as the upstream by the iterative org's many DVC tutorial/example repos and across the wider DVC ecosystem). However, the live GitHub search index did not return the main repo and direct repo access was unavailable in this session, so its stargazers_count could not be fetched — stars is intentionally left undefined and confidence is downgraded to \"likely\" pending a direct star-count confirmation.",
     verifiedAt: "2026-05-30",
+    icon: "🗃️",
+    plainSummary:
+      "Version control for your data and models, like Git but for the big files that don't fit in code repositories.",
+    useCase:
+      "You want every version of your dataset and model tracked alongside the code so results stay reproducible.",
   },
   {
     id: "snakemake",
@@ -420,6 +531,11 @@ export const ossProjects: OSSProject[] = [
     verifyUrl: "https://github.com/snakemake/snakemake",
     stars: 2793,
     verifiedAt: "2026-05-30",
+    icon: "🐍",
+    plainSummary:
+      "Writes down the recipe for your analysis so the whole thing can be re-run start to finish with one command.",
+    useCase:
+      "Your study has many analysis steps and you want anyone to reproduce all of them automatically.",
   },
   {
     id: "nextflow",
@@ -437,6 +553,11 @@ export const ossProjects: OSSProject[] = [
     note: "Canonical repo nextflow-io/nextflow. GitHub reports the primary language as Groovy (Java also present). Now developed under Seqera (formerly Seqera Labs).",
     stars: 3406,
     verifiedAt: "2026-05-30",
+    icon: "🔗",
+    plainSummary:
+      "Runs the same analysis pipeline identically on your laptop, a cluster, or the cloud.",
+    useCase:
+      "You run bioinformatics pipelines and need them to behave the same everywhere for reproducibility.",
   },
 ];
 
