@@ -179,6 +179,20 @@ await check("POST /api/journals/finder (Saudi-only filter)", async () => {
   }
 });
 
+await check("GET /api/announcements", async () => {
+  const a = await getJson("/api/announcements");
+  if (!Array.isArray(a.announcements) || a.announcements.length < 1) {
+    throw new Error("no announcements returned");
+  }
+});
+
+await check("GET /about (public page)", async () => {
+  const r = await fetch(`${BASE}/about`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const html = await r.text();
+  if (!/Our mission/i.test(html)) throw new Error("about content missing");
+});
+
 await check("GET / (HTML shell)", async () => {
   const r = await fetch(`${BASE}/`);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);

@@ -66,15 +66,30 @@ export default function AuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-[var(--mc-canvas)] p-6">
       <div className="card-elevated w-full max-w-md p-8">
         <LogoWordmark className="mb-6" />
-        <h1 className="display-title text-xl mb-1">Sign in to MedCore</h1>
-        <p className="muted text-sm mb-2">
-          Optional cloud sync for your manuscript projects. No email confirmation —
-          sign up and you&apos;re in immediately.
+        <h1 className="display-title text-xl mb-1">
+          {mode === "sign-in" ? "Welcome back" : "Create your account"}
+        </h1>
+        <p className="muted text-sm mb-4">
+          {mode === "sign-in"
+            ? "Sign in to sync your manuscripts across devices."
+            : "One step — email and password, and you're in. No email confirmation."}
         </p>
-        <p className="text-[12.5px] text-med-sub mb-6">
-          You can use the entire platform with no account at all — just{" "}
-          <Link href="/" className="text-med-brand font-medium hover:underline">continue as guest</Link>.
-        </p>
+
+        {/* Mode toggle */}
+        <div className="grid grid-cols-2 gap-1 p-1 mb-5 rounded-lg bg-slate-100">
+          {(["sign-in", "sign-up"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => { setMode(m); setMsg(null); }}
+              className={`rounded-md py-1.5 text-[13px] font-medium transition ${
+                mode === m ? "bg-white text-med-ink shadow-soft" : "text-med-sub hover:text-med-ink"
+              }`}
+            >
+              {m === "sign-in" ? "Sign in" : "Create account"}
+            </button>
+          ))}
+        </div>
 
         {!configured ? (
           <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
@@ -113,21 +128,23 @@ export default function AuthPage() {
             <button type="submit" className="btn-primary w-full" disabled={busy}>
               {busy ? "Please wait…" : mode === "sign-in" ? "Sign in" : "Create account"}
             </button>
-            <button
-              type="button"
-              className="btn-ghost text-sm"
-              onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
-            >
-              {mode === "sign-in" ? "Need an account? Sign up" : "Already have an account? Sign in"}
-            </button>
+            {mode === "sign-up" && (
+              <p className="text-[11.5px] text-med-sub text-center">
+                Password must be at least 8 characters. No email confirmation needed.
+              </p>
+            )}
           </form>
         )}
 
-        <p className="mt-6 text-center text-sm">
+        <div className="mt-6 flex items-center justify-center gap-3 text-sm">
           <Link href="/" className="text-med-brand font-medium hover:underline">
             Continue as guest →
           </Link>
-        </p>
+          <span className="text-med-line" aria-hidden>|</span>
+          <Link href="/about" className="text-med-sub hover:text-med-ink hover:underline">
+            About MedCore
+          </Link>
+        </div>
       </div>
     </div>
   );
