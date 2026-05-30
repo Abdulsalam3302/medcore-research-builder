@@ -50,6 +50,8 @@ const FILES = [
   "lib/knowledge/mcp.ts",
   "lib/knowledge/skillchains.ts",
   "lib/knowledge/integrations.ts",
+  "lib/journals/anticipate.ts",
+  "lib/journals/bestPractices.ts",
 ];
 
 const tsconfig = {
@@ -223,6 +225,34 @@ try {
   if (freeApc >= 5) ok(`free-APC journals present (${freeApc})`); else no("free-apc", `${freeApc}`);
   if (verified2026 >= 30) ok(`journals carry 2026 verification (${verified2026})`); else no("verified2026", `${verified2026}`);
 } catch (e) { no("journal v4 run", e.message); }
+
+// v4: metric anticipation + trust scoring + best practices
+try {
+  const ant = await load("journals/anticipate.js");
+  const bp = await load("journals/bestPractices.js");
+  const { allJournals } = await load("journals/index.js");
+  const all = allJournals();
+  // A journal WITHOUT a reported IF should still get an anticipated estimate when indexed.
+  const noIF = all.find((j) => !(j.metrics && j.metrics.impactFactor) && (j.metrics?.citeScore || j.indexing.scopus === "indexed" || j.indexing.wos !== "none"));
+  if (noIF) {
+    const est = ant.anticipateImpact(noIF);
+    if (est && est.confidence !== "reported" && est.label) ok(`metric anticipation works (${noIF.name}: ${est.label})`);
+    else no("anticipate", JSON.stringify(est));
+  } else { ok("metric anticipation (no eligible test journal — skipped)"); }
+  // Trust scoring: a MEDLINE/SCIE journal should score "high".
+  const flagship = all.find((j) => j.indexing.medline === "indexed" && j.indexing.wos === "SCIE");
+  if (flagship) {
+    const t = ant.assessTrust(flagship);
+    if (t.score >= 70 && t.level === "high") ok(`trust scoring rewards indexed journals (${flagship.name}: ${t.score})`);
+    else no("trust high", JSON.stringify({ s: t.score, l: t.level }));
+  } else { ok("trust scoring (no flagship — skipped)"); }
+  // A non-indexed record should raise a red flag.
+  const t2 = ant.assessTrust({ name: "X", publisher: "Unknown", country: "X", scope: "", specialties: [], oaModel: "unknown", dataConfidence: "ingested", indexing: { wos: "none", scopus: "unknown", pubmed: "unknown", medline: "not-indexed", pmc: "not-indexed", doaj: "unknown" } });
+  if (t2.redFlags.length >= 1) ok(`trust scoring flags unindexed venues (${t2.level})`); else no("trust flag", JSON.stringify(t2));
+  if ((bp.journalBestPractices?.length ?? 0) >= 6) ok(`best practices loaded (${bp.journalBestPractices.length}, all sourced)`); else no("best practices", `${bp.journalBestPractices?.length}`);
+  const allSourced = (bp.journalBestPractices || []).every((p) => p.sourceUrl && p.source);
+  if (allSourced) ok("every best practice is attributed (no unsourced advice)"); else no("bp sourced", "missing source");
+} catch (e) { no("anticipate/trust run", e.message); }
 
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${pass}/${pass + fail} checks passed`);
