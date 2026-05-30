@@ -11,7 +11,7 @@ import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
 import { analyzeCoherence } from "@/lib/coherence";
 import type { ProjectState } from "@/lib/types";
-import { buildAgentPrompt, parseAgentResponse, ALL_AGENTS } from "@/lib/swarm/agents";
+import { buildAgentPrompt, parseAgentResponse, ALL_AGENTS, AGENT_LAYER } from "@/lib/swarm/agents";
 import { buildSwarmContext, synthesizeReport } from "@/lib/swarm/orchestrator";
 import type { AgentRole, AgentFinding, RawAgentResponse } from "@/lib/swarm/types";
 
@@ -60,7 +60,16 @@ export async function POST(req: Request) {
     const agentsRun: AgentRole[] = [];
     const agentsFailed: Array<{ agent: AgentRole; error: string }> = [];
 
+    // Overall wall-clock budget so a stack of slow agents can't run for
+    // minutes; once exceeded we stop launching new agents and return what we
+    // have (synthesized with the deterministic coherence signals).
+    const deadline = Date.now() + (Number(process.env.SWARM_BUDGET_MS) || 120000);
+
     for (const role of agents) {
+      if (Date.now() > deadline) {
+        agentsFailed.push({ agent: role, error: "skipped — overall time budget exceeded" });
+        continue;
+      }
       try {
         const spec = buildAgentPrompt(role, ctx);
         const text = await callLLM({
@@ -77,6 +86,14 @@ export async function POST(req: Request) {
           layerSummaries[`agent:${role}`] = parsed.summary;
         }
         humanReviewRequired.push(...parsed.humanReviewRequired);
+        // Feed the agent's summary into its quality LAYER so the scorecard
+        // layer cards show LLM-authored summaries (not just the count fallback).
+        if (parsed.summary) {
+          const layer = AGENT_LAYER[role] || "quality";
+          layerSummaries[layer] = layerSummaries[layer]
+            ? `${layerSummaries[layer]} ${parsed.summary}`
+            : parsed.summary;
+        }
         agentsRun.push(role);
       } catch (e) {
         // Tolerate a single agent failing — skip and note it.

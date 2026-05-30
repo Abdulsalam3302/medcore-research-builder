@@ -347,7 +347,7 @@ export default function WorkspaceApp() {
             <ResearchPhaseShell
               phaseLabel="Quality & Empowerment"
               title="Research Skills & Methods"
-              subtitle="130+ focused skills and 69 best-practice tips to empower every part of your research."
+              subtitle="A focused skills library and best-practice tips to empower every part of your research."
             >
               <ResearchSkills />
             </ResearchPhaseShell>

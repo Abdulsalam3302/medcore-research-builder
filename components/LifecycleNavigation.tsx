@@ -53,7 +53,7 @@ const NAV_ITEMS: NavItem[] = [
 
   { key: "swarm", label: "AI Peer-Review Swarm", phase: "Quality & Empowerment" },
   { key: "scorecard", label: "Manuscript Scorecard", phase: "Quality & Empowerment" },
-  { key: "skills", label: "Research Skills (130+)", phase: "Quality & Empowerment" },
+  { key: "skills", label: "Research Skills & Tips", phase: "Quality & Empowerment" },
   { key: "toolkit", label: "Tools & MCP Directory", phase: "Quality & Empowerment" },
 
   { key: "impact-studio", label: "Post-Publication Impact Studio", phase: "Post-Publication" },
