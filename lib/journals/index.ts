@@ -131,6 +131,11 @@ function passesFilters(j: JournalRecord, f: JournalFilters): boolean {
     const jif = j.metrics?.impactFactor ?? -1;
     if (jif < f.minImpactFactor) return false;
   }
+  if (f.freeApcOnly && !(j.freeApc || j.apcModel === "none" || j.oaModel === "diamond" || j.apcUsd === 0)) return false;
+  if (typeof f.maxDecisionDays === "number") {
+    // Only exclude when we KNOW it's slower; unknown timelines pass (don't hide).
+    if (typeof j.decisionTimeDays === "number" && j.decisionTimeDays > f.maxDecisionDays) return false;
+  }
   if (f.country && j.country.toLowerCase() !== f.country.toLowerCase()) return false;
   if (f.specialties && f.specialties.length) {
     const set = new Set(j.specialties.map((s) => s.toLowerCase()));
