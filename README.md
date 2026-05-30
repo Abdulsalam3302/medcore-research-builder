@@ -7,17 +7,37 @@ A free, no-login, reporting-guideline-driven workspace for building the core of 
 **Live app:** https://medcore-research-builder.vercel.app  
 **Repository:** https://github.com/Abdulsalam3302/medcore-research-builder
 
-## What’s new in v2
+## What’s new in v3
+
+- **Journal Finder** — a deep journal-suggestion engine over WoS SCIE/ESCI,
+  Scopus, PubMed/MEDLINE, PMC, and DOAJ, with a curated **100%-Saudi** journal
+  set, relevance + indexing ranking, filters, official verify links, and
+  per-journal **submission formatting**. Scales to tens of thousands via
+  `scripts/ingest-journals.mjs` (OpenAlex/DOAJ/Crossref) → `lib/journals/generated.ts`.
+- **Manuscript Coherence** — treats the manuscript as one connected unit:
+  checks title↔content, design↔claims, objective↔conclusion, results↔discussion
+  (numbers + causal language), citation **order**, and cited-vs-listed integrity.
+- **Protocol / Proposal Studio** — the platform *develops* protocols (offline
+  skeleton + AI draft), design-aware (SPIRIT/PRISMA-P/STROBE/STARD/TRIPOD/CARE).
+- **Figures & Results upgrade** — figure-type recommendation with caption/legend/
+  footnotes, a Table 1 scaffold, and AI-assisted results interpretation that
+  foregrounds effect size + CI and never fabricates numbers.
+- **Reference Safety** — an anti-hallucination layer flagging unverified,
+  low-confidence, irrelevant, or retracted citations for human review.
+- **Language Studio** — academic editing that preserves meaning and every
+  number, with honest (non-guarantee) readability / AI-pattern / originality aids.
+- **Instant auth** — sign-up with no email confirmation (auto sign-in); full
+  guest mode with zero registration. See `docs/AUTH_SETUP.md`.
+- **Durable rate limiting** (Upstash) + **tokenized share links**.
+- **Tests** — `npm run test:smoke` and `npm run test:auth`.
+
+### From v2
 
 - **63 study designs**, **34 journals**, **84 feature flags** via the design registry
-- **Research Launch** readiness scoring before you write
-- **Title Lab** with 7-dimension rubric + PubMed/Crossref/OpenAlex similarity scan
+- **Research Launch** readiness scoring; **Title Lab** novelty scan
 - **Reference Verifier** across PubMed, Crossref, OpenAlex, Europe PMC, Semantic Scholar, Unpaywall
 - **Quality Suite**, **Reviewer Simulator**, **Statistician Copilot**, **Flow Diagram Builder**
-- **Version history**, **URL hash sharing**, **DOCX export**
-- **System status panel** — live integration health on Overview
-- **Rate limiting & security headers** for public deployment
-- **Smoke tests** — `npm run test:smoke`
+- **Version history**, **DOCX export**, **system status panel**, security headers
 
 ## Core principles
 

@@ -13,7 +13,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:smoke": "node scripts/smoke-test.mjs"
+    "test:smoke": "node scripts/smoke-test.mjs",
+    "test:auth": "node scripts/auth-multiuser-test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
