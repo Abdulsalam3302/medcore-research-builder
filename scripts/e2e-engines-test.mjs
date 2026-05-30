@@ -196,6 +196,9 @@ try {
   const ossOk = (oss.ossProjects || []).every((p) => p.verifyUrl);
   const mcpOk = (mcp.mcpServers || []).every((p) => p.verifyUrl);
   if (ossOk && mcpOk) ok("every registry entry has a verify link (no unsourced claims)"); else no("verify links", `oss=${ossOk} mcp=${mcpOk}`);
+  // GitHub-verified enrichment: most OSS entries should now carry real stars + a verified date.
+  const verified = (oss.ossProjects || []).filter((p) => typeof p.stars === "number" && p.verifiedAt);
+  if (verified.length >= 18) ok(`OSS registry GitHub-verified with live stars (${verified.length}/${nOss})`); else no("oss verified", `${verified.length}/${nOss}`);
 } catch (e) { no("knowledge run", e.message); }
 
 rmSync(work, { recursive: true, force: true });

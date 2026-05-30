@@ -60,9 +60,14 @@ function OSSCard({ project }: { project: OSSProject }) {
             <div className="font-semibold text-med-ink">{project.name}</div>
             <div className="muted">{project.org}</div>
           </div>
-          <Badge kind={confidenceBadgeKind(project.confidence)}>
-            {project.confidence}
-          </Badge>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {typeof project.stars === "number" && (
+              <Badge kind="neutral">★ {project.stars.toLocaleString()}</Badge>
+            )}
+            <Badge kind={confidenceBadgeKind(project.confidence)}>
+              {project.confidence}
+            </Badge>
+          </div>
         </div>
 
         <p className="mt-3 text-sm text-med-ink">{project.whatItDoes}</p>
@@ -77,8 +82,11 @@ function OSSCard({ project }: { project: OSSProject }) {
           <p className="mt-2 text-[12px] italic text-med-sub">{project.note}</p>
         )}
 
-        <div className="mt-3">
+        <div className="mt-3 flex items-center gap-2 flex-wrap">
           <VerifyLink href={project.verifyUrl} />
+          {project.verifiedAt && (
+            <span className="text-[11px] text-med-sub">GitHub-verified {project.verifiedAt}</span>
+          )}
         </div>
       </CardBody>
     </Card>

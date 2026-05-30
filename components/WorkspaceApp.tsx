@@ -103,6 +103,10 @@ const ResearchToolkit = dynamic(
   () => import("@/components/ResearchToolkit").then((m) => m.ResearchToolkit),
   { loading: RouteSkeleton, ssr: false },
 );
+const LiteratureSearch = dynamic(
+  () => import("@/components/LiteratureSearch").then((m) => m.LiteratureSearch),
+  { loading: RouteSkeleton, ssr: false },
+);
 
 export default function WorkspaceApp() {
   const { project, setProject, update, ready, autosave } = useProject();
@@ -225,6 +229,14 @@ export default function WorkspaceApp() {
               subtitle="Develop title and novelty positioning with trusted evidence support."
             >
               <TitleLab project={project} update={update} />
+            </ResearchPhaseShell>
+          ) : active === "literature" ? (
+            <ResearchPhaseShell
+              phaseLabel="Pre-Research Workspace"
+              title="Literature Search (live)"
+              subtitle="Search real peer-reviewed papers and preprints via Europe PMC, then add any to your references in one click."
+            >
+              <LiteratureSearch project={project} update={update} />
             </ResearchPhaseShell>
           ) : active === "methods" ? (
             <ResearchPhaseShell
@@ -407,6 +419,7 @@ function MobileTabs({
     { key: "protocol", label: "Protocol" },
     { key: "type", label: "Design" },
     { key: "title", label: "Gap" },
+    { key: "literature", label: "Lit search" },
     { key: "introduction", label: "Intro" },
     { key: "methods", label: "Methods" },
     { key: "results", label: "Results" },

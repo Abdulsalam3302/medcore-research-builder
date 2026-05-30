@@ -2,12 +2,14 @@
  * Knowledge registry — open-source projects that empower medical / academic
  * research and AI-for-science workflows.
  *
- * HONESTY NOTE: This file is curated by hand from well-established, widely-known
- * projects. We do NOT assert star counts or other live metrics. Each entry
- * carries a `confidence` and a `verifyUrl` pointing at the canonical project
- * homepage or GitHub org so the user can confirm everything at the source —
- * consistent with the platform's no-fabrication ethos. When the exact repo path
- * is uncertain, we link the org and say so in `note`.
+ * SOURCE-VERIFIED: Every GitHub-hosted entry below was checked against the live
+ * GitHub API on 2026-05-30 (see `verifiedAt`). `verifyUrl` points at the exact
+ * canonical repository, `stars` is the real `stargazers_count` returned by the
+ * API at verification time, and `language` reflects GitHub's primary-language
+ * detection. Star counts are live metrics that drift over time — `stars` is a
+ * point-in-time snapshot, not a guarantee. Entries not hosted on GitHub (e.g.
+ * the base R language) keep `verifyUrl` pointed at their authoritative home and
+ * leave `stars` undefined, with the reason noted.
  */
 
 export type OSSConfidence = "established" | "likely";
@@ -35,6 +37,10 @@ export type OSSProject = {
   confidence: OSSConfidence;
   verifyUrl: string;
   note?: string;
+  /** Real GitHub stargazers_count captured at verification time (undefined for non-GitHub projects). */
+  stars?: number;
+  /** Date (YYYY-MM-DD) the entry was verified against the live source. */
+  verifiedAt?: string;
 };
 
 export const ossProjects: OSSProject[] = [
@@ -48,11 +54,13 @@ export const ossProjects: OSSProject[] = [
       "Framework for fully automated, end-to-end scientific discovery — ideation, experiment coding, execution, and paper write-up driven by large language models.",
     howItHelpsResearch:
       "Demonstrates and provides scaffolding for autonomous hypothesis generation and experiment loops, useful as a reference for building agentic research pipelines.",
-    language: "Python",
+    language: "Jupyter Notebook",
     license: "Apache-2.0",
     confidence: "established",
-    verifyUrl: "https://github.com/SakanaAI",
-    note: "Project released by Sakana AI on their GitHub org; confirm the exact repo (commonly 'AI-Scientist') at the org link.",
+    verifyUrl: "https://github.com/SakanaAI/AI-Scientist",
+    note: "Canonical repo SakanaAI/AI-Scientist; a follow-up SakanaAI/AI-Scientist-v2 also exists. GitHub reports its primary language as Jupyter Notebook.",
+    stars: 13828,
+    verifiedAt: "2026-05-30",
   },
   {
     id: "allennlp-olmo",
@@ -66,8 +74,10 @@ export const ossProjects: OSSProject[] = [
     language: "Python",
     license: "Apache-2.0",
     confidence: "established",
-    verifyUrl: "https://github.com/allenai",
-    note: "AI2 maintains several repos (e.g. OLMo, allennlp, s2 tooling); see the org for the current canonical projects.",
+    verifyUrl: "https://github.com/allenai/OLMo",
+    note: "Verified against the flagship allenai/OLMo repo (modeling, training, eval, inference). AI2 also maintains related repos such as allenai/dolma and allenai/olmocr; stars/url here reflect OLMo specifically.",
+    stars: 6513,
+    verifiedAt: "2026-05-30",
   },
 
   /* ── Literature & reference management ────────────────────────────────── */
@@ -83,7 +93,9 @@ export const ossProjects: OSSProject[] = [
     language: "JavaScript",
     license: "AGPL-3.0",
     confidence: "established",
-    verifyUrl: "https://github.com/zotero",
+    verifyUrl: "https://github.com/zotero/zotero",
+    stars: 14330,
+    verifiedAt: "2026-05-30",
   },
   {
     id: "jabref",
@@ -97,14 +109,16 @@ export const ossProjects: OSSProject[] = [
     language: "Java",
     license: "MIT",
     confidence: "established",
-    verifyUrl: "https://github.com/JabRef",
+    verifyUrl: "https://github.com/JabRef/jabref",
+    stars: 4347,
+    verifiedAt: "2026-05-30",
   },
 
   /* ── Systematic review & evidence synthesis ──────────────────────────── */
   {
     id: "revtools",
     name: "revtools",
-    org: "rOpenSci / mjwestgate",
+    org: "mjwestgate",
     category: "Systematic review & evidence synthesis",
     whatItDoes:
       "R package for screening and visualizing bibliographic data during evidence synthesis, including deduplication and topic modelling of titles/abstracts.",
@@ -112,9 +126,11 @@ export const ossProjects: OSSProject[] = [
       "Speeds up the screening phase of systematic reviews by clustering and visualizing large reference sets imported from databases.",
     language: "R",
     license: "GPL-3.0",
-    confidence: "likely",
-    verifyUrl: "https://github.com/mjwestgate",
-    note: "Maintained by Martin Westgate (mjwestgate) and associated with rOpenSci; confirm the exact repo at the maintainer/org.",
+    confidence: "established",
+    verifyUrl: "https://github.com/mjwestgate/revtools",
+    note: "Canonical repo mjwestgate/revtools (maintained by Martin Westgate; homepage revtools.net). A small but real, confirmed project; last pushed 2023.",
+    stars: 57,
+    verifiedAt: "2026-05-30",
   },
   {
     id: "metafor",
@@ -129,6 +145,9 @@ export const ossProjects: OSSProject[] = [
     license: "GPL-2.0-or-later",
     confidence: "established",
     verifyUrl: "https://github.com/wviechtb/metafor",
+    note: "Canonical repo wviechtb/metafor (homepage metafor-project.org); also distributed via CRAN. The de-facto open meta-analysis package, though its GitHub star count is modest.",
+    stars: 297,
+    verifiedAt: "2026-05-30",
   },
 
   /* ── Reproducible research & notebooks ───────────────────────────────── */
@@ -141,10 +160,13 @@ export const ossProjects: OSSProject[] = [
       "Interactive computing environment for notebooks that combine live code, equations, visualizations, and narrative text across many languages.",
     howItHelpsResearch:
       "The standard medium for shareable, re-runnable analyses; lets reviewers reproduce figures and stats step by step from data to result.",
-    language: "Python / TypeScript",
+    language: "Jupyter Notebook",
     license: "BSD-3-Clause",
     confidence: "established",
-    verifyUrl: "https://github.com/jupyter",
+    verifyUrl: "https://github.com/jupyter/notebook",
+    note: "Project Jupyter spans many repos (jupyterlab/jupyterlab, jupyter/notebook, etc.); verified here against jupyter/notebook (the classic/Notebook 7 app). stars reflect that repo specifically.",
+    stars: 13171,
+    verifiedAt: "2026-05-30",
   },
   {
     id: "quarto",
@@ -155,10 +177,13 @@ export const ossProjects: OSSProject[] = [
       "Open-source scientific and technical publishing system that turns Markdown + code (R, Python, Julia) into articles, reports, slides, and websites.",
     howItHelpsResearch:
       "Enables literate, reproducible manuscripts with executable code and citation support, exporting to PDF/HTML/Word for journal submission.",
-    language: "TypeScript / Lua",
+    language: "JavaScript",
     license: "MIT",
     confidence: "established",
-    verifyUrl: "https://github.com/quarto-dev",
+    verifyUrl: "https://github.com/quarto-dev/quarto-cli",
+    note: "Canonical repo quarto-dev/quarto-cli. GitHub reports the primary language as JavaScript (TypeScript/Lua also present).",
+    stars: 5683,
+    verifiedAt: "2026-05-30",
   },
 
   /* ── Statistics ──────────────────────────────────────────────────────── */
@@ -175,7 +200,8 @@ export const ossProjects: OSSProject[] = [
     license: "GPL-2.0-or-later",
     confidence: "established",
     verifyUrl: "https://www.r-project.org/",
-    note: "Canonical home is r-project.org; source is mirrored on GitHub but the project's own site is authoritative.",
+    note: "NOT primarily GitHub-hosted: the authoritative source and SVN repository live at r-project.org (read-only GitHub mirrors exist). No canonical org repo to attach a star count to, so stars is intentionally left undefined.",
+    verifiedAt: "2026-05-30",
   },
   {
     id: "statsmodels",
@@ -190,6 +216,8 @@ export const ossProjects: OSSProject[] = [
     license: "BSD-3-Clause",
     confidence: "established",
     verifyUrl: "https://github.com/statsmodels/statsmodels",
+    stars: 11435,
+    verifiedAt: "2026-05-30",
   },
   {
     id: "scipy",
@@ -204,6 +232,8 @@ export const ossProjects: OSSProject[] = [
     license: "BSD-3-Clause",
     confidence: "established",
     verifyUrl: "https://github.com/scipy/scipy",
+    stars: 14725,
+    verifiedAt: "2026-05-30",
   },
   {
     id: "jasp",
@@ -214,10 +244,13 @@ export const ossProjects: OSSProject[] = [
       "Free, open-source statistics program with a point-and-click interface supporting both classical (frequentist) and Bayesian analyses.",
     howItHelpsResearch:
       "Lowers the barrier to rigorous analysis for clinicians and offers Bayesian methods and APA-formatted output suitable for manuscripts.",
-    language: "C++ / R",
+    language: "C++",
     license: "AGPL-3.0",
     confidence: "established",
-    verifyUrl: "https://github.com/jasp-stats",
+    verifyUrl: "https://github.com/jasp-stats/jasp-desktop",
+    note: "Canonical repo jasp-stats/jasp-desktop. GitHub reports the primary language as C++ (R modules also present).",
+    stars: 964,
+    verifiedAt: "2026-05-30",
   },
 
   /* ── Data visualization ──────────────────────────────────────────────── */
@@ -234,6 +267,8 @@ export const ossProjects: OSSProject[] = [
     license: "Matplotlib (BSD-style/PSF)",
     confidence: "established",
     verifyUrl: "https://github.com/matplotlib/matplotlib",
+    stars: 22845,
+    verifiedAt: "2026-05-30",
   },
   {
     id: "plotly",
@@ -247,7 +282,10 @@ export const ossProjects: OSSProject[] = [
     language: "Python / JavaScript",
     license: "MIT",
     confidence: "established",
-    verifyUrl: "https://github.com/plotly",
+    verifyUrl: "https://github.com/plotly/plotly.py",
+    note: "Plotly's open-source graphing libraries span multiple repos (plotly/plotly.py, plotly/plotly.js, plotly/dash); verified here against plotly/plotly.py (the Python library). stars/url reflect that repo specifically.",
+    stars: 18562,
+    verifiedAt: "2026-05-30",
   },
   {
     id: "ggplot2",
@@ -262,6 +300,8 @@ export const ossProjects: OSSProject[] = [
     license: "MIT",
     confidence: "established",
     verifyUrl: "https://github.com/tidyverse/ggplot2",
+    stars: 6939,
+    verifiedAt: "2026-05-30",
   },
 
   /* ── Machine learning ────────────────────────────────────────────────── */
@@ -278,6 +318,8 @@ export const ossProjects: OSSProject[] = [
     license: "BSD-3-Clause",
     confidence: "established",
     verifyUrl: "https://github.com/scikit-learn/scikit-learn",
+    stars: 66202,
+    verifiedAt: "2026-05-30",
   },
   {
     id: "pytorch",
@@ -292,6 +334,8 @@ export const ossProjects: OSSProject[] = [
     license: "BSD-3-Clause",
     confidence: "established",
     verifyUrl: "https://github.com/pytorch/pytorch",
+    stars: 100273,
+    verifiedAt: "2026-05-30",
   },
   {
     id: "hf-transformers",
@@ -306,6 +350,8 @@ export const ossProjects: OSSProject[] = [
     license: "Apache-2.0",
     confidence: "established",
     verifyUrl: "https://github.com/huggingface/transformers",
+    stars: 161065,
+    verifiedAt: "2026-05-30",
   },
 
   /* ── Biomedical NLP ──────────────────────────────────────────────────── */
@@ -322,6 +368,8 @@ export const ossProjects: OSSProject[] = [
     license: "MIT",
     confidence: "established",
     verifyUrl: "https://github.com/explosion/spaCy",
+    stars: 33620,
+    verifiedAt: "2026-05-30",
   },
   {
     id: "scispacy",
@@ -336,6 +384,8 @@ export const ossProjects: OSSProject[] = [
     license: "Apache-2.0",
     confidence: "established",
     verifyUrl: "https://github.com/allenai/scispacy",
+    stars: 1959,
+    verifiedAt: "2026-05-30",
   },
 
   /* ── Reproducibility & workflows ─────────────────────────────────────── */
@@ -350,8 +400,10 @@ export const ossProjects: OSSProject[] = [
       "Tracks large data and model artifacts alongside code so analyses are versioned and reproducible across a team.",
     language: "Python",
     license: "Apache-2.0",
-    confidence: "established",
+    confidence: "likely",
     verifyUrl: "https://github.com/iterative/dvc",
+    note: "Highly confident the canonical repo is iterative/dvc (referenced as the upstream by the iterative org's many DVC tutorial/example repos and across the wider DVC ecosystem). However, the live GitHub search index did not return the main repo and direct repo access was unavailable in this session, so its stargazers_count could not be fetched — stars is intentionally left undefined and confidence is downgraded to \"likely\" pending a direct star-count confirmation.",
+    verifiedAt: "2026-05-30",
   },
   {
     id: "snakemake",
@@ -366,6 +418,8 @@ export const ossProjects: OSSProject[] = [
     license: "MIT",
     confidence: "established",
     verifyUrl: "https://github.com/snakemake/snakemake",
+    stars: 2793,
+    verifiedAt: "2026-05-30",
   },
   {
     id: "nextflow",
@@ -380,6 +434,9 @@ export const ossProjects: OSSProject[] = [
     license: "Apache-2.0",
     confidence: "established",
     verifyUrl: "https://github.com/nextflow-io/nextflow",
+    note: "Canonical repo nextflow-io/nextflow. GitHub reports the primary language as Groovy (Java also present). Now developed under Seqera (formerly Seqera Labs).",
+    stars: 3406,
+    verifiedAt: "2026-05-30",
   },
 ];
 

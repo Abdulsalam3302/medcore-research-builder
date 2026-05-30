@@ -9,6 +9,7 @@ export type LifecycleKey =
   | "protocol"
   | "type"
   | "title"
+  | "literature"
   | "introduction"
   | "methods"
   | "results"
@@ -38,6 +39,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "protocol", label: "Protocol / Proposal Studio", phase: "Pre-Research" },
   { key: "type", label: "Study Design Selector", phase: "Pre-Research" },
   { key: "title", label: "Literature & Gap Explorer", phase: "Pre-Research" },
+  { key: "literature", label: "Literature Search (live)", phase: "Pre-Research" },
   { key: "introduction", label: "Introduction", phase: "Intra-Research" },
   { key: "methods", label: "Methods", phase: "Intra-Research" },
   { key: "results", label: "Results", phase: "Intra-Research" },

@@ -8,12 +8,14 @@ import type { Guideline } from "./types";
  */
 export const guidelines: Guideline[] = [
   {
-    id: "consort-2010",
-    name: "CONSORT 2010 — Randomized Trials",
+    id: "consort-2025",
+    name: "CONSORT 2025 — Randomized Trials",
     acronym: "CONSORT",
-    versionOrYear: "2010 (with 2025 update emerging)",
+    // CONSORT 2025 was published 14 Apr 2025 simultaneously in BMJ, JAMA,
+    // The Lancet, Nature Medicine, and PLOS Medicine, superseding CONSORT 2010.
+    versionOrYear: "2025 (published; supersedes 2010)",
     source: "EQUATOR",
-    officialUrl: "https://www.equator-network.org/reporting-guidelines/consort/",
+    officialUrl: "https://www.consort-spirit.org/",
     appliesTo: ["randomized controlled trial", "RCT", "parallel-group trial"],
     manuscriptSections: [
       "title",
@@ -196,9 +198,10 @@ export const guidelines: Guideline[] = [
     id: "spirit",
     name: "SPIRIT — Clinical Trial Protocols",
     acronym: "SPIRIT",
-    versionOrYear: "2013 (2025 update emerging)",
+    // SPIRIT 2025 was co-published with CONSORT 2025 (Apr 2025).
+    versionOrYear: "2025 (published; supersedes 2013)",
     source: "EQUATOR",
-    officialUrl: "https://www.equator-network.org/reporting-guidelines/spirit-2013-statement-defining-standard-protocol-items-for-clinical-trials/",
+    officialUrl: "https://www.consort-spirit.org/",
     appliesTo: ["clinical trial protocol", "RCT protocol"],
     manuscriptSections: ["title", "introduction", "methods", "references"],
     checklistPrompts: {
