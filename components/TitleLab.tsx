@@ -11,6 +11,7 @@ import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Spinner } from "./ui/Spinner";
 import { Badge } from "./ui/Badge";
 import { CopyButton } from "./ui/CopyButton";
+import { InfoHint } from "./ui/InfoHint";
 import { detectTitleConflicts } from "@/lib/alignment";
 
 type TitleAssessment = {
@@ -19,6 +20,30 @@ type TitleAssessment = {
   verdict?: "weak" | "moderate" | "strong" | "excellent";
   topRefinements?: string[];
   designConflictNotes?: string[];
+};
+
+/** Educational "why this matters" notes per title input, in a mentoring voice. */
+const FIELD_HINTS: Partial<Record<keyof TitleInputs, { title: string; text: string }>> = {
+  draftTitle: {
+    title: "Why the title carries weight",
+    text: "The title is the first — and for most readers, only — thing an editor and the indexing databases read. A clear, specific title that names the population, the key variable, and the design is easier to screen in and easier to find. Vague or overclaiming titles are a common trigger for desk rejection.",
+  },
+  population: {
+    title: "PICO — Population (P)",
+    text: "Naming exactly who was studied (age, condition, severity, setting) sharpens the research question and tells readers whether the findings apply to their patients. A precise population also keeps your eligibility, analysis, and claims internally consistent.",
+  },
+  intervention: {
+    title: "PICO — Intervention / exposure (I)",
+    text: "This is the central variable your study acts on or observes. Stating it precisely defines what your result is actually about and stops the question from drifting. In the title it signals the contribution at a glance.",
+  },
+  comparator: {
+    title: "PICO — Comparator (C)",
+    text: "What you compared against (placebo, usual care, an alternative, or none) determines what your effect estimate means. An unclear or absent comparator is a frequent source of overclaiming — be explicit about the reference.",
+  },
+  outcome: {
+    title: "PICO — Outcome (O)",
+    text: "The primary outcome is the single result your study is powered and judged on. Pinning down one pre-specified primary outcome prevents outcome-switching and keeps the title's promise aligned with what you actually report.",
+  },
 };
 
 const FIELD_DEFS: Array<[keyof TitleInputs, string, string]> = [
@@ -260,7 +285,15 @@ export function TitleLab({
             return (
               <div key={key} className={isDraft ? "md:col-span-2" : ""}>
                 <div className="flex items-center justify-between">
-                  <label className="label">{label}</label>
+                  <span className="inline-flex items-center gap-1.5">
+                    <label className="label">{label}</label>
+                    {FIELD_HINTS[key] && (
+                      <InfoHint
+                        title={FIELD_HINTS[key]!.title}
+                        text={FIELD_HINTS[key]!.text}
+                      />
+                    )}
+                  </span>
                   <button
                     className="text-[11px] text-med-brand hover:underline disabled:opacity-50"
                     disabled={busy !== null}
@@ -347,6 +380,10 @@ export function TitleLab({
             >
               {busy === "novelty" && <Spinner dark />} Check title (novelty + validation + applicability …)
             </button>
+            <InfoHint
+              title="Generate vs Refine vs Check"
+              text="Generate proposes fresh candidate titles from your PICO fields. Refine takes the draft you typed and tightens it while validating against your chosen design (so it won't, say, call a cohort study a 'trial'). Check runs the similarity scan plus the multi-dimensional rubric so you can see how an editor might read it. All three assist your wording — you choose which title to keep, and you're responsible for the final claim."
+            />
             {err && <div className="text-sm text-med-bad">{err}</div>}
           </div>
         </CardBody>
@@ -354,7 +391,17 @@ export function TitleLab({
 
       {project.titleCandidates.length > 0 && (
         <Card>
-          <CardHeader title="Candidate titles" />
+          <CardHeader
+            title={
+              <span className="inline-flex items-center gap-1.5">
+                Candidate titles
+                <InfoHint
+                  title="How to choose"
+                  text="Don't just take the first option — pick the title that most precisely names your population, key variable, and design without overstating the finding. Watch the warning and 'design conflict' badges: a title that contradicts your study type (or promises more than your data show) is a fast desk-rejection. The one you select becomes the through-line every later section is checked against."
+                />
+              </span>
+            }
+          />
           <CardBody className="grid gap-3">
             {project.titleCandidates.map((c, i) => {
               const cConflicts = detectTitleConflicts(designId, c.text);
@@ -450,7 +497,15 @@ function TitleAssessmentCard({ a }: { a: TitleAssessment }) {
   return (
     <Card>
       <CardHeader
-        title="Title — multi-dimensional check"
+        title={
+          <span className="inline-flex items-center gap-1.5">
+            Title — multi-dimensional check
+            <InfoHint
+              title="Why score the title"
+              text="These dimensions mirror what editors and reviewers weigh in the first 30 seconds: is the claim valid for the design, is it specific, does it disclose the study type, is it novel and important? A title that scores well on clarity, specificity, and design-disclosure is far less likely to be desk-rejected. Treat the scores as coaching, not a verdict — you decide which refinements to make."
+            />
+          </span>
+        }
         subtitle="Validation, reliability, similarity, novelty, importance, applicability, contribution."
         right={
           <div className="flex items-center gap-2">
@@ -648,7 +703,15 @@ function NoveltyResult({ report }: { report: NoveltyReport }) {
   return (
     <Card>
       <CardHeader
-        title="Novelty / similarity report"
+        title={
+          <span className="inline-flex items-center gap-1.5">
+            Novelty / similarity report
+            <InfoHint
+              title="Why scan prior work"
+              text="Checking the literature before you commit shows whether your question has already been answered and how your study differs. It guards against two common reviewer objections — duplicating existing work and overclaiming novelty. This scan surveys trusted sources to surface near-matches; it can't prove novelty, so read the closest papers yourself and articulate your differentiator."
+            />
+          </span>
+        }
         subtitle="Evidence-based scan across trusted literature and citation sources."
         right={<Badge kind={riskBadge.kind}>{riskBadge.label}</Badge>}
       />

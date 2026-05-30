@@ -5,6 +5,7 @@ import type { ParsedReference, ProjectState, ReferenceVerification } from "@/lib
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { Spinner } from "./ui/Spinner";
+import { InfoHint } from "./ui/InfoHint";
 import { downloadAsFile } from "@/lib/store";
 import { referencesToCSV } from "@/lib/export";
 
@@ -124,6 +125,10 @@ export function ReferenceVerifier({
             <button className="btn-secondary" onClick={parse} disabled={busy !== null}>
               {busy === "parse" && <Spinner dark />} Parse
             </button>
+            <InfoHint
+              title="Why verify references?"
+              text="Reviewers and editors routinely check your citations. Verifying first lets you catch fabricated, retracted, or mismatched references — wrong author/journal/year, a DOI that points elsewhere — before they reach a desk reject. Accurate, intact citations are a core marker of research integrity."
+            />
             <button
               className="btn-primary"
               onClick={verify}
@@ -131,6 +136,10 @@ export function ReferenceVerifier({
             >
               {busy === "verify" && <Spinner />} Verify across trusted sources
             </button>
+            <InfoHint
+              title="Verified across trusted sources"
+              text="Each citation is cross-checked against independent scholarly databases — PubMed, Crossref, OpenAlex, and Europe PMC. Agreement across several sources raises confidence the work is real and correctly cited; a record found in none is a red flag worth investigating before you submit."
+            />
             {verifications.length > 0 && (
               <button
                 className="btn-secondary"
@@ -168,6 +177,10 @@ export function ReferenceVerifier({
           />
           <CardBody>
             <div className="flex flex-wrap items-center gap-1.5 mb-3">
+              <InfoHint
+                title="Triaging your references"
+                text="These filters let you work through the riskiest citations first. Start with Issues, Retraction, and No-DOI — a missing DOI or a paper found in no index is the kind of thing a reviewer will pounce on. Preprints and Open access are informational, not faults, but knowing which sources are not yet peer-reviewed helps you weight your claims."
+              />
               {[
                 ["all", `All (${verifications.length})`],
                 [
@@ -221,7 +234,11 @@ function SummaryBadges({ verifications }: { verifications: ReferenceVerification
   const dup = verifications.filter((v) => v.checks.duplicate).length;
   const retr = verifications.filter((v) => v.checks.possibleRetractionOrConcern === true).length;
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap items-center gap-1.5">
+      <InfoHint
+        title="Reading the safety flags"
+        text="Mismatch means the cited metadata (title, authors, journal, year) disagrees with what the databases hold — often a typo or the wrong source. Duplicates flag the same work cited twice. Retraction/concern marks a paper that may have been retracted or carry an expression of concern; never cite it as if it still stands. Resolve every flag before submitting."
+      />
       <Badge kind="neutral">Total: {total}</Badge>
       <Badge kind="good">Primary index: {pubmed}</Badge>
       <Badge kind="info">DOI coverage: {doi}</Badge>
@@ -279,6 +296,11 @@ function VerificationRow({ index, v }: { index: number; v: ReferenceVerification
             <Badge kind="bad">retraction/concern</Badge>
           )}
           <Badge kind={confKind}>confidence: {v.confidence}</Badge>
+          <InfoHint
+            side="left"
+            title="Confidence level"
+            text="How strongly the databases agree this citation matches a real record. High means a clean match (e.g. resolving DOI/PMID with consistent metadata); low means little corroboration was found — open the row, compare the parsed fields against the source matches, and fix or replace the citation."
+          />
         </div>
       </summary>
       <div className="mt-3 grid md:grid-cols-2 gap-3 text-sm">

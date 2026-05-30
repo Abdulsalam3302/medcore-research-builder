@@ -55,6 +55,7 @@ const FILES = [
   "lib/journals/compare.ts",
   "lib/journals/strategy.ts",
   "lib/journals/predatoryCheck.ts",
+  "lib/journals/indexGuide.ts",
 ];
 
 const tsconfig = {
@@ -282,6 +283,17 @@ try {
   const bad2 = pred.assessPredatory(badAnswers);
   if (good.score >= 75 && bad2.verdict === "likely-predatory") ok(`predatory check discriminates (good ${good.score} vs bad ${bad2.score}/${bad2.verdict})`); else no("predatory", JSON.stringify({ g: good.score, b: bad2.score, v: bad2.verdict }));
 } catch (e) { no("compare/strategy/predatory run", e.message); }
+
+// v3.5: index explainers (SCIE/ESCI/Scopus/MEDLINE…) all present + verifiable
+try {
+  const ig = await load("journals/indexGuide.js");
+  const ids = (ig.indexExplainers || []).map((e) => e.id);
+  const need = ["scie", "esci", "scopus", "pubmed", "medline", "pmc", "doaj"];
+  const haveAll = need.every((n) => ids.includes(n));
+  if (haveAll) ok(`index guide covers all ${need.length} indexes (SCIE/ESCI/Scopus/PubMed/MEDLINE/PMC/DOAJ)`); else no("index guide coverage", ids.join(","));
+  const allVerifiable = (ig.indexExplainers || []).every((e) => e.what && e.importance && e.verifyUrl);
+  if (allVerifiable && ig.indexVerificationNote) ok("index guide entries have what/why/verify + fake-metric warning"); else no("index guide fields", "missing");
+} catch (e) { no("index guide run", e.message); }
 
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${pass}/${pass + fail} checks passed`);

@@ -7,6 +7,7 @@ import type { ResultsInterpretation } from "@/lib/results/interpret";
 import { FileResourceManager } from "./FileResourceManager";
 import { Badge } from "./ui/Badge";
 import { CopyButton } from "./ui/CopyButton";
+import { InfoHint } from "./ui/InfoHint";
 
 type OutcomeType = "continuous" | "binary" | "time-to-event" | "count" | "other";
 
@@ -145,20 +146,38 @@ export function ResultsDataLab({
           </div>
         </div>
         <div className="p-5 grid gap-4">
-          <div className="text-sm text-med-sub">
-            Read uploaded data, confirm variable roles, and generate structured outputs for Methods/Results/Tables/Figures.
-            Never upload identifiable patient data.
+          <div className="text-sm text-med-sub inline-flex items-start gap-1.5">
+            <span>
+              Read uploaded data, confirm variable roles, and generate structured outputs for Methods/Results/Tables/Figures.
+              Never upload identifiable patient data.
+            </span>
+            <InfoHint
+              title="Upload de-identified data only"
+              text="Strip every direct and indirect identifier — names, MRNs, dates of birth, addresses, rare combinations — before uploading. Sharing identifiable patient data without authorisation breaches privacy law (HIPAA/GDPR) and your IRB approval. When in doubt, aggregate or remove the field."
+            />
           </div>
           <FileResourceManager onProfilesChange={setProfiles} />
 
           <div className="card">
             <div className="card-body grid md:grid-cols-2 gap-3">
               <div>
-                <label className="label">Primary outcome</label>
+                <label className="label inline-flex items-center gap-1.5">
+                  Primary outcome
+                  <InfoHint
+                    title="Define variable roles"
+                    text="Naming your primary outcome, its type, comparison groups, and confounders tells the tool how to infer each variable's role and which analysis fits. The primary outcome should be the single pre-specified endpoint your study is powered to answer — fixing it now guards against cherry-picking a more flattering result later."
+                  />
+                </label>
                 <input className="input" value={primaryOutcome} onChange={(e) => setPrimaryOutcome(e.target.value)} />
               </div>
               <div>
-                <label className="label">Outcome type</label>
+                <label className="label inline-flex items-center gap-1.5">
+                  Outcome type
+                  <InfoHint
+                    title="Why outcome type drives the test"
+                    text="The outcome's data type decides the right analysis: continuous outcomes use means and mean differences, binary use risk/odds ratios, time-to-event use hazard ratios and survival curves, counts use rate ratios. Mislabelling it here leads to the wrong effect measure and a misleading result, so pick the type that matches how the variable was actually measured."
+                  />
+                </label>
                 <select className="input" value={outcomeType} onChange={(e) => setOutcomeType(e.target.value as OutcomeType)}>
                   <option value="continuous">Continuous</option>
                   <option value="binary">Binary</option>
@@ -195,9 +214,17 @@ export function ResultsDataLab({
             <button type="button" className="btn-primary" onClick={generatePlan}>
               Generate analysis plan
             </button>
+            <InfoHint
+              title="Generate analysis plan"
+              text="Drafts a pre-specified plan — variable roles, model choice, confounder strategy — from your uploaded files and design context. Writing it before you run the analysis is what keeps the study honest: it pins down what you'll test in advance, so the final stats can't drift toward whatever looks best. It still flags the decisions a human must confirm."
+            />
             <button type="button" className="btn-secondary" onClick={appendResultsTemplate}>
               Create results draft scaffold
             </button>
+            <InfoHint
+              title="Results draft scaffold"
+              text="Inserts a correctly-ordered Results skeleton — data quality, descriptives, main analysis, cautious interpretation — with every number left as a labelled [author: …] placeholder. Nothing is invented: it gives you the structure reviewers expect while you supply the real figures from your own analysis."
+            />
             <button
               type="button"
               className="btn-secondary"
@@ -206,6 +233,10 @@ export function ResultsDataLab({
             >
               {interpreting ? "Interpreting…" : "Interpret results (AI-assisted)"}
             </button>
+            <InfoHint
+              title="Interpret results"
+              text="Reframes your Results text around effect sizes with 95% confidence intervals rather than bare p-values: an effect size says how large and how precise the finding is, while a p-value alone says nothing about clinical importance. The AI assists with phrasing — it can misread numbers, so verify every estimate, CI, and p-value against your own analysis."
+            />
           </div>
 
           {interpretError && (

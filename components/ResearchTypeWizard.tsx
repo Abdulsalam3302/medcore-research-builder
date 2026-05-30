@@ -16,6 +16,7 @@ import type {
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { Spinner } from "./ui/Spinner";
+import { InfoHint } from "./ui/InfoHint";
 import {
   isManuscriptTypeCompatible,
   manuscriptTypesAllowed,
@@ -442,7 +443,15 @@ function DesignPicker({
       <div className="lg:col-span-2">
         <Card>
           <CardHeader
-            title="2. Specific design"
+            title={
+              <span className="inline-flex items-center gap-1.5">
+                2. Specific design
+                <InfoHint
+                  title="Why design comes first"
+                  text="Your study design is the single decision that drives everything downstream: which reporting guideline applies (CONSORT, STROBE, PRISMA…), which statistics are valid, and which causal claims you're allowed to make. Pick it deliberately — changing it later means re-doing the checklist, the analysis plan, and often the title."
+                />
+              </span>
+            }
             subtitle="Each design carries its own checklist, eligibility criteria, supporting documents, and guideline."
           />
           <CardBody className="grid gap-3 max-h-[600px] overflow-y-auto">
@@ -600,7 +609,15 @@ function ManuscriptTypePicker({
   return (
     <Card>
       <CardHeader
-        title="Manuscript type"
+        title={
+          <span className="inline-flex items-center gap-1.5">
+            Manuscript type
+            <InfoHint
+              title="Why this matters"
+              text="The manuscript type sets the rules of the format: word limit, abstract structure, figure/table caps, and reference count. Editors desk-reject submissions that ignore these. It also narrows the reporting guideline — a research letter and a full original investigation of the same trial are held to different length and detail expectations."
+            />
+          </span>
+        }
         subtitle="Drives word limits, abstract structure, figure caps, and which guideline applies."
         right={<button className="btn-ghost text-xs" onClick={onBack}>← Back</button>}
       />
@@ -683,7 +700,15 @@ function JournalPicker({
   return (
     <Card>
       <CardHeader
-        title="Target journal"
+        title={
+          <span className="inline-flex items-center gap-1.5">
+            Target journal
+            <InfoHint
+              title="Why pick a journal now"
+              text="Choosing the target journal early lets every later step write to its rules — reference style, abstract format, word and figure limits, and the editor/reviewer lens it's known for. Matching scope and audience before you draft reduces avoidable desk rejections and saves a full reformatting pass later."
+            />
+          </span>
+        }
         subtitle="Locks reference style, abstract structure, word limits, figure rules, and reviewer/editor lens for every downstream step."
         right={<button className="btn-ghost text-xs" onClick={onBack}>← Back</button>}
       />
@@ -836,7 +861,15 @@ function FeaturesPicker({
   return (
     <Card>
       <CardHeader
-        title="Special features"
+        title={
+          <span className="inline-flex items-center gap-1.5">
+            Special features
+            <InfoHint
+              title="Why add features"
+              text="Features pull in the right reporting-guideline extensions for your study's specifics — e.g. TIDieR for intervention detail, CONSORT-PRO for patient-reported outcomes, or data-sharing statements. Declaring them up front means the relevant checklist items and supporting documents are expected and prepared, rather than discovered as gaps in peer review."
+            />
+          </span>
+        }
         subtitle="Features attach reporting-guideline extensions, checklist items, supporting documents, and agent-hints. We auto-suggest the most suitable ones based on your design, manuscript type, and notes — expert add-ons live in the 'Expert add-ons' tab."
         right={
           <div className="flex gap-2">
@@ -1064,7 +1097,15 @@ function NotesEditor({
       <div className="lg:col-span-2">
         <Card>
           <CardHeader
-            title="Notes for the assistant"
+            title={
+              <span className="inline-flex items-center gap-1.5">
+                Notes for the assistant
+                <InfoHint
+                  title="Why detail pays off here"
+                  text="Spell out your PICO (population, intervention/exposure, comparator, outcome) plus setting, dates, sample size, data source, ethics, registration, and funding. The more concrete context you give, the more accurate every downstream draft is — and the assistant will never fill these in for you. Anything missing is flagged as an [author: …] prompt, not invented."
+                />
+              </span>
+            }
             subtitle="Free-text. We'll never invent details; the Expand button structures what you wrote and surfaces clarifying questions."
             right={
               <div className="flex gap-2">
@@ -1092,6 +1133,10 @@ function NotesEditor({
               <button className="btn-secondary" onClick={onExpand} disabled={busy || generating || !notes.trim()}>
                 {busy && <Spinner dark />} ✨ Expand notes (PICO + conflicts)
               </button>
+              <InfoHint
+                title="Generate vs Expand"
+                text="'AI generate' drafts a structured notes paragraph from your design and journal — useful as a scaffold, but you must verify and replace any [author: …] placeholders. 'Expand' instead parses what you already wrote into PICO fields and flags conflicts with your design (e.g. a comparator that doesn't fit the study type). Both assist your thinking; neither replaces your judgement on the facts."
+              />
               {err && <div className="text-sm text-med-bad">{err}</div>}
             </div>
           </CardBody>
@@ -1101,7 +1146,15 @@ function NotesEditor({
         {expanded ? (
           <Card>
             <CardHeader
-              title="Structured context"
+              title={
+                <span className="inline-flex items-center gap-1.5">
+                  Structured context
+                  <InfoHint
+                    title="Your PICO, made explicit"
+                    text="This breaks your notes into the building blocks every downstream step relies on: population, intervention/exposure, comparator, and outcome (PICO), plus setting, dates, sample size, and governance. Seeing them laid out is a check on your own thinking — if a field is empty or wrong, fix the note now, because the title, methods, and analysis all inherit it. The 'confidence' badge reflects how clearly your notes mapped onto these fields, not whether the facts are correct."
+                  />
+                </span>
+              }
               right={<Badge kind={expanded.confidence === "high" ? "good" : expanded.confidence === "medium" ? "info" : "warn"}>{expanded.confidence}</Badge>}
             />
             <CardBody className="grid gap-2 text-sm">
@@ -1217,7 +1270,15 @@ function ReviewStep({
     <div className="grid gap-5">
       <Card>
         <CardHeader
-          title="Review & confirm"
+          title={
+            <span className="inline-flex items-center gap-1.5">
+              Review & confirm
+              <InfoHint
+                title="What 'Build my checklist' does"
+                text="This merges your design, manuscript type, journal, and selected features into one tailored package: the matched reporting guideline, a section-by-section checklist, the supporting documents you'll need, and warnings about likely conflicts. It's the blueprint the rest of the workspace writes against — confirm the four choices above are right before you build, since changing them later re-derives everything."
+              />
+            </span>
+          }
           subtitle="Generate the merged checklist, supporting documents, warnings, and journal-aware lenses."
           right={
             <div className="flex gap-2">
@@ -1262,14 +1323,28 @@ function ReviewStep({
       {result && (
         <Card>
           <CardHeader
-            title="Recommended guideline & checklist"
+            title={
+              <span className="inline-flex items-center gap-1.5">
+                Recommended guideline & checklist
+                <InfoHint
+                  title="Why follow the guideline"
+                  text="Reporting guidelines like CONSORT, PRISMA, and STROBE are the checklist editors and reviewers use to judge completeness. Following the one matched to your design makes the manuscript easier to review and is associated with smoother acceptance and clearer reporting — many top journals require a completed checklist at submission. It's a quality standard, not a guarantee, but skipping items is a common, avoidable reason for revisions."
+                />
+              </span>
+            }
             subtitle={result.primaryGuidelineName}
             right={<Badge kind="good">{result.requiredSections.length} sections</Badge>}
           />
           <CardBody className="grid gap-4">
             {result.warnings.length > 0 && (
               <div className="border border-amber-200 bg-amber-50 rounded-lg p-3 text-sm text-amber-800">
-                <div className="font-semibold mb-1">Warnings</div>
+                <div className="font-semibold mb-1 inline-flex items-center gap-1.5">
+                  Warnings
+                  <InfoHint
+                    title="Why read these first"
+                    text="These flag mismatches between your choices — for example a manuscript type or feature that doesn't fit the design, or a guideline whose extension you haven't accounted for. They surface conflicts now, while they're cheap to fix, rather than as reviewer comments later. Resolve or consciously accept each one before you start drafting."
+                  />
+                </div>
                 <ul className="list-disc list-inside space-y-1">
                   {result.warnings.map((w, i) => <li key={i}>{w}</li>)}
                 </ul>

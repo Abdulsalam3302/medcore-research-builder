@@ -12,6 +12,8 @@ import { journalBestPractices } from "@/lib/journals/bestPractices";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { CopyButton } from "./ui/CopyButton";
+import { InfoHint } from "./ui/InfoHint";
+import { JournalIndexGuide } from "./JournalIndexGuide";
 import { downloadAsFile } from "@/lib/store";
 
 function trustBadge(level: ReturnType<typeof assessTrust>["level"]): { kind: "good" | "info" | "warn" | "bad"; label: string } {
@@ -207,6 +209,10 @@ export function JournalFinder({ project }: { project: ProjectState }) {
 
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-2 text-[12px]">
+            <span className="inline-flex items-center gap-1 text-[11px] uppercase tracking-wide text-med-sub">
+              Filter by index
+              <InfoHint title="What do these indexes mean?" text="SCIE = Web of Science top tier (gets a Journal Impact Factor). ESCI = Web of Science 'emerging', still under evaluation (often no JIF). Scopus = Elsevier's database (CiteScore/SJR/quartiles). MEDLINE = NLM's selectively-curated core (strong credibility). Open the full 'Understanding the indexes' guide below for how to verify each." />
+            </span>
             {WOS_OPTIONS.map((o) => (
               <button
                 key={o.value}
@@ -316,6 +322,8 @@ export function JournalFinder({ project }: { project: ProjectState }) {
           </CardBody>
         )}
       </Card>
+
+      <JournalIndexGuide />
 
       {matches.length > 0 && (
         <Card>

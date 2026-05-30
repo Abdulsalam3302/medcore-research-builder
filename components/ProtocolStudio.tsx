@@ -10,6 +10,7 @@ import {
 import { downloadAsFile } from "@/lib/store";
 import { CopyButton } from "./ui/CopyButton";
 import { Badge } from "./ui/Badge";
+import { InfoHint } from "./ui/InfoHint";
 
 function slugify(s: string): string {
   return (s || "protocol").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 60) || "protocol";
@@ -105,8 +106,19 @@ export function ProtocolStudio({ project }: { project: ProjectState }) {
       <div className="card-header">
         <div>
           <div className="eyebrow">Protocol & proposal generator</div>
-          <h3 className="section-title text-[15px]">Develop a study-design-aware protocol</h3>
+          <h3 className="section-title text-[15px] inline-flex items-center gap-1.5">
+            Develop a study-design-aware protocol
+            <InfoHint
+              title="Why a protocol matters"
+              text="A protocol fixes your hypotheses, outcomes, and analysis plan before you see the data — the single strongest defence against bias, p-hacking, and outcome-switching. It's also required: ethics boards, trial registries (e.g. ClinicalTrials.gov), and most journals expect a pre-specified protocol."
+            />
+          </h3>
         </div>
+        <InfoHint
+          side="left"
+          title="Design-aware guidance"
+          text={`This studio tailors structure to your detected design and its reporting guideline (${profile.guideline}) — for example SPIRIT for trial protocols, PRISMA-P for systematic-review protocols, and STROBE for observational studies. Following the right checklist means reviewers find every section they expect.`}
+        />
         <Badge kind="info">{profile.guideline}</Badge>
       </div>
 
@@ -139,6 +151,10 @@ export function ProtocolStudio({ project }: { project: ProjectState }) {
           >
             {busy === "offline" ? "Generating…" : "Generate skeleton (offline)"}
           </button>
+          <InfoHint
+            title="Offline skeleton"
+            text="Builds a complete, correctly-ordered section outline for your design with no API key and nothing invented. Every quantitative slot — sample size, effect estimates, timelines — is left as a labelled placeholder for you to fill, so no number is fabricated on your behalf."
+          />
           <button
             type="button"
             className="btn-secondary text-sm"
@@ -147,6 +163,10 @@ export function ProtocolStudio({ project }: { project: ProjectState }) {
           >
             {busy === "ai" ? "Drafting with AI…" : "Draft with AI"}
           </button>
+          <InfoHint
+            title="Draft with AI"
+            text="Expands the skeleton into readable prose using your project context. It still won't invent your sample size, power calculation, or results — those stay as [needs author input] placeholders. Treat the output as a first draft that requires your methodological and ethics review before use."
+          />
         </div>
 
         {error && (

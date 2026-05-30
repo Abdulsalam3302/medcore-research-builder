@@ -10,6 +10,7 @@ import type {
 import { scoreLaunch, durationLabel } from "@/lib/launchReadiness";
 import { getLaunchBaseline, setLaunchBaseline } from "@/lib/store";
 import { Badge } from "./ui/Badge";
+import { InfoHint } from "./ui/InfoHint";
 import {
   IconBolt,
   IconCheck,
@@ -104,15 +105,29 @@ export function ResearchLaunch({
             title="Team & leadership"
             desc="Most journals require a senior author. Solo work is publishable but slower — peer review of drafts is what catches Methods/Results errors before reviewers do."
             tone="teal"
+            hint={{
+              title: "Why team & leadership comes first",
+              text: "Who is on the project — and who steers it — determines how fast work gets divided, how accountability is shared, and whether drafts get an internal review before submission. Settling people and roles now prevents stalled work and last-minute disputes later.",
+            }}
           >
             <div className="grid gap-3">
               <YnmRow
                 label="Do you have a team?"
                 value={answers.hasTeam}
                 onChange={(v) => setLaunch({ hasTeam: v })}
+                hint={{
+                  title: "Why a team matters",
+                  text: "A team accelerates the research and breaks work into manageable tasks, sharing cost, effort and accountability while maintaining quality through peer checks. Solo work is publishable but slower, and internal review of drafts catches Methods/Results errors before reviewers do.",
+                }}
               />
               {answers.hasTeam === "yes" || answers.hasTeam === "partial" ? (
-                <FieldRow label="Approximate team size">
+                <FieldRow
+                  label="Approximate team size"
+                  hint={{
+                    title: "Why size matters",
+                    text: "Team size shapes how finely you can split data collection, analysis and writing — and how much each person carries. Too few and tasks bottleneck; too many and coordination cost rises and authorship gets crowded. A realistic count here keeps the workload plan honest.",
+                  }}
+                >
                   <input
                     className="input max-w-[140px]"
                     type="number"
@@ -132,9 +147,18 @@ export function ResearchLaunch({
                 label="Do you have a consultant / Principal Investigator (PI)?"
                 value={answers.hasPI}
                 onChange={(v) => setLaunch({ hasPI: v })}
+                hint={{
+                  title: "Why a PI / consultant helps",
+                  text: "A PI or senior consultant lends credibility, often signs as corresponding author, and is the person who navigates ethics boards and reviewer revisions. Their oversight catches design flaws early and many journals and funders expect a clearly accountable senior figure on the study.",
+                }}
               />
               {answers.hasPI === "yes" ? (
-                <FieldRow label="PI name (optional)">
+                <FieldRow
+                  label="PI name (optional)"
+                  hint={{
+                    text: "Naming the PI now fixes accountability and makes it concrete who signs off on ethics, correspondence and final approval of the manuscript. It also avoids ambiguity later when the title page and author contributions are assembled.",
+                  }}
+                >
                   <input
                     className="input"
                     value={answers.piName ?? ""}
@@ -148,15 +172,28 @@ export function ResearchLaunch({
                 label="Do you have a senior / expert researcher on the team?"
                 value={answers.hasSeniorResearcher}
                 onChange={(v) => setLaunch({ hasSeniorResearcher: v })}
+                hint={{
+                  title: "Why senior expertise matters",
+                  text: "A senior or domain-expert researcher strengthens methodological rigour and credibility, anticipates the questions reviewers will raise, and guides the team through revisions. Their experience turns a defensible study into a publishable one and shortens the review cycle.",
+                }}
               />
 
               <YnmRow
                 label="Do you have a clear leader?"
                 value={answers.hasLeader}
                 onChange={(v) => setLaunch({ hasLeader: v })}
+                hint={{
+                  title: "Why one clear leader",
+                  text: "A single accountable leader keeps decisions moving, owns the timeline, and resolves disagreements before they stall the project. Studies without a clear driver drift — deadlines slip because no one is responsible for chasing them.",
+                }}
               />
               {answers.hasLeader === "yes" ? (
-                <FieldRow label="Who leads?">
+                <FieldRow
+                  label="Who leads?"
+                  hint={{
+                    text: "Naming the leadership role makes expectations explicit: the PI, a senior researcher, the first author and an external consultant each carry different authority and time commitments. Being specific avoids the common situation where everyone assumes someone else is driving.",
+                  }}
+                >
                   <select
                     className="input max-w-[260px]"
                     value={answers.leaderRole ?? ""}
@@ -182,6 +219,10 @@ export function ResearchLaunch({
                 label="Roles assigned (data, analysis, writing, submission)"
                 checked={!!answers.rolesAssigned}
                 onChange={(v) => setLaunch({ rolesAssigned: v })}
+                hint={{
+                  title: "Why assign roles early",
+                  text: "Mapping who owns data, analysis, writing and submission means no critical task falls through the gap between contributors. Clear roles also feed directly into a defensible author-contributions statement and prevent the end-stage scramble when a journal asks who did what.",
+                }}
               />
             </div>
           </SectionCard>
@@ -191,15 +232,28 @@ export function ResearchLaunch({
             title="Authorship"
             desc="Authorship disputes are the single most common cause of late-stage manuscript collapse. Decide before drafting starts."
             tone="blue"
+            hint={{
+              title: "Why settle authorship up front",
+              text: "Who appears, in what order, and who is corresponding author affects credit, careers and accountability. Agreeing this before anyone writes a word — against recognised criteria like ICMJE — is the single most reliable way to avoid the disputes that derail manuscripts at submission.",
+            }}
           >
             <div className="grid gap-3">
               <CheckRow
                 label="First author decided"
                 checked={!!answers.firstAuthorDecided}
                 onChange={(v) => setLaunch({ firstAuthorDecided: v })}
+                hint={{
+                  title: "Why name the first author",
+                  text: "The first author carries the heaviest writing and revision load and gets the most career credit. Deciding who that is before drafting starts aligns effort with recognition and prevents the resentment that surfaces when one person has done most of the work but the order is still 'open'.",
+                }}
               />
               {answers.firstAuthorDecided ? (
-                <FieldRow label="First author name (optional)">
+                <FieldRow
+                  label="First author name (optional)"
+                  hint={{
+                    text: "Recording the first author by name turns an informal agreement into something concrete the whole team can see, reducing the risk of a 'I thought we agreed differently' conversation when the title page is built.",
+                  }}
+                >
                   <input
                     className="input"
                     value={answers.firstAuthorName ?? ""}
@@ -212,16 +266,28 @@ export function ResearchLaunch({
                 label="Authorship order agreed by all contributors"
                 checked={!!answers.authorshipOrderAgreed}
                 onChange={(v) => setLaunch({ authorshipOrderAgreed: v })}
+                hint={{
+                  title: "Why get sign-off from everyone",
+                  text: "Order disputes almost always erupt at submission, when changing it is painful and relationships are strained. Getting every contributor to agree the sequence in writing now — while stakes feel low — is the cheapest insurance against a late-stage collapse.",
+                }}
               />
               <CheckRow
                 label="Corresponding author decided"
                 checked={!!answers.correspondingAuthorDecided}
                 onChange={(v) => setLaunch({ correspondingAuthorDecided: v })}
+                hint={{
+                  title: "Why the corresponding author matters",
+                  text: "The corresponding author is the journal's single point of contact — they handle submission, reviewer correspondence, revisions and post-publication queries, and are accountable for the integrity of the work. It should be someone reachable and senior enough to make binding decisions on the team's behalf.",
+                }}
               />
               <CheckRow
                 label="ICMJE authorship criteria reviewed with the team"
                 checked={!!answers.icmjeReviewed}
                 onChange={(v) => setLaunch({ icmjeReviewed: v })}
+                hint={{
+                  title: "Why ICMJE criteria",
+                  text: "The ICMJE defines four criteria all authors must meet — substantial contribution, drafting/revising, final approval, and accountability. Reviewing them together prevents both 'gift' authorship and the unfair exclusion of genuine contributors, and most reputable journals require you to confirm authors qualify.",
+                }}
               />
             </div>
           </SectionCard>
@@ -231,14 +297,27 @@ export function ResearchLaunch({
             title="Research type & pre-requirements"
             desc="IRB, data, and instruments are the gating items. If any of these are 'not started', most realistic timelines move out by months."
             tone="indigo"
+            hint={{
+              title: "Why pre-requirements gate everything",
+              text: "Ethics approval, data readiness and a validated instrument are the items that legally and practically gate when you can start. Each one that is 'not started' typically pushes a realistic timeline out by weeks or months — so it is worth being honest here before you commit to a date.",
+            }}
           >
             <div className="grid gap-3">
               <CheckRow
                 label="Research type / design known"
                 checked={!!answers.researchTypeKnown}
                 onChange={(v) => setLaunch({ researchTypeKnown: v })}
+                hint={{
+                  title: "Why fix the design first",
+                  text: "Your study design (cohort, case-control, RCT, cross-sectional, review) dictates ethics requirements, sample size, analysis and the reporting checklist you'll follow. Choosing it early prevents collecting data that can't answer your question and avoids costly redesign after collection has begun.",
+                }}
               />
-              <FieldRow label="Working description (e.g. 'retrospective cohort, T2DM patients, single centre')">
+              <FieldRow
+                label="Working description (e.g. 'retrospective cohort, T2DM patients, single centre')"
+                hint={{
+                  text: "A one-line design statement forces clarity on population, setting and approach, and becomes the seed of your Methods section. Writing it now surfaces hidden assumptions — single vs multi-centre, retrospective vs prospective — that change feasibility and ethics.",
+                }}
+              >
                 <input
                   className="input"
                   value={answers.researchTypeNote ?? ""}
@@ -247,7 +326,13 @@ export function ResearchLaunch({
                 />
               </FieldRow>
 
-              <FieldRow label="IRB / Ethics status">
+              <FieldRow
+                label="IRB / Ethics status"
+                hint={{
+                  title: "Why ethics approval is non-negotiable",
+                  text: "For any study involving humans, their data, or animals, ethics/IRB approval must be in place before data collection begins — journals will reject work collected without it, and retrospective approval is rarely accepted. Knowing your status here tells you whether you can start now or are still on the critical path.",
+                }}
+              >
                 <select
                   className="input max-w-[260px]"
                   value={answers.irbStatus ?? ""}
@@ -267,7 +352,12 @@ export function ResearchLaunch({
                 </select>
               </FieldRow>
               {answers.irbStatus === "approved" ? (
-                <FieldRow label="IRB / approval number (optional)">
+                <FieldRow
+                  label="IRB / approval number (optional)"
+                  hint={{
+                    text: "Recording the approval number now means it is to hand when you draft the Methods statement and complete the journal's submission forms — both of which require you to quote it. It also lets co-authors and editors verify the approval independently.",
+                  }}
+                >
                   <input
                     className="input"
                     value={answers.irbNumber ?? ""}
@@ -277,7 +367,13 @@ export function ResearchLaunch({
                 </FieldRow>
               ) : null}
 
-              <FieldRow label="Data status">
+              <FieldRow
+                label="Data status"
+                hint={{
+                  title: "Why data readiness drives the timeline",
+                  text: "Whether your data is analysis-ready, raw, still being collected, secondary, or not yet started is the single biggest determinant of how fast you can publish. Clean existing data can move to analysis in days; 'not started' means collection, cleaning and ethics still sit ahead of you.",
+                }}
+              >
                 <select
                   className="input max-w-[320px]"
                   value={answers.dataStatus ?? ""}
@@ -298,7 +394,13 @@ export function ResearchLaunch({
                 </select>
               </FieldRow>
 
-              <FieldRow label="Questionnaire / instrument">
+              <FieldRow
+                label="Questionnaire / instrument"
+                hint={{
+                  title: "Why use a validated instrument",
+                  text: "A previously validated questionnaire or scale gives you measurement properties reviewers trust and saves you from having to demonstrate reliability and validity yourself. A draft instrument means extra pilot-testing and validation work — plan that time in, or switch to an established tool.",
+                }}
+              >
                 <select
                   className="input max-w-[260px]"
                   value={answers.questionnaireStatus ?? ""}
@@ -318,7 +420,13 @@ export function ResearchLaunch({
                 </select>
               </FieldRow>
 
-              <FieldRow label="Trial / study registration">
+              <FieldRow
+                label="Trial / study registration"
+                hint={{
+                  title: "Why register prospectively",
+                  text: "Clinical trials and systematic reviews are expected to be registered before they begin (e.g. ClinicalTrials.gov, PROSPERO). Prospective registration locks in your outcomes and methods, guards against selective reporting and outcome-switching, and is mandatory at most journals — registering late or not at all can make the work unpublishable.",
+                }}
+              >
                 <select
                   className="input max-w-[260px]"
                   value={answers.registrationStatus ?? ""}
@@ -338,7 +446,12 @@ export function ResearchLaunch({
                 </select>
               </FieldRow>
               {answers.registrationStatus === "registered" ? (
-                <FieldRow label="Registration ID (NCT / PROSPERO / etc.)">
+                <FieldRow
+                  label="Registration ID (NCT / PROSPERO / etc.)"
+                  hint={{
+                    text: "The registration ID is quoted in your abstract, Methods and submission forms, and lets editors and readers cross-check your pre-specified protocol against what you report. Capturing it here keeps it linked to the project from day one.",
+                  }}
+                >
                   <input
                     className="input"
                     value={answers.registrationId ?? ""}
@@ -348,7 +461,13 @@ export function ResearchLaunch({
                 </FieldRow>
               ) : null}
 
-              <FieldRow label="Informed consent">
+              <FieldRow
+                label="Informed consent"
+                hint={{
+                  title: "Why consent status matters",
+                  text: "Informed consent is an ethical and legal requirement for most prospective human research; participants must understand and agree before any data is collected. Knowing whether consent is obtained, in progress, waived (e.g. anonymised secondary data) or not started tells you whether you can lawfully proceed.",
+                }}
+              >
                 <select
                   className="input max-w-[260px]"
                   value={answers.consentStatus ?? ""}
@@ -375,19 +494,36 @@ export function ResearchLaunch({
             title="Budget & funding"
             desc="≈99% of publications carry third-party costs — APC for open access, language editing, statistics, figure design. Budget early so submission isn't blocked."
             tone="amber"
+            hint={{
+              title: "Why budget early",
+              text: "Almost every publication carries third-party costs — open-access fees, language editing, statistics, figures — that surface right at submission. Costing each item now, while you can still seek funding or pick a cheaper route, prevents a finished manuscript stalling because there is no money to publish it.",
+            }}
           >
             <div className="grid gap-3">
               <CheckRow
                 label="Budget planned"
                 checked={!!answers.budgetPlanned}
                 onChange={(v) => setLaunch({ budgetPlanned: v })}
+                hint={{
+                  title: "Why a written budget",
+                  text: "A simple itemised budget turns vague worry about cost into a concrete number you can plan and fund against. It also reveals early whether you need a grant, departmental support, or a fee-waiver journal — decisions that are far harder to make once the work is done.",
+                }}
               />
               <YnmRow
                 label="Funding secured"
                 value={answers.fundingSecured}
                 onChange={(v) => setLaunch({ fundingSecured: v })}
+                hint={{
+                  title: "Why confirm funding now",
+                  text: "Knowing whether funding is fully secured, partial, or absent shapes which journals and methods are realistic for you. A funding gap discovered at submission can delay publication for months; spotting it now lets you pursue waivers, grants or lower-cost routes in parallel with the research.",
+                }}
               />
-              <FieldRow label="Estimated total budget (USD, optional)">
+              <FieldRow
+                label="Estimated total budget (USD, optional)"
+                hint={{
+                  text: "Putting a single rough figure on the whole project makes the scale of funding you need tangible and comparable against what you have. Even an approximate number helps you sense-check whether the study is affordable before you invest months of effort.",
+                }}
+              >
                 <input
                   className="input max-w-[180px]"
                   type="number"
@@ -405,8 +541,12 @@ export function ResearchLaunch({
               </FieldRow>
 
               <div>
-                <div className="text-[12px] font-semibold text-med-ink mb-2">
-                  Budget items considered
+                <div className="text-[12px] font-semibold text-med-ink mb-2 flex items-center gap-1.5">
+                  <span>Budget items considered</span>
+                  <InfoHint
+                    title="Why tick each line item"
+                    text="Costs hide in the details — APCs, plagiarism checks, statistics, transcription, software licences and travel each catch teams out individually. Walking the full list now means no single overlooked line item blocks submission later, and the total it builds is far more accurate than a guess."
+                  />
                 </div>
                 <div className="grid sm:grid-cols-2 gap-2">
                   {BUDGET_ITEMS.map((it) => (
@@ -428,6 +568,10 @@ export function ResearchLaunch({
             title="Methodology readiness"
             desc="A pre-specified analysis plan and a defined primary outcome cut review cycles dramatically and protect against p-hacking accusations."
             tone="violet"
+            hint={{
+              title: "Why nail the methods before data",
+              text: "Pre-specifying your outcomes, analysis and sample size before you look at the data is what separates a credible study from one reviewers suspect of p-hacking. Settling these now also makes the analysis itself faster, because you are executing a plan rather than improvising one.",
+            }}
           >
             <div className="grid gap-3">
               <YnmRow
@@ -436,21 +580,37 @@ export function ResearchLaunch({
                 onChange={(v) => setLaunch({ statisticianAvailable: v })}
                 extra="external"
                 extraLabel="External / paid"
+                hint={{
+                  title: "Why involve a statistician early",
+                  text: "A statistician consulted before data collection helps right-size the sample, choose valid tests and pre-register the analysis — the points reviewers scrutinise hardest. Bringing them in after the data is gathered often means discovering the study was underpowered or measured the wrong thing, when it is too late to fix.",
+                }}
               />
               <CheckRow
                 label="Analysis plan ready (pre-specified)"
                 checked={!!answers.analysisPlanReady}
                 onChange={(v) => setLaunch({ analysisPlanReady: v })}
+                hint={{
+                  title: "Why pre-specify the analysis",
+                  text: "A written analysis plan agreed before you see results fixes which tests, subgroups and adjustments you will run, so your findings can't be accused of being cherry-picked. It also speeds the actual analysis and is increasingly required by registries and journals.",
+                }}
               />
               <CheckRow
                 label="Primary & secondary outcomes defined"
                 checked={!!answers.outcomeMeasuresDefined}
                 onChange={(v) => setLaunch({ outcomeMeasuresDefined: v })}
+                hint={{
+                  title: "Why define outcomes up front",
+                  text: "A single clearly stated primary outcome anchors your sample size, your main analysis and the claim your paper makes; secondary outcomes are explicitly secondary. Defining them before data collection prevents outcome-switching — quietly promoting whatever turned out significant — which reviewers and registries actively check for.",
+                }}
               />
               <CheckRow
                 label="Sample size justified (power calc / saturation)"
                 checked={!!answers.sampleSizeJustified}
                 onChange={(v) => setLaunch({ sampleSizeJustified: v })}
+                hint={{
+                  title: "Why justify the sample size",
+                  text: "A power calculation (or, for qualitative work, a saturation rationale) shows your study is large enough to detect the effect it claims to look for. Skipping it risks an underpowered study that wastes participants' time and can't reach a conclusion — a common and avoidable reason for rejection.",
+                }}
               />
             </div>
           </SectionCard>
@@ -460,15 +620,28 @@ export function ResearchLaunch({
             title="Journal, tools & compliance"
             desc="Choosing the journal first locks word limits, abstract structure, and reference style — saves the typical late-stage reformat cycle."
             tone="sky"
+            hint={{
+              title: "Why decide journal & tooling early",
+              text: "Picking your target journal before you write locks in word limits, abstract structure, reporting checklist and reference style, so you draft to spec instead of reformatting at the end. Settling reference manager, COI and AI-use policies now also keeps you compliant with the rules editors check at submission.",
+            }}
           >
             <div className="grid gap-3">
               <CheckRow
                 label="Target journal known"
                 checked={!!answers.targetJournalKnown}
                 onChange={(v) => setLaunch({ targetJournalKnown: v })}
+                hint={{
+                  title: "Why choose the journal first",
+                  text: "Writing 'for a journal' rather than 'a paper' means you match its scope, word count, structure and audience from the first draft — the surest way to avoid a desk-reject and a late reformat. Knowing the target also tells you the fees, open-access options and reporting checklist you'll need.",
+                }}
               />
               {answers.targetJournalKnown ? (
-                <FieldRow label="Target journal name">
+                <FieldRow
+                  label="Target journal name"
+                  hint={{
+                    text: "Naming the specific journal lets you pull its author guidelines now and write to them, and lets the team sense-check scope and impact fit before investing months. It also fixes the reference style and structure your draft should follow.",
+                  }}
+                >
                   <input
                     className="input"
                     value={answers.targetJournalName ?? ""}
@@ -483,26 +656,46 @@ export function ResearchLaunch({
                 label="Manuscript type decided (article / brief / case report / review)"
                 checked={!!answers.manuscriptTypeKnown}
                 onChange={(v) => setLaunch({ manuscriptTypeKnown: v })}
+                hint={{
+                  title: "Why pick the article type",
+                  text: "Each manuscript type — original article, brief report, case report, review — has its own word limit, structure and evidence expectations. Deciding which one you are writing shapes how much data you need and how you frame it, and stops you over- or under-building the paper.",
+                }}
               />
               <CheckRow
                 label="Reference manager set up (Zotero / EndNote / Mendeley)"
                 checked={!!answers.referenceManagerReady}
                 onChange={(v) => setLaunch({ referenceManagerReady: v })}
+                hint={{
+                  title: "Why set up references now",
+                  text: "A reference manager lets you collect citations as you read and reformat the whole bibliography to any journal's style in one click. Setting it up before writing avoids the error-prone, hours-long job of hand-formatting references — a frequent source of submission mistakes.",
+                }}
               />
               <CheckRow
                 label="Conflicts of interest collected from all authors"
                 checked={!!answers.coiDisclosed}
                 onChange={(v) => setLaunch({ coiDisclosed: v })}
+                hint={{
+                  title: "Why collect COI early",
+                  text: "Every journal requires a conflict-of-interest declaration from each author at submission. Gathering these now — funding, advisory roles, competing interests — avoids chasing co-authors at the last minute and protects the paper's credibility; an undisclosed conflict surfacing later can trigger a correction or retraction.",
+                }}
               />
               <CheckRow
                 label="AI-assisted writing policy reviewed (ICMJE 2026)"
                 checked={!!answers.aiUsePolicyReviewed}
                 onChange={(v) => setLaunch({ aiUsePolicyReviewed: v })}
+                hint={{
+                  title: "Why review the AI-use policy",
+                  text: "Journals now require authors to disclose how generative AI was used and forbid listing it as an author, holding humans accountable for every claim. Agreeing your team's approach against current ICMJE guidance up front keeps your use transparent and compliant, and avoids an integrity query at submission.",
+                }}
               />
               <CheckRow
                 label="Data sharing plan agreed"
                 checked={!!answers.dataSharingPlanned}
                 onChange={(v) => setLaunch({ dataSharingPlanned: v })}
+                hint={{
+                  title: "Why plan data sharing",
+                  text: "Many journals and funders now require a data-availability statement and, increasingly, deposited data. Deciding what you can share — and arranging anonymisation and a repository — before collection means consent and ethics cover it, rather than discovering at submission that you cannot share what is required.",
+                }}
               />
             </div>
           </SectionCard>
@@ -512,8 +705,19 @@ export function ResearchLaunch({
             title="Quick survey — duration → design"
             desc="Pick the duration you actually have. The recommender below adjusts to realistic designs — a 12-month project can finish in ≈10 days when team, data, journal, and IRB are all ready."
             tone="teal"
+            hint={{
+              title: "Why start from time available",
+              text: "Your honest time budget is the constraint that decides which designs are realistic — an ambitious prospective trial needs months, while a focused review or secondary-data analysis can fit a short window. Matching scope to the time you actually have is what keeps a project finishable rather than abandoned.",
+            }}
           >
             <div className="grid gap-3">
+              <div className="text-[12px] font-medium text-med-sub flex items-center gap-1.5">
+                <span>Duration you actually have</span>
+                <InfoHint
+                  title="Why be realistic about duration"
+                  text="Choosing the time you genuinely have — not the time you wish you had — lets the recommender below suggest designs you can actually complete. Over-scoping for an optimistic timeline is the classic way studies stall; an honest window produces a feasible, publishable plan."
+                />
+              </div>
               <div className="flex flex-wrap gap-2">
                 {DURATION_OPTIONS.map((d) => {
                   const active = answers.durationTarget === d.value;
@@ -544,9 +748,18 @@ export function ResearchLaunch({
                 label="Hard deadline (grant, conference, thesis defence)"
                 checked={!!answers.hasHardDeadline}
                 onChange={(v) => setLaunch({ hasHardDeadline: v })}
+                hint={{
+                  title: "Why flag a hard deadline",
+                  text: "An immovable date — a grant report, conference submission or thesis defence — caps the scope you can realistically attempt and should drive the design you pick. Naming it now lets the plan work backwards from the deadline, rather than discovering too late that the chosen study can't finish in time.",
+                }}
               />
               {answers.hasHardDeadline ? (
-                <FieldRow label="Deadline date">
+                <FieldRow
+                  label="Deadline date"
+                  hint={{
+                    text: "Entering the actual date lets the tool count down the working time you have left and warn you when it gets tight, so milestones can be scheduled backwards from it instead of drifting.",
+                  }}
+                >
                   <input
                     type="date"
                     className="input max-w-[220px]"
@@ -565,6 +778,10 @@ export function ResearchLaunch({
             title="Notes"
             desc="Anything else the team should know on day one — scope constraints, language, multi-site logistics, etc."
             tone="indigo"
+            hint={{
+              title: "Why capture notes now",
+              text: "The constraints and context in your head on day one — site logistics, language editing needs, data quirks, stakeholder expectations — are easily forgotten once work begins. Writing them down here carries them into the project overview so the whole team shares the same assumptions from the start.",
+            }}
           >
             <textarea
               className="textarea"
@@ -941,12 +1158,14 @@ function SectionCard({
   title,
   desc,
   tone,
+  hint,
   children,
 }: {
   step: string;
   title: string;
   desc: string;
   tone: "teal" | "blue" | "indigo" | "sky" | "amber" | "violet";
+  hint?: { title?: string; text: string };
   children: React.ReactNode;
 }) {
   const t: Record<typeof tone, string> = {
@@ -967,7 +1186,12 @@ function SectionCard({
             {step}
           </span>
           <div>
-            <div className="section-title text-[15px]">{title}</div>
+            <div className="section-title text-[15px] flex items-center gap-1.5">
+              <span>{title}</span>
+              {hint ? (
+                <InfoHint title={hint.title} text={hint.text} side="bottom" />
+              ) : null}
+            </div>
             <p className="muted text-[12.5px] leading-relaxed mt-0.5 max-w-2xl">
               {desc}
             </p>
@@ -981,14 +1205,19 @@ function SectionCard({
 
 function FieldRow({
   label,
+  hint,
   children,
 }: {
   label: string;
+  hint?: { title?: string; text: string };
   children: React.ReactNode;
 }) {
   return (
     <div>
-      <div className="text-[12px] font-medium text-med-sub mb-1">{label}</div>
+      <div className="text-[12px] font-medium text-med-sub mb-1 flex items-center gap-1.5">
+        <span>{label}</span>
+        {hint ? <InfoHint title={hint.title} text={hint.text} /> : null}
+      </div>
       {children}
     </div>
   );
@@ -1000,12 +1229,14 @@ function YnmRow<T extends string>({
   onChange,
   extra,
   extraLabel,
+  hint,
 }: {
   label: string;
   value?: T;
   onChange: (v: T) => void;
   extra?: T;
   extraLabel?: string;
+  hint?: { title?: string; text: string };
 }) {
   const baseOpts = YNM as unknown as { value: T; label: string }[];
   const opts: { value: T; label: string }[] = extra
@@ -1013,7 +1244,10 @@ function YnmRow<T extends string>({
     : baseOpts;
   return (
     <div>
-      <div className="text-[13px] text-med-ink mb-1.5">{label}</div>
+      <div className="text-[13px] text-med-ink mb-1.5 flex items-center gap-1.5">
+        <span>{label}</span>
+        {hint ? <InfoHint title={hint.title} text={hint.text} /> : null}
+      </div>
       <div className="flex flex-wrap gap-1.5">
         {opts.map((o) => {
           const active = value === o.value;
@@ -1042,25 +1276,34 @@ function CheckRow({
   checked,
   onChange,
   compact,
+  hint,
 }: {
   label: string;
   checked: boolean;
   onChange: (v: boolean) => void;
   compact?: boolean;
+  hint?: { title?: string; text: string };
 }) {
   return (
-    <label
-      className={`flex items-start gap-2.5 cursor-pointer ${
+    <div
+      className={`flex items-start gap-1.5 ${
         compact ? "text-[12.5px]" : "text-[13px]"
       } text-med-ink`}
     >
-      <input
-        type="checkbox"
-        className="mt-0.5 h-4 w-4 rounded border-med-line text-med-brand focus:ring-med-brand/30"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <span className="leading-snug">{label}</span>
-    </label>
+      <label className="flex items-start gap-2.5 cursor-pointer">
+        <input
+          type="checkbox"
+          className="mt-0.5 h-4 w-4 rounded border-med-line text-med-brand focus:ring-med-brand/30"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        <span className="leading-snug">{label}</span>
+      </label>
+      {hint ? (
+        <span className="mt-0.5">
+          <InfoHint title={hint.title} text={hint.text} />
+        </span>
+      ) : null}
+    </div>
   );
 }
