@@ -30,9 +30,9 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MedCore — Research Builder",
+  title: "MedCore — Research Platform",
   description:
-    "A reporting-guideline-driven medical manuscript workspace with PubMed, Crossref, and OpenAlex verification.",
+    "An integrity-first, guideline-driven medical research platform: draft manuscripts, verify references, find journals, and review with AI — assist, never fabricate.",
   applicationName: "MedCore Research Builder",
   authors: [{ name: "MedCore" }],
   keywords: [
@@ -46,9 +46,9 @@ export const metadata: Metadata = {
     "Crossref",
   ],
   openGraph: {
-    title: "MedCore — Research Builder",
+    title: "MedCore — Research Platform",
     description:
-      "Reporting-guideline-driven medical manuscript builder with PubMed, Crossref, and OpenAlex verification.",
+      "An integrity-first, guideline-driven medical research platform. Assist, never fabricate.",
     type: "website",
   },
 };

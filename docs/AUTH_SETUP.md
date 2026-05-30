@@ -59,7 +59,35 @@ create policy "own projects" on manuscript_projects
   for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 ```
 
-## 4. Environment variables
+## 4. Announcements table (optional — post updates without a deploy)
+
+The app always shows the version-controlled announcements in `lib/announcements.ts`.
+If you want to post live from the dashboard, create this table; rows are merged
+on top of the built-in posts by `/api/announcements`.
+
+```sql
+create table if not exists announcements (
+  id        text primary key,
+  date      date not null default current_date,
+  kind      text not null default 'notice',  -- release | update | tip | notice
+  title     text not null,
+  body      text not null,
+  pinned    boolean not null default false,
+  cta_label text,
+  cta_href  text
+);
+alter table announcements enable row level security;
+
+-- Anyone (incl. guests) may READ announcements.
+create policy "read announcements" on announcements
+  for select to anon, authenticated using (true);
+-- Only the service role / dashboard inserts; no public write policy is created,
+-- so users cannot post. Add rows from the Supabase Table editor or SQL editor.
+```
+
+To post: insert a row (e.g. `insert into announcements (id, kind, title, body, pinned) values ('2026-06-promo','update','New journals added','We expanded the Journal Finder...', true);`).
+
+## 5. Environment variables
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=...

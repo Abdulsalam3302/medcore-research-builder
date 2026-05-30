@@ -107,6 +107,14 @@ const LiteratureSearch = dynamic(
   () => import("@/components/LiteratureSearch").then((m) => m.LiteratureSearch),
   { loading: RouteSkeleton, ssr: false },
 );
+const Announcements = dynamic(
+  () => import("@/components/Announcements").then((m) => m.Announcements),
+  { loading: RouteSkeleton, ssr: false },
+);
+const About = dynamic(() => import("@/components/About").then((m) => m.About), {
+  loading: RouteSkeleton,
+  ssr: false,
+});
 
 export default function WorkspaceApp() {
   const { project, setProject, update, ready, autosave } = useProject();
@@ -387,6 +395,22 @@ export default function WorkspaceApp() {
             >
               <ExportCenter project={project} onImport={importProject} onReset={resetProject} />
             </ResearchPhaseShell>
+          ) : active === "announcements" ? (
+            <ResearchPhaseShell
+              phaseLabel="Platform"
+              title="Announcements & Updates"
+              subtitle="Latest releases, improvements, and tips from the MedCore team."
+            >
+              <Announcements />
+            </ResearchPhaseShell>
+          ) : active === "about" ? (
+            <ResearchPhaseShell
+              phaseLabel="Platform"
+              title="About MedCore"
+              subtitle="Mission, vision, principles, and a letter from the founder."
+            >
+              <About />
+            </ResearchPhaseShell>
           ) : null}
         </main>
         <FounderContact />
@@ -397,8 +421,12 @@ export default function WorkspaceApp() {
               compliance. It does not replace expert scientific, statistical,
               ethical, or journal review.
             </p>
-            <p className="text-med-subtle whitespace-nowrap">
-              Drafts stored in your browser · API calls processed server-side
+            <p className="text-med-subtle whitespace-nowrap flex items-center gap-2">
+              <button type="button" className="hover:text-med-ink hover:underline" onClick={() => setActive("about")}>About</button>
+              <span aria-hidden>·</span>
+              <button type="button" className="hover:text-med-ink hover:underline" onClick={() => setActive("announcements")}>News</button>
+              <span aria-hidden>·</span>
+              Drafts in your browser
             </p>
           </div>
         </footer>
@@ -437,6 +465,8 @@ function MobileTabs({
     { key: "toolkit", label: "Tools" },
     { key: "impact-studio", label: "Impact" },
     { key: "export", label: "Export" },
+    { key: "announcements", label: "News" },
+    { key: "about", label: "About" },
   ];
   return (
     <nav

@@ -26,12 +26,14 @@ export type LifecycleKey =
   | "toolkit"
   | "skills"
   | "impact-studio"
-  | "export";
+  | "export"
+  | "announcements"
+  | "about";
 
 type NavItem = {
   key: LifecycleKey;
   label: string;
-  phase: "Pre-Research" | "Intra-Research" | "Post-Research" | "Quality & Empowerment" | "Post-Publication";
+  phase: "Pre-Research" | "Intra-Research" | "Post-Research" | "Quality & Empowerment" | "Post-Publication" | "Platform";
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -60,6 +62,9 @@ const NAV_ITEMS: NavItem[] = [
 
   { key: "impact-studio", label: "Post-Publication Impact Studio", phase: "Post-Publication" },
   { key: "export", label: "Export Center", phase: "Post-Publication" },
+
+  { key: "announcements", label: "Announcements", phase: "Platform" },
+  { key: "about", label: "About MedCore", phase: "Platform" },
 ];
 
 export function LifecycleNavigation({
