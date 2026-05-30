@@ -1,4 +1,4 @@
-import { bad, handleError, ok, safeJson } from "../../_utils";
+import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
 import { GLOBAL_SYSTEM, finalReportPrompt } from "@/lib/prompts";
 import type { ProjectState } from "@/lib/types";
@@ -14,6 +14,8 @@ export const runtime = "nodejs";
 type Body = { project: ProjectState; multiCheck?: boolean };
 
 export async function POST(req: Request) {
+  const rl = await enforceRateLimit(req, "llm");
+  if (rl) return rl;
   try {
     const body = await safeJson<Body>(req);
     if (!body?.project) return bad("project is required");

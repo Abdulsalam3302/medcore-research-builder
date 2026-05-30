@@ -34,13 +34,27 @@ export default function AuthPage() {
         window.location.href = "/";
         return;
       }
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
       });
       if (error) throw error;
-      setMsg("Check your email to confirm your account, then sign in.");
+      // When email confirmation is disabled (recommended for this app), sign-up
+      // returns an active session immediately — go straight into the workspace.
+      if (data.session) {
+        window.location.href = "/";
+        return;
+      }
+      // Otherwise try an immediate sign-in (works when confirmation is off but
+      // no session was returned). Fall back to a friendly message if it isn't.
+      const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+      if (!signInErr) {
+        window.location.href = "/";
+        return;
+      }
+      setMsg("Account created. You can sign in now — no email confirmation needed.");
+      setMode("sign-in");
     } catch (err) {
       setMsg(err instanceof Error ? err.message : String(err));
     } finally {
@@ -53,8 +67,13 @@ export default function AuthPage() {
       <div className="card-elevated w-full max-w-md p-8">
         <LogoWordmark className="mb-6" />
         <h1 className="display-title text-xl mb-1">Sign in to MedCore</h1>
-        <p className="muted text-sm mb-6">
-          Optional cloud sync for your manuscript projects. Guest mode still works without an account.
+        <p className="muted text-sm mb-2">
+          Optional cloud sync for your manuscript projects. No email confirmation —
+          sign up and you&apos;re in immediately.
+        </p>
+        <p className="text-[12.5px] text-med-sub mb-6">
+          You can use the entire platform with no account at all — just{" "}
+          <Link href="/" className="text-med-brand font-medium hover:underline">continue as guest</Link>.
         </p>
 
         {!configured ? (

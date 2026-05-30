@@ -1,0 +1,144 @@
+#!/usr/bin/env node
+/**
+ * Deploy-time journal ingestion.
+ *
+ * Builds lib/journals/generated.ts from public sources so the Journal Finder
+ * can scale from the curated seed to the full universe (~2.1k SCIE medical,
+ * ~12k ESCI/emerging, ~35k PubMed). Run this in a network-enabled environment
+ * (CI / a maintainer's machine) — NOT inside the sandboxed app runtime.
+ *
+ * Sources (no API key required; please set a contact email for polite pools):
+ *   - DOAJ    https://doaj.org/api/v2/search/journals/    (OA journals + ISSN)
+ *   - Crossref https://api.crossref.org/journals           (publisher + ISSN)
+ *   - OpenAlex https://api.openalex.org/sources            (metrics + concepts)
+ *
+ * Indexing flags (WoS/Scopus/MEDLINE) are NOT authoritatively available from a
+ * free bulk API, so generated records are marked dataConfidence:"ingested"
+ * with indexing:"unknown" and official verify links. The curated seed supplies
+ * the hand-verified indexing; the finder merges and lets curated win.
+ *
+ * Usage:
+ *   SCHOLARLY_MAILTO=you@example.com node scripts/ingest-journals.mjs \
+ *     --subjects "medicine,public health,surgery" --max 20000
+ */
+
+import { writeFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+
+const MAILTO =
+  process.env.SCHOLARLY_MAILTO || process.env.OPENALEX_MAILTO || process.env.CROSSREF_MAILTO || "";
+const UA = `MedCoreResearchBuilder/3.0 (journal-ingest; ${MAILTO ? "mailto:" + MAILTO : "+https://medcore-research-builder.vercel.app"})`;
+
+const args = process.argv.slice(2);
+function arg(name, def) {
+  const i = args.indexOf(`--${name}`);
+  return i >= 0 && args[i + 1] ? args[i + 1] : def;
+}
+const MAX = Number(arg("max", "20000"));
+const SUBJECTS = arg("subjects", "medicine,public health,health,surgery,nursing,dentistry,pharmacy")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function getJson(url) {
+  const res = await fetch(url, { headers: { accept: "application/json", "user-agent": UA } });
+  if (!res.ok) throw new Error(`${res.status} ${url}`);
+  return res.json();
+}
+
+function normName(name) {
+  return String(name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+function slugify(name) {
+  return String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+/** OpenAlex sources — rich (concepts + counts), paginated via cursor. */
+async function fromOpenAlex(records, seen) {
+  let cursor = "*";
+  let pulled = 0;
+  const filter = "type:journal";
+  while (cursor && records.length < MAX) {
+    const url =
+      `https://api.openalex.org/sources?filter=${encodeURIComponent(filter)}` +
+      `&per-page=200&cursor=${encodeURIComponent(cursor)}` +
+      (MAILTO ? `&mailto=${encodeURIComponent(MAILTO)}` : "");
+    let data;
+    try {
+      data = await getJson(url);
+    } catch (e) {
+      console.warn("OpenAlex page failed:", e.message);
+      break;
+    }
+    for (const s of data.results || []) {
+      const name = s.display_name;
+      if (!name) continue;
+      const key = normName(name);
+      if (seen.has(key)) continue;
+      const concepts = (s.x_concepts || []).map((c) => String(c.display_name || "").toLowerCase());
+      // Keep only medicine/health-relevant sources.
+      const isMed = concepts.some((c) =>
+        /medicine|health|clinical|surg|nurs|dental|pharma|biolog|epidemi|psych/.test(c),
+      );
+      if (!isMed) continue;
+      seen.add(key);
+      const issn = (s.issn || [])[0] || s.issn_l || undefined;
+      records.push({
+        id: `oa-${slugify(name)}-${(issn || "").replace(/[^0-9xX]/g, "") || records.length}`,
+        name,
+        publisher: s.host_organization_name || "Unknown",
+        country: s.country_code || "Unknown",
+        issnOnline: issn,
+        homepage: s.homepage_url || undefined,
+        scope: concepts.slice(0, 8).join(", "),
+        specialties: concepts.slice(0, 6),
+        indexing: { wos: "none", scopus: "unknown", pubmed: "unknown", medline: "unknown", pmc: "unknown", doaj: s.is_in_doaj ? "indexed" : "unknown" },
+        oaModel: s.is_oa ? "gold" : "unknown",
+        dataConfidence: "ingested",
+        verifyUrls: {
+          wos: "https://mjl.clarivate.com/home",
+          scopus: "https://www.scopus.com/sources",
+          nlm: "https://www.ncbi.nlm.nih.gov/nlmcatalog/journals/",
+          doaj: "https://doaj.org/",
+        },
+      });
+      pulled++;
+    }
+    cursor = data.meta?.next_cursor || null;
+    await sleep(120);
+    if (pulled && pulled % 1000 === 0) console.log(`  …${records.length} journals so far`);
+  }
+}
+
+async function main() {
+  console.log(`Ingesting journals (max ${MAX}); subjects: ${SUBJECTS.join(", ")}`);
+  if (!MAILTO) console.warn("Tip: set SCHOLARLY_MAILTO for polite-pool rate limits.");
+  const records = [];
+  const seen = new Set();
+
+  await fromOpenAlex(records, seen);
+
+  const out =
+    `/* AUTO-GENERATED by scripts/ingest-journals.mjs on ${new Date().toISOString()}.\n` +
+    `   ${records.length} journals. Do not edit by hand — re-run the script.\n` +
+    `   Indexing flags are "unknown" (no free bulk source); curated data wins. */\n\n` +
+    `import type { JournalRecord } from "./types";\n\n` +
+    `export const generatedJournals: JournalRecord[] = ${JSON.stringify(records, null, 0)};\n`;
+
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const target = path.join(here, "..", "lib", "journals", "generated.ts");
+  await writeFile(target, out, "utf8");
+  console.log(`Wrote ${records.length} journals → ${target}`);
+}
+
+main().catch((e) => {
+  console.error("Ingestion failed:", e);
+  process.exitCode = 1;
+});

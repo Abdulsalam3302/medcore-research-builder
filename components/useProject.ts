@@ -26,7 +26,23 @@ export function useProject(): {
     cloud: "idle",
   });
   const cloudTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Holds the latest project so the snapshot interval can read it without
+  // listing `project` as a dependency (which would reset the timer per edit).
+  const projectRef = useRef<ProjectState>(project);
   const cloudEnabled = isSupabaseConfigured();
+
+  function hasContent(p: ProjectState): boolean {
+    return Boolean(
+      p.titleFinal ||
+        p.titleInputs?.draftTitle ||
+        p.sections?.introduction ||
+        p.sections?.methods ||
+        p.sections?.results ||
+        p.sections?.discussion ||
+        p.sections?.conclusion ||
+        (p.references?.verifications?.length ?? 0) > 0,
+    );
+  }
 
   useEffect(() => {
     async function bootstrap() {
@@ -34,10 +50,29 @@ export function useProject(): {
         try {
           const r = await fetch("/api/projects", { cache: "no-store" });
           if (r.ok) {
-            const data = (await r.json()) as { project?: ProjectState | null };
+            const data = (await r.json()) as {
+              project?: ProjectState | null;
+              updatedAt?: string | null;
+            };
             if (data.project && typeof data.project === "object") {
-              set({ ...loadProject(), ...data.project });
-              saveProject({ ...loadProject(), ...data.project });
+              const local = loadProject();
+              const cloud = data.project;
+              const cloudUpdatedAt = data.updatedAt ?? cloud.updatedAt ?? "";
+              const localUpdatedAt = local.updatedAt ?? "";
+              // Only let cloud overwrite local when cloud is strictly newer, or
+              // when local has no meaningful content / no timestamp to trust.
+              const cloudIsNewer =
+                !hasContent(local) ||
+                !localUpdatedAt ||
+                (Boolean(cloudUpdatedAt) && cloudUpdatedAt > localUpdatedAt);
+              if (cloudIsNewer) {
+                const merged = { ...local, ...cloud };
+                set(merged);
+                projectRef.current = merged;
+                saveProject(merged);
+              }
+              // When local is newer we keep it; queueCloudSync will push it up
+              // on the next commit.
             }
           }
         } catch {
@@ -54,10 +89,10 @@ export function useProject(): {
   useEffect(() => {
     if (!ready) return;
     const id = window.setInterval(() => {
-      addSnapshot(project, "Auto snapshot", true);
+      addSnapshot(projectRef.current, "Auto snapshot", true);
     }, 1000 * 60 * 30);
     return () => window.clearInterval(id);
-  }, [project, ready]);
+  }, [ready]);
 
   function queueCloudSync(p: ProjectState) {
     if (!cloudEnabled) return;
@@ -83,8 +118,12 @@ export function useProject(): {
   }
 
   function commit(p: ProjectState) {
+    projectRef.current = p;
     setAutosave((a) => ({ ...a, saving: true }));
-    saveProject(p);
+    const ok = saveProject(p);
+    if (!ok) {
+      console.warn("useProject: local save failed (storage quota?)");
+    }
     setAutosave({ savedAt: Date.now(), saving: false, cloud: autosave.cloud });
     queueCloudSync(p);
   }

@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ProjectState } from "@/lib/types";
 import type { ProtocolReadinessItem, ProtocolStatus } from "@/lib/lifecycle";
 import { Badge } from "./ui/Badge";
+import { buildDocumentSkeleton } from "@/lib/protocol/generator";
+import { downloadAsFile } from "@/lib/store";
 
 const STATUSES: Array<{ id: ProtocolStatus; label: string }> = [
   { id: "not-started", label: "Not started" },
@@ -53,6 +55,34 @@ function badgeKind(status: ProtocolStatus): "good" | "warn" | "bad" | "neutral" 
 export function ProtocolProposalAvailability({ project }: { project: ProjectState }) {
   const [items, setItems] = useState<ProtocolReadinessItem[]>(DEFAULT_ITEMS);
   const [selectedDesign, setSelectedDesign] = useState("");
+  const [openDraftId, setOpenDraftId] = useState<string | null>(null);
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  function onUploadClick(id: string) {
+    fileInputs.current[id]?.click();
+  }
+
+  function onFileChosen(id: string, files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === id ? { ...it, status: "uploaded", uploadedFile: file.name } : it,
+      ),
+    );
+  }
+
+  function onGenerateSkeleton(item: ProtocolReadinessItem) {
+    const md = buildDocumentSkeleton(item.id, item.label, project);
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === item.id
+          ? { ...it, generatedDraft: md, status: it.status === "uploaded" || it.status === "complete" ? it.status : "draft-available" }
+          : it,
+      ),
+    );
+    setOpenDraftId(item.id);
+  }
 
   const score = useMemo(() => {
     const total = items.length;
@@ -101,8 +131,15 @@ export function ProtocolProposalAvailability({ project }: { project: ProjectStat
               </thead>
               <tbody>
                 {items.map((item) => (
-                  <tr key={item.id} className="border-t border-med-line">
-                    <td className="px-3 py-2 text-med-ink">{item.label}</td>
+                  <tr key={item.id} className="border-t border-med-line align-top">
+                    <td className="px-3 py-2 text-med-ink">
+                      {item.label}
+                      {item.uploadedFile && (
+                        <div className="text-[11px] text-emerald-700 mt-0.5">
+                          File: {item.uploadedFile}
+                        </div>
+                      )}
+                    </td>
                     <td className="px-3 py-2">
                       <select
                         className="input text-xs min-w-[160px]"
@@ -116,12 +153,62 @@ export function ProtocolProposalAvailability({ project }: { project: ProjectStat
                         ))}
                       </select>
                     </td>
-                    <td className="px-3 py-2 text-xs text-med-sub">{item.guidance}</td>
+                    <td className="px-3 py-2 text-xs text-med-sub">
+                      {item.guidance}
+                      {item.generatedDraft && openDraftId === item.id && (
+                        <div className="mt-2 grid gap-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge kind="info">Draft skeleton</Badge>
+                            <button
+                              type="button"
+                              className="btn-secondary text-[11px]"
+                              onClick={() => downloadAsFile(`${item.id}-skeleton.md`, item.generatedDraft || "", "text/markdown")}
+                            >
+                              Download .md
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-secondary text-[11px]"
+                              onClick={() => setOpenDraftId(null)}
+                            >
+                              Hide
+                            </button>
+                          </div>
+                          <pre className="border border-med-line rounded-lg p-2 bg-white text-[11px] text-med-ink whitespace-pre-wrap overflow-x-auto max-h-[260px]">
+                            {item.generatedDraft}
+                          </pre>
+                          <div className="text-[11px] text-amber-700">
+                            Draft only — requires human and ethics review.
+                          </div>
+                        </div>
+                      )}
+                    </td>
                     <td className="px-3 py-2">
                       <div className="flex gap-1.5 flex-wrap">
                         <Badge kind={badgeKind(item.status)}>{item.status.replaceAll("-", " ")}</Badge>
-                        <button className="btn-secondary text-xs">Upload</button>
-                        <button className="btn-secondary text-xs">Generate skeleton</button>
+                        <input
+                          ref={(el) => {
+                            fileInputs.current[item.id] = el;
+                          }}
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.doc,.docx,.txt,.md,.rtf,.csv,.xlsx,.json,.odt"
+                          onChange={(e) => onFileChosen(item.id, e.target.files)}
+                        />
+                        <button
+                          type="button"
+                          className="btn-secondary text-xs"
+                          onClick={() => onUploadClick(item.id)}
+                        >
+                          {item.uploadedFile ? "Replace" : "Upload"}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-secondary text-xs"
+                          onClick={() => onGenerateSkeleton(item)}
+                        >
+                          {item.generatedDraft ? "Regenerate" : "Generate skeleton"}
+                        </button>
                       </div>
                     </td>
                   </tr>

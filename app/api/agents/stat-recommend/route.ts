@@ -1,4 +1,4 @@
-import { bad, handleError, ok, safeJson } from "../../_utils";
+import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import {
   recommendStat,
   type OutcomeShape,
@@ -18,6 +18,8 @@ type Body = {
 };
 
 export async function POST(req: Request) {
+  const rl = await enforceRateLimit(req, "llm");
+  if (rl) return rl;
   try {
     const body = await safeJson<Body>(req);
     if (!body?.outcome || !body?.grouping)

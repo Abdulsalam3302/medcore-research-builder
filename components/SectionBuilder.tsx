@@ -371,7 +371,7 @@ export function SectionBuilder({
               </button>
               <CopyButton text={project.sections[section] || ""} label="Copy draft" />
             </div>
-            {err && <div className="text-sm text-med-bad">{err}</div>}
+            {err && <div role="alert" className="text-sm text-med-bad">{err}</div>}
             <HumanReviewBanner compact />
           </CardBody>
         </Card>

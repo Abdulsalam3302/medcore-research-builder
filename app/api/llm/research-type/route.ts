@@ -1,4 +1,4 @@
-import { bad, handleError, ok, safeJson } from "../../_utils";
+import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import type { ResearchTypeAnswersV2, ResearchTypeResult } from "@/lib/types";
 import { designById, designs } from "@/lib/registry/designs";
 import { featureById } from "@/lib/registry/features";
@@ -14,6 +14,8 @@ type Body = { answers: ResearchTypeAnswersV2 };
  * so old projects keep working.
  */
 export async function POST(req: Request) {
+  const rl = await enforceRateLimit(req, "llm");
+  if (rl) return rl;
   try {
     const body = await safeJson<Body>(req);
     if (!body?.answers) return bad("answers is required");

@@ -4,6 +4,8 @@
  * Polite pool: include mailto query parameter when configured.
  */
 
+import { scholarlyHeaders, SCHOLARLY_TIMEOUT_MS } from "./_http";
+
 const BASE = "https://api.openalex.org";
 
 export type OpenAlexWork = {
@@ -29,7 +31,8 @@ export async function openalexSearch(args: {
   if (mailto) p.set("mailto", mailto);
   if (process.env.OPENALEX_API_KEY) p.set("api_key", process.env.OPENALEX_API_KEY);
   const res = await fetch(`${BASE}/works?${p.toString()}`, {
-    headers: { accept: "application/json" },
+    headers: scholarlyHeaders(),
+    signal: AbortSignal.timeout(SCHOLARLY_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`OpenAlex ${res.status}`);
   const data = (await res.json()) as { results?: Array<Record<string, unknown>> };

@@ -6,6 +6,8 @@
  * Email required (free). Set UNPAYWALL_EMAIL.
  */
 
+import { scholarlyHeaders, SCHOLARLY_TIMEOUT_MS } from "./_http";
+
 const BASE = "https://api.unpaywall.org/v2";
 
 export type UnpaywallResult = {
@@ -28,7 +30,10 @@ export async function unpaywallLookup(doi: string): Promise<UnpaywallResult | nu
   if (!email) throw new Error("UNPAYWALL_EMAIL not configured");
   const clean = doi.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
   const url = `${BASE}/${encodeURIComponent(clean)}?email=${encodeURIComponent(email)}`;
-  const res = await fetch(url, { headers: { accept: "application/json" } });
+  const res = await fetch(url, {
+    headers: scholarlyHeaders(),
+    signal: AbortSignal.timeout(SCHOLARLY_TIMEOUT_MS),
+  });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Unpaywall ${res.status}`);
   const data = (await res.json()) as Record<string, unknown>;

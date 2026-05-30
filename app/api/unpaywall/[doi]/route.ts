@@ -1,10 +1,12 @@
-import { bad, handleError, ok } from "../../_utils";
+import { bad, handleError, ok, enforceRateLimit } from "../../_utils";
 import { unpaywallConfigured, unpaywallLookup } from "@/lib/scholarly/unpaywall";
 
 export const runtime = "nodejs";
 
-export async function GET(_req: Request, { params }: { params: { doi: string } }) {
+export async function GET(req: Request, { params }: { params: { doi: string } }) {
   try {
+    const limited = await enforceRateLimit(req, "search");
+    if (limited) return limited;
     if (!unpaywallConfigured()) return bad("UNPAYWALL_EMAIL not configured", 503);
     const doi = decodeURIComponent(params.doi);
     if (!doi) return bad("doi is required");

@@ -9,7 +9,7 @@ import { FounderContact } from "@/components/FounderContact";
 import { useProject } from "@/components/useProject";
 import { emptyProject, type ProjectState } from "@/lib/types";
 import { downloadAsFile } from "@/lib/store";
-import { tryParseSharedHash } from "@/lib/share";
+import { fetchServerShare, tryParseShareToken, tryParseSharedHash } from "@/lib/share";
 import { SkeletonLines } from "@/components/ui/Skeleton";
 import { ProtocolProposalAvailability } from "@/components/ProtocolProposalAvailability";
 import { LearningResourcePanel } from "@/components/LearningResourcePanel";
@@ -63,6 +63,50 @@ const CoverLetter = dynamic(
   () => import("@/components/CoverLetter").then((m) => m.CoverLetter),
   { loading: RouteSkeleton, ssr: false },
 );
+const ProtocolStudio = dynamic(
+  () => import("@/components/ProtocolStudio").then((m) => m.ProtocolStudio),
+  { loading: RouteSkeleton, ssr: false },
+);
+const ManuscriptCoherence = dynamic(
+  () => import("@/components/ManuscriptCoherence").then((m) => m.ManuscriptCoherence),
+  { loading: RouteSkeleton, ssr: false },
+);
+const LanguageStudio = dynamic(
+  () => import("@/components/LanguageStudio").then((m) => m.LanguageStudio),
+  { loading: RouteSkeleton, ssr: false },
+);
+const JournalFinder = dynamic(
+  () => import("@/components/JournalFinder").then((m) => m.JournalFinder),
+  { loading: RouteSkeleton, ssr: false },
+);
+const ReferenceSafetyPanel = dynamic(
+  () => import("@/components/ReferenceSafetyPanel").then((m) => m.ReferenceSafetyPanel),
+  { loading: RouteSkeleton, ssr: false },
+);
+const StatsAndFigures = dynamic(
+  () => import("@/components/StatsAndFigures").then((m) => m.StatsAndFigures),
+  { loading: RouteSkeleton, ssr: false },
+);
+const ResearchSwarm = dynamic(
+  () => import("@/components/ResearchSwarm").then((m) => m.ResearchSwarm),
+  { loading: RouteSkeleton, ssr: false },
+);
+const ManuscriptScorecard = dynamic(
+  () => import("@/components/ManuscriptScorecard").then((m) => m.ManuscriptScorecard),
+  { loading: RouteSkeleton, ssr: false },
+);
+const ResearchSkills = dynamic(
+  () => import("@/components/ResearchSkills").then((m) => m.ResearchSkills),
+  { loading: RouteSkeleton, ssr: false },
+);
+const ResearchToolkit = dynamic(
+  () => import("@/components/ResearchToolkit").then((m) => m.ResearchToolkit),
+  { loading: RouteSkeleton, ssr: false },
+);
+const LiteratureSearch = dynamic(
+  () => import("@/components/LiteratureSearch").then((m) => m.LiteratureSearch),
+  { loading: RouteSkeleton, ssr: false },
+);
 
 export default function WorkspaceApp() {
   const { project, setProject, update, ready, autosave } = useProject();
@@ -70,12 +114,35 @@ export default function WorkspaceApp() {
 
   useEffect(() => {
     if (!ready) return;
+    // Existing inline-fragment path (#shared=…): data already lives in the URL,
+    // Collaboration reads it and offers a merge — just open the export view.
     const incoming = tryParseSharedHash();
     if (incoming) {
       setActive("export");
       if (typeof window !== "undefined") {
         history.replaceState(null, "", window.location.pathname);
       }
+      return;
+    }
+    // Server-stored token path (?share=<token>): fetch the project, import it,
+    // then clean the token out of the URL. Degrades silently if unavailable.
+    const token = tryParseShareToken();
+    if (token) {
+      let cancelled = false;
+      void (async () => {
+        const remote = await fetchServerShare(token);
+        if (cancelled) return;
+        if (remote) {
+          importProject(remote);
+          setActive("export");
+        }
+        if (typeof window !== "undefined") {
+          history.replaceState(null, "", window.location.pathname);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
@@ -102,6 +169,12 @@ export default function WorkspaceApp() {
 
   return (
     <div className="min-h-screen flex bg-med-bg">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-elevated focus:ring-2 focus:ring-med-brand"
+      >
+        Skip to content
+      </a>
       <LifecycleNavigation active={active} onSelect={setActive} project={project} />
       <div className="flex-1 min-w-0 flex flex-col">
         <WorkspaceHeader
@@ -112,7 +185,7 @@ export default function WorkspaceApp() {
           autosave={autosave}
         />
         <MobileTabs active={active} onSelect={setActive} />
-        <main className="p-4 md:p-6 lg:p-8 flex-1 max-w-[1400px] w-full mx-auto">
+        <main id="main-content" className="p-4 md:p-6 lg:p-8 flex-1 max-w-[1400px] w-full mx-auto">
           {!ready ? (
             <div className="muted">Loading…</div>
           ) : active === "launch" ? (
@@ -132,6 +205,15 @@ export default function WorkspaceApp() {
               />
               <VideoSupplementSlot sectionId="launch" />
             </ResearchPhaseShell>
+          ) : active === "protocol" ? (
+            <ResearchPhaseShell
+              phaseLabel="Pre-Research Workspace"
+              title="Protocol / Proposal Studio"
+              subtitle="Generate a study-design-aware protocol or proposal — develop it here, not just upload it."
+            >
+              <ProtocolStudio project={project} />
+              <ProtocolProposalAvailability project={project} />
+            </ResearchPhaseShell>
           ) : active === "type" ? (
             <ResearchPhaseShell
               phaseLabel="Pre-Research Workspace"
@@ -147,6 +229,14 @@ export default function WorkspaceApp() {
               subtitle="Develop title and novelty positioning with trusted evidence support."
             >
               <TitleLab project={project} update={update} />
+            </ResearchPhaseShell>
+          ) : active === "literature" ? (
+            <ResearchPhaseShell
+              phaseLabel="Pre-Research Workspace"
+              title="Literature Search (live)"
+              subtitle="Search real peer-reviewed papers and preprints via Europe PMC, then add any to your references in one click."
+            >
+              <LiteratureSearch project={project} update={update} />
             </ResearchPhaseShell>
           ) : active === "methods" ? (
             <ResearchPhaseShell
@@ -171,6 +261,11 @@ export default function WorkspaceApp() {
               subtitle="Transform uploaded data and analysis context into results-ready output."
             >
               <ResultsDataLab project={project} update={update} />
+              <StatsAndFigures
+                designId={project.researchTypeAnswers?.designId}
+                manuscriptType={project.researchTypeAnswers?.manuscriptType}
+                expandedNotes={project.researchTypeAnswers?.expandedNotes}
+              />
               <SectionBuilder section="results" project={project} update={update} />
               <VideoSupplementSlot sectionId="intra-results-lab" />
             </ResearchPhaseShell>
@@ -205,6 +300,31 @@ export default function WorkspaceApp() {
               subtitle="Check citation metadata quality and source integrity before submission."
             >
               <ReferenceVerifier project={project} update={update} />
+              <ReferenceSafetyPanel project={project} />
+            </ResearchPhaseShell>
+          ) : active === "coherence" ? (
+            <ResearchPhaseShell
+              phaseLabel="Post-Research Submission"
+              title="Manuscript Coherence"
+              subtitle="One connected manuscript: checks title, sections, results, discussion, and citation order for conflicts."
+            >
+              <ManuscriptCoherence project={project} />
+            </ResearchPhaseShell>
+          ) : active === "language" ? (
+            <ResearchPhaseShell
+              phaseLabel="Post-Research Submission"
+              title="Language Studio"
+              subtitle="Academic language editing, readability, and writing-integrity advisories — meaning preserved, every number intact."
+            >
+              <LanguageStudio project={project} />
+            </ResearchPhaseShell>
+          ) : active === "journal-finder" ? (
+            <ResearchPhaseShell
+              phaseLabel="Post-Research Submission"
+              title="Journal Finder"
+              subtitle="Find and compare target journals (WoS SCIE/ESCI, Scopus, PubMed/MEDLINE, DOAJ, Saudi) with submission formatting."
+            >
+              <JournalFinder project={project} />
             </ResearchPhaseShell>
           ) : active === "submission" ? (
             <ResearchPhaseShell
@@ -218,6 +338,38 @@ export default function WorkspaceApp() {
               <QualitySuite project={project} />
               <OriginalityCitationGuard project={project} />
               <ComplianceReport project={project} onJump={(k) => setActive(k as LifecycleKey)} />
+            </ResearchPhaseShell>
+          ) : active === "swarm" ? (
+            <ResearchPhaseShell
+              phaseLabel="Quality & Empowerment"
+              title="AI Peer-Review Swarm"
+              subtitle="A swarm of specialist agents (methodologist, statistician, reviewer, editor, integrity officer…) reviews your manuscript across layers of quality and safety."
+            >
+              <ResearchSwarm project={project} />
+            </ResearchPhaseShell>
+          ) : active === "scorecard" ? (
+            <ResearchPhaseShell
+              phaseLabel="Quality & Empowerment"
+              title="Manuscript Scorecard"
+              subtitle="Objective, repeatable multi-dimension evaluation. Re-run after edits to prove the draft is getting better."
+            >
+              <ManuscriptScorecard project={project} />
+            </ResearchPhaseShell>
+          ) : active === "skills" ? (
+            <ResearchPhaseShell
+              phaseLabel="Quality & Empowerment"
+              title="Research Skills & Methods"
+              subtitle="A focused skills library and best-practice tips to empower every part of your research."
+            >
+              <ResearchSkills />
+            </ResearchPhaseShell>
+          ) : active === "toolkit" ? (
+            <ResearchPhaseShell
+              phaseLabel="Quality & Empowerment"
+              title="Tools & MCP Directory"
+              subtitle="Curated open-source projects and MCP servers that empower medical and academic research — each with a verify link."
+            >
+              <ResearchToolkit />
             </ResearchPhaseShell>
           ) : active === "impact-studio" ? (
             <ResearchPhaseShell
@@ -264,8 +416,10 @@ function MobileTabs({
 }) {
   const items: { key: LifecycleKey; label: string }[] = [
     { key: "launch", label: "Launch" },
+    { key: "protocol", label: "Protocol" },
     { key: "type", label: "Design" },
     { key: "title", label: "Gap" },
+    { key: "literature", label: "Lit search" },
     { key: "introduction", label: "Intro" },
     { key: "methods", label: "Methods" },
     { key: "results", label: "Results" },
@@ -273,17 +427,29 @@ function MobileTabs({
     { key: "conclusion", label: "Conclusion" },
     { key: "references", label: "Refs" },
     { key: "appendix", label: "Appendix" },
+    { key: "coherence", label: "Coherence" },
+    { key: "language", label: "Language" },
+    { key: "journal-finder", label: "Journals" },
     { key: "submission", label: "Submit" },
+    { key: "swarm", label: "Swarm" },
+    { key: "scorecard", label: "Score" },
+    { key: "skills", label: "Skills" },
+    { key: "toolkit", label: "Tools" },
     { key: "impact-studio", label: "Impact" },
     { key: "export", label: "Export" },
   ];
   return (
-    <div className="md:hidden border-b border-med-line bg-white/85 backdrop-blur px-2 py-2 overflow-x-auto sticky top-[57px] z-10">
+    <nav
+      aria-label="Section navigation"
+      className="md:hidden border-b border-med-line bg-white/85 backdrop-blur px-2 py-2 overflow-x-auto sticky top-[57px] z-10"
+    >
       <div className="flex gap-1 min-w-max">
         {items.map((it) => (
           <button
             key={it.key}
+            type="button"
             onClick={() => onSelect(it.key)}
+            aria-current={active === it.key ? "page" : undefined}
             className={`pill-tab whitespace-nowrap ${
               active === it.key ? "pill-tab-active" : ""
             }`}
@@ -292,6 +458,6 @@ function MobileTabs({
           </button>
         ))}
       </div>
-    </div>
+    </nav>
   );
 }

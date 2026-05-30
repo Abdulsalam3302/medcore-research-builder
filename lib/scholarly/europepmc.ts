@@ -8,6 +8,8 @@
  *  - Surfaces a `hasPDF`/`isOpenAccess` flag inline.
  */
 
+import { scholarlyHeaders, SCHOLARLY_TIMEOUT_MS } from "./_http";
+
 const BASE = "https://www.ebi.ac.uk/europepmc/webservices/rest";
 
 export type EuropePMCPaper = {
@@ -44,7 +46,8 @@ export async function europepmcSearch(args: {
   p.set("pageSize", String(Math.min(args.pageSize ?? 25, 100)));
   p.set("resultType", args.resultType ?? "lite");
   const res = await fetch(`${BASE}/search?${p.toString()}`, {
-    headers: { accept: "application/json" },
+    headers: scholarlyHeaders(),
+    signal: AbortSignal.timeout(SCHOLARLY_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`EuropePMC ${res.status}`);
   const data = (await res.json()) as {
@@ -92,7 +95,8 @@ export async function europepmcSearch(args: {
 export async function europepmcFullText(pmcid: string): Promise<string | null> {
   const id = pmcid.replace(/^PMC/i, "");
   const res = await fetch(`${BASE}/PMC${id}/fullTextXML`, {
-    headers: { accept: "application/xml" },
+    headers: scholarlyHeaders("application/xml"),
+    signal: AbortSignal.timeout(SCHOLARLY_TIMEOUT_MS),
   });
   if (!res.ok) return null;
   return res.text();

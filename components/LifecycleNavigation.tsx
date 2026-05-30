@@ -6,8 +6,10 @@ import { APP_VERSION } from "@/lib/constants";
 
 export type LifecycleKey =
   | "launch"
+  | "protocol"
   | "type"
   | "title"
+  | "literature"
   | "introduction"
   | "methods"
   | "results"
@@ -15,20 +17,29 @@ export type LifecycleKey =
   | "conclusion"
   | "references"
   | "appendix"
+  | "coherence"
+  | "language"
+  | "journal-finder"
   | "submission"
+  | "swarm"
+  | "scorecard"
+  | "toolkit"
+  | "skills"
   | "impact-studio"
   | "export";
 
 type NavItem = {
   key: LifecycleKey;
   label: string;
-  phase: "Pre-Research" | "Intra-Research" | "Post-Research" | "Post-Publication";
+  phase: "Pre-Research" | "Intra-Research" | "Post-Research" | "Quality & Empowerment" | "Post-Publication";
 };
 
 const NAV_ITEMS: NavItem[] = [
   { key: "launch", label: "Research Launch", phase: "Pre-Research" },
+  { key: "protocol", label: "Protocol / Proposal Studio", phase: "Pre-Research" },
   { key: "type", label: "Study Design Selector", phase: "Pre-Research" },
   { key: "title", label: "Literature & Gap Explorer", phase: "Pre-Research" },
+  { key: "literature", label: "Literature Search (live)", phase: "Pre-Research" },
   { key: "introduction", label: "Introduction", phase: "Intra-Research" },
   { key: "methods", label: "Methods", phase: "Intra-Research" },
   { key: "results", label: "Results", phase: "Intra-Research" },
@@ -37,7 +48,15 @@ const NAV_ITEMS: NavItem[] = [
   { key: "references", label: "References", phase: "Intra-Research" },
   { key: "appendix", label: "Appendix (optional)", phase: "Intra-Research" },
 
+  { key: "coherence", label: "Manuscript Coherence", phase: "Post-Research" },
+  { key: "language", label: "Language Studio", phase: "Post-Research" },
+  { key: "journal-finder", label: "Journal Finder", phase: "Post-Research" },
   { key: "submission", label: "Submission & Quality", phase: "Post-Research" },
+
+  { key: "swarm", label: "AI Peer-Review Swarm", phase: "Quality & Empowerment" },
+  { key: "scorecard", label: "Manuscript Scorecard", phase: "Quality & Empowerment" },
+  { key: "skills", label: "Research Skills & Tips", phase: "Quality & Empowerment" },
+  { key: "toolkit", label: "Tools & MCP Directory", phase: "Quality & Empowerment" },
 
   { key: "impact-studio", label: "Post-Publication Impact Studio", phase: "Post-Publication" },
   { key: "export", label: "Export Center", phase: "Post-Publication" },
@@ -65,7 +84,7 @@ export function LifecycleNavigation({
         <LogoWordmark />
       </div>
 
-      <nav className="px-3 py-4 flex-1 overflow-y-auto space-y-5">
+      <nav aria-label="Research lifecycle" className="px-3 py-4 flex-1 overflow-y-auto space-y-5">
         {Object.entries(groups).map(([phase, items]) => (
           <section key={phase}>
             <div className="mc-eyebrow px-2 pb-1.5 text-[10.5px] text-[var(--mc-ink-400)]">{phase}</div>
@@ -75,7 +94,9 @@ export function LifecycleNavigation({
                 return (
                   <button
                     key={item.key}
+                    type="button"
                     onClick={() => onSelect(item.key)}
+                    aria-current={isActive ? "page" : undefined}
                     className={`w-full text-left rounded-lg px-2.5 py-2 text-[13px] transition ${
                       isActive
                         ? "bg-[var(--mc-blue-50)] text-[var(--mc-blue-700)] font-semibold"

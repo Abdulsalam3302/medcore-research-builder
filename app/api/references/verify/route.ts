@@ -11,7 +11,7 @@ type Body =
 
 export async function POST(req: Request) {
   try {
-    const limited = enforceRateLimit(req, "verify");
+    const limited = await enforceRateLimit(req, "verify");
     if (limited) return limited;
     const body = await safeJson<Body>(req, "references");
     let items: Array<{ originalText: string; parsed: ParsedReference }> = [];

@@ -113,6 +113,7 @@ export async function s2Search(args: {
   }
   const res = await fetch(`${BASE}/paper/search?${p.toString()}`, {
     headers: headers(),
+    signal: AbortSignal.timeout(20000),
   });
   if (!res.ok) throw new Error(`S2 ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const data = (await res.json()) as { data?: Array<Record<string, unknown>> };
@@ -136,6 +137,7 @@ export async function s2Paper(id: string): Promise<S2Paper | null> {
   p.set("fields", DEFAULT_FIELDS);
   const res = await fetch(`${BASE}/paper/${encodeURIComponent(tagged)}?${p.toString()}`, {
     headers: headers(),
+    signal: AbortSignal.timeout(20000),
   });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`S2 paper ${res.status}`);
@@ -156,7 +158,7 @@ export async function s2Recommendations(args: {
   p.set("fields", DEFAULT_FIELDS);
   const res = await fetch(
     `${REC_BASE}/papers/forpaper/${encodeURIComponent(args.paperId)}?${p.toString()}`,
-    { headers: headers() },
+    { headers: headers(), signal: AbortSignal.timeout(20000) },
   );
   if (!res.ok) throw new Error(`S2 recommendations ${res.status}`);
   const data = (await res.json()) as { recommendedPapers?: Array<Record<string, unknown>> };

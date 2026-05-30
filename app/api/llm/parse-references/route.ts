@@ -9,7 +9,7 @@ type Body = { raw: string };
 
 export async function POST(req: Request) {
   try {
-    const limited = enforceRateLimit(req, "llm");
+    const limited = await enforceRateLimit(req, "llm");
     if (limited) return limited;
     const body = await safeJson<Body>(req, "references");
     if (!body?.raw || !body.raw.trim()) return bad("raw text is required");

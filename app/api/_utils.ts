@@ -13,10 +13,10 @@ export function bad(message: string, status = 400, extra?: Record<string, unknow
 export type RateTier = keyof typeof RATE_LIMITS;
 export type BodyTier = keyof typeof BODY_LIMITS;
 
-export function enforceRateLimit(req: Request, tier: RateTier = "default") {
+export async function enforceRateLimit(req: Request, tier: RateTier = "default") {
   const { limit, windowMs } = RATE_LIMITS[tier];
   const key = `${tier}:${clientKey(req)}`;
-  const result = checkRateLimit(key, limit, windowMs);
+  const result = await checkRateLimit(key, limit, windowMs);
   if (!result.ok) {
     return bad("Rate limit exceeded — please wait and try again.", 429, {
       retryAfterSec: result.retryAfterSec,
@@ -49,16 +49,31 @@ export async function safeJson<T = unknown>(
   try {
     return (await req.json()) as T;
   } catch {
-    throw new Error("Invalid JSON body");
+    throw new BadRequestError("Invalid JSON body");
+  }
+}
+
+/** Thrown for malformed/invalid client input — surfaced to the client as 400. */
+export class BadRequestError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BadRequestError";
   }
 }
 
 export function handleError(e: unknown) {
   const msg = e instanceof Error ? e.message : String(e);
+  // Client-input problems: echo the message with the right status. These are
+  // safe to surface (they describe the caller's request, not an upstream).
+  if (e instanceof BadRequestError || msg === "Invalid JSON body") {
+    return bad(msg, 400);
+  }
   if (msg.includes("Rate limit") || msg.includes("too large")) {
     const status = msg.includes("too large") ? 413 : 429;
     return bad(msg, status);
   }
-  // Surface upstream API errors transparently for debugging, but don't leak keys.
-  return bad(msg, 500);
+  // Everything else may carry raw upstream text/keys — log server-side and
+  // return a generic message so we never leak it to the client.
+  console.error("[api]", e);
+  return bad("Upstream request failed. Please try again.", 502);
 }

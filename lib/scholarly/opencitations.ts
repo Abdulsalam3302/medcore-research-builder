@@ -10,6 +10,8 @@
  * finding under-cited but topically central papers.
  */
 
+import { scholarlyHeaders, SCHOLARLY_TIMEOUT_MS } from "./_http";
+
 const BASE = "https://opencitations.net/index/coci/api/v1";
 
 export type OCRecord = {
@@ -35,7 +37,8 @@ function normalize(raw: Record<string, unknown>): OCRecord {
 export async function openCitationsCitedBy(doi: string): Promise<OCRecord[]> {
   const clean = doi.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
   const res = await fetch(`${BASE}/citations/${encodeURIComponent(clean)}`, {
-    headers: { accept: "application/json" },
+    headers: scholarlyHeaders(),
+    signal: AbortSignal.timeout(SCHOLARLY_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`OpenCitations ${res.status}`);
   const data = (await res.json()) as Array<Record<string, unknown>>;
@@ -45,7 +48,8 @@ export async function openCitationsCitedBy(doi: string): Promise<OCRecord[]> {
 export async function openCitationsReferences(doi: string): Promise<OCRecord[]> {
   const clean = doi.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
   const res = await fetch(`${BASE}/references/${encodeURIComponent(clean)}`, {
-    headers: { accept: "application/json" },
+    headers: scholarlyHeaders(),
+    signal: AbortSignal.timeout(SCHOLARLY_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`OpenCitations ${res.status}`);
   const data = (await res.json()) as Array<Record<string, unknown>>;

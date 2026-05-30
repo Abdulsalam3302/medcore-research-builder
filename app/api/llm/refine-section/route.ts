@@ -20,7 +20,7 @@ type Body = {
 
 export async function POST(req: Request) {
   try {
-    const limited = enforceRateLimit(req, "llm");
+    const limited = await enforceRateLimit(req, "llm");
     if (limited) return limited;
     if (!isLLMConfigured())
       return bad("LLM not configured — set MINIMAX_API_KEY (default), ANTHROPIC_API_KEY, or OPENAI_API_KEY", 503);

@@ -1,4 +1,4 @@
-import { bad, handleError, ok, safeJson } from "../../_utils";
+import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import { GLOBAL_SYSTEM, refineTitlePrompt } from "@/lib/prompts";
 import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
 import type { ResearchTypeAnswersV2 } from "@/lib/types";
@@ -16,6 +16,8 @@ type Body = {
 };
 
 export async function POST(req: Request) {
+  const rl = await enforceRateLimit(req, "llm");
+  if (rl) return rl;
   try {
     if (!isLLMConfigured())
       return bad(
