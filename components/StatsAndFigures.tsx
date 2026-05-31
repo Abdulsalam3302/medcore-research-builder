@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { ExpandedNotes } from "@/lib/types";
 import { PlotlyPreview } from "./PlotlyPreview";
 import { CopyButton } from "./ui/CopyButton";
@@ -211,11 +211,13 @@ function useApi<T>() {
 function Descriptive() {
   const [values, setValues] = useState("");
   const api = useApi();
+  const valuesId = useId();
   return (
     <div className="card">
       <div className="card-body space-y-3">
-        <label className="label">Values (comma / space / newline separated)</label>
+        <label className="label" htmlFor={valuesId}>Values (comma / space / newline separated)</label>
         <textarea
+          id={valuesId}
           className="textarea font-mono"
           rows={4}
           value={values}
@@ -246,6 +248,8 @@ function TwoSample() {
   const [g2, setG2] = useState("");
   const [mode, setMode] = useState<"welch_t" | "paired_t">("welch_t");
   const api = useApi();
+  const g1Id = useId();
+  const g2Id = useId();
   return (
     <div className="card">
       <div className="card-body space-y-3">
@@ -270,8 +274,9 @@ function TwoSample() {
         </div>
         <div className="grid md:grid-cols-2 gap-3">
           <div>
-            <label className="label">{mode === "paired_t" ? "Pre" : "Group 1"}</label>
+            <label className="label" htmlFor={g1Id}>{mode === "paired_t" ? "Pre" : "Group 1"}</label>
             <textarea
+              id={g1Id}
               className="textarea font-mono"
               rows={4}
               value={g1}
@@ -279,8 +284,9 @@ function TwoSample() {
             />
           </div>
           <div>
-            <label className="label">{mode === "paired_t" ? "Post" : "Group 2"}</label>
+            <label className="label" htmlFor={g2Id}>{mode === "paired_t" ? "Post" : "Group 2"}</label>
             <textarea
+              id={g2Id}
               className="textarea font-mono"
               rows={4}
               value={g2}
@@ -337,19 +343,19 @@ function ChiSquare() {
             <tr>
               <td className="px-2 py-1 font-medium">Group 1</td>
               <td>
-                <input className="input w-24" value={a} onChange={(e) => setA(e.target.value)} />
+                <input className="input w-24" aria-label="Group 1, Outcome positive count" value={a} onChange={(e) => setA(e.target.value)} />
               </td>
               <td>
-                <input className="input w-24" value={b} onChange={(e) => setB(e.target.value)} />
+                <input className="input w-24" aria-label="Group 1, Outcome negative count" value={b} onChange={(e) => setB(e.target.value)} />
               </td>
             </tr>
             <tr>
               <td className="px-2 py-1 font-medium">Group 2</td>
               <td>
-                <input className="input w-24" value={c} onChange={(e) => setC(e.target.value)} />
+                <input className="input w-24" aria-label="Group 2, Outcome positive count" value={c} onChange={(e) => setC(e.target.value)} />
               </td>
               <td>
-                <input className="input w-24" value={d} onChange={(e) => setD(e.target.value)} />
+                <input className="input w-24" aria-label="Group 2, Outcome negative count" value={d} onChange={(e) => setD(e.target.value)} />
               </td>
             </tr>
           </tbody>
@@ -380,23 +386,25 @@ function Correlation() {
   const [x, setX] = useState("");
   const [y, setY] = useState("");
   const api = useApi();
+  const xId = useId();
+  const yId = useId();
   return (
     <div className="card">
       <div className="card-body space-y-3">
         <div className="grid md:grid-cols-2 gap-3">
           <div>
-            <label className="label inline-flex items-center gap-1.5">
+            <label className="label inline-flex items-center gap-1.5" htmlFor={xId}>
               X values
               <InfoHint
                 title="Pearson assumes linearity"
                 text="Pearson's r captures the strength of a linear association between two continuous variables and is sensitive to outliers and non-linearity. If the relationship is monotonic but curved, or values are ordinal/skewed, prefer Spearman's rank correlation. Report r with its 95% CI, and remember correlation is not causation."
               />
             </label>
-            <textarea className="textarea font-mono" rows={4} value={x} onChange={(e) => setX(e.target.value)} />
+            <textarea id={xId} className="textarea font-mono" rows={4} value={x} onChange={(e) => setX(e.target.value)} />
           </div>
           <div>
-            <label className="label">Y values (same length)</label>
-            <textarea className="textarea font-mono" rows={4} value={y} onChange={(e) => setY(e.target.value)} />
+            <label className="label" htmlFor={yId}>Y values (same length)</label>
+            <textarea id={yId} className="textarea font-mono" rows={4} value={y} onChange={(e) => setY(e.target.value)} />
           </div>
         </div>
         <button
@@ -464,12 +472,15 @@ function Recommender({
   );
   const [enrich, setEnrich] = useState(false);
   const api = useApi();
+  const outcomeId = useId();
+  const groupingId = useId();
+  const contextId = useId();
   return (
     <div className="card">
       <div className="card-body space-y-3">
         <div className="grid md:grid-cols-2 gap-3">
           <div>
-            <label className="label inline-flex items-center gap-1.5">
+            <label className="label inline-flex items-center gap-1.5" htmlFor={outcomeId}>
               Outcome shape
               <InfoHint
                 title="The test follows the data"
@@ -477,6 +488,7 @@ function Recommender({
               />
             </label>
             <select
+              id={outcomeId}
               className="input"
               value={outcome}
               onChange={(e) => setOutcome(e.target.value as typeof outcome)}
@@ -489,7 +501,7 @@ function Recommender({
             </select>
           </div>
           <div>
-            <label className="label inline-flex items-center gap-1.5">
+            <label className="label inline-flex items-center gap-1.5" htmlFor={groupingId}>
               Grouping
               <InfoHint
                 title="Design dictates the structure"
@@ -497,6 +509,7 @@ function Recommender({
               />
             </label>
             <select
+              id={groupingId}
               className="input"
               value={grouping}
               onChange={(e) => setGrouping(e.target.value as typeof grouping)}
@@ -510,8 +523,9 @@ function Recommender({
           </div>
         </div>
         <div>
-          <label className="label">Context (optional)</label>
+          <label className="label" htmlFor={contextId}>Context (optional)</label>
           <textarea
+            id={contextId}
             className="textarea"
             rows={2}
             value={context}
@@ -550,6 +564,7 @@ function FigureSpec() {
   const [spec, setSpec] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const resultTextId = useId();
 
   async function recommend() {
     setLoading(true);
@@ -604,7 +619,7 @@ function FigureSpec() {
     <div className="card">
       <div className="card-body space-y-3">
         <div>
-          <label className="label inline-flex items-center gap-1.5">
+          <label className="label inline-flex items-center gap-1.5" htmlFor={resultTextId}>
             Describe the result you want to visualize
             <InfoHint
               title="Describe the estimate, not just the topic"
@@ -612,6 +627,7 @@ function FigureSpec() {
             />
           </label>
           <textarea
+            id={resultTextId}
             className="textarea"
             rows={3}
             value={resultText}
@@ -676,6 +692,10 @@ function TableScaffold() {
   const [test, setTest] = useState("");
   const [result, setResult] = useState<{ markdown: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const titleId = useId();
+  const columnsId = useId();
+  const variablesId = useId();
+  const testId = useId();
 
   function build() {
     setError(null);
@@ -734,12 +754,13 @@ function TableScaffold() {
           />
         </div>
         <div>
-          <label className="label">Table title</label>
-          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <label className="label" htmlFor={titleId}>Table title</label>
+          <input id={titleId} className="input" value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
         <div>
-          <label className="label">Columns (comma or newline separated)</label>
+          <label className="label" htmlFor={columnsId}>Columns (comma or newline separated)</label>
           <input
+            id={columnsId}
             className="input"
             value={columnText}
             onChange={(e) => setColumnText(e.target.value)}
@@ -747,10 +768,11 @@ function TableScaffold() {
           />
         </div>
         <div>
-          <label className="label">
+          <label className="label" htmlFor={variablesId}>
             Variables — one per line: <code>label | continuous|categorical | levels/nonNormal</code>
           </label>
           <textarea
+            id={variablesId}
             className="textarea font-mono"
             rows={5}
             value={variableText}
@@ -767,8 +789,9 @@ function TableScaffold() {
         </label>
         {includeP && (
           <div>
-            <label className="label">Statistical test (for the footnote, optional)</label>
+            <label className="label" htmlFor={testId}>Statistical test (for the footnote, optional)</label>
             <input
+              id={testId}
               className="input"
               value={test}
               onChange={(e) => setTest(e.target.value)}

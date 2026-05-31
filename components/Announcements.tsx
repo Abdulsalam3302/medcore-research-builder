@@ -5,6 +5,7 @@ import { mergeAnnouncements, staticAnnouncements, type Announcement } from "@/li
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { Card, CardBody } from "./ui/Card";
 import { Badge } from "./ui/Badge";
+import { useConfirm } from "./ui/ConfirmDialog";
 
 function kindBadge(kind: Announcement["kind"]): { kind: "good" | "info" | "warn" | "neutral"; label: string } {
   switch (kind) {
@@ -25,6 +26,7 @@ export function Announcements() {
   const [items, setItems] = useState<Announcement[]>(() => mergeAnnouncements());
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const { confirm } = useConfirm();
 
   function refresh() {
     fetch("/api/announcements", { cache: "no-store" })
@@ -104,7 +106,13 @@ export function Announcements() {
                         type="button"
                         className="text-[11px] text-med-bad hover:underline"
                         onClick={async () => {
-                          if (!confirm(`Delete announcement "${a.title}"?`)) return;
+                          const yes = await confirm({
+                            title: "Delete announcement",
+                            message: `Delete announcement "${a.title}"?`,
+                            confirmLabel: "Delete",
+                            danger: true,
+                          });
+                          if (!yes) return;
                           await fetch(`/api/admin/announcements?id=${encodeURIComponent(a.id)}`, { method: "DELETE" });
                           refresh();
                         }}

@@ -99,6 +99,7 @@ function Assumptions() {
         <CardBody className="grid gap-2">
           <textarea
             className="textarea text-[13px] min-h-[100px]"
+            aria-label="Group A values (comma/space-separated)"
             value={a}
             onChange={(e) => setA(e.target.value)}
           />
@@ -110,6 +111,7 @@ function Assumptions() {
         <CardBody className="grid gap-2">
           <textarea
             className="textarea text-[13px] min-h-[100px]"
+            aria-label="Group B values (comma/space-separated)"
             value={b}
             onChange={(e) => setB(e.target.value)}
           />
@@ -202,6 +204,7 @@ function PowerMeans() {
           step={0.05}
           value={d}
           onChange={(e) => setD(Number(e.target.value))}
+          aria-label="Cohen's d effect size"
         />
       </Field>
       <Field label={`α (${alpha})`}>
@@ -212,6 +215,7 @@ function PowerMeans() {
           step={0.005}
           value={alpha}
           onChange={(e) => setAlpha(Number(e.target.value))}
+          aria-label="Significance level alpha"
         />
       </Field>
       <Field label={`Power (${power})`}>
@@ -222,6 +226,7 @@ function PowerMeans() {
           step={0.01}
           value={power}
           onChange={(e) => setPower(Number(e.target.value))}
+          aria-label="Statistical power"
         />
       </Field>
       <div className="rounded-lg border border-med-line bg-slate-50/50 p-3">
@@ -248,6 +253,7 @@ function PowerProps() {
           step={0.01}
           value={p1}
           onChange={(e) => setP1(Number(e.target.value))}
+          aria-label="Proportion in group 1 (p₁)"
         />
       </Field>
       <Field label={`p₂ (${p2})`}>
@@ -258,6 +264,7 @@ function PowerProps() {
           step={0.01}
           value={p2}
           onChange={(e) => setP2(Number(e.target.value))}
+          aria-label="Proportion in group 2 (p₂)"
         />
       </Field>
       <Field label={`α (${alpha})`}>
@@ -268,6 +275,7 @@ function PowerProps() {
           step={0.005}
           value={alpha}
           onChange={(e) => setAlpha(Number(e.target.value))}
+          aria-label="Significance level alpha"
         />
       </Field>
       <Field label={`Power (${power})`}>
@@ -278,6 +286,7 @@ function PowerProps() {
           step={0.01}
           value={power}
           onChange={(e) => setPower(Number(e.target.value))}
+          aria-label="Statistical power"
         />
       </Field>
       <div className="rounded-lg border border-med-line bg-slate-50/50 p-3">
@@ -305,6 +314,7 @@ function Snippets() {
           <Field label="Design / test">
             <select
               className="input"
+              aria-label="Design / test"
               value={input.designKind}
               onChange={(e) =>
                 setInput((p) => ({
@@ -327,6 +337,7 @@ function Snippets() {
           <Field label="Outcome variable">
             <input
               className="input"
+              aria-label="Outcome variable"
               value={input.outcomeName || ""}
               onChange={(e) => setInput((p) => ({ ...p, outcomeName: e.target.value }))}
             />
@@ -334,6 +345,7 @@ function Snippets() {
           <Field label="Exposure / grouping variable">
             <input
               className="input"
+              aria-label="Exposure / grouping variable"
               value={input.exposureName || ""}
               onChange={(e) => setInput((p) => ({ ...p, exposureName: e.target.value }))}
             />
@@ -341,6 +353,7 @@ function Snippets() {
           <Field label="Covariates (comma-separated)">
             <input
               className="input"
+              aria-label="Covariates (comma-separated)"
               value={(input.covariates || []).join(", ")}
               onChange={(e) =>
                 setInput((p) => ({

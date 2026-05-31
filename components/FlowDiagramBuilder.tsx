@@ -196,6 +196,7 @@ export function FlowDiagramBuilder({ defaultAcronym }: { defaultAcronym?: string
                 >
                   <textarea
                     className="textarea text-[12.5px] min-h-[44px]"
+                    aria-label={`${n.kind === "exclusion" ? "Exclusion" : "Main"} step ${i + 1} label`}
                     value={n.label}
                     onChange={(e) => updateNode(n.id, { label: e.target.value })}
                   />
