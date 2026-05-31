@@ -29,9 +29,14 @@ export async function GET(req: Request) {
     if (limited) return limited;
 
     const u = new URL(req.url);
-    const q = (u.searchParams.get("q") || "").trim();
-    const issn = (u.searchParams.get("issn") || "").trim();
-    if (!q && !issn) return bad("q (journal name) or issn is required");
+    // Bound the inputs: a journal name is short, and an ISSN must match the
+    // standard format. This caps the upstream request size (no amplification)
+    // and rejects junk before we build the OpenAlex/DOAJ URL.
+    const q = (u.searchParams.get("q") || "").trim().slice(0, 200);
+    const issnRaw = (u.searchParams.get("issn") || "").trim().toUpperCase();
+    const issn = /^\d{4}-?\d{3}[\dX]$/.test(issnRaw) ? issnRaw : "";
+    if (issnRaw && !issn) return bad("issn must be a valid ISSN, e.g. 1234-5678");
+    if (!q && !issn) return bad("q (journal name) or a valid issn is required");
 
     // 1) OpenAlex source lookup (rich metrics + indexing hints).
     const oaUrl = issn

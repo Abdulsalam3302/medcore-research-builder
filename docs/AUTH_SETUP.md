@@ -33,11 +33,25 @@ alter table profiles enable row level security;
 create policy "read own profile" on profiles
   for select to authenticated using (auth.uid() = id);
 
--- A user may insert/update their own profile, but NOT escalate their role.
-create policy "upsert own profile" on profiles
-  for insert to authenticated with check (auth.uid() = id);
-create policy "update own non-role" on profiles
-  for update to authenticated using (auth.uid() = id);
+-- A user may insert their own profile, but ONLY with the default 'user' role.
+create policy "insert own profile" on profiles
+  for insert to authenticated
+  with check (auth.uid() = id and role = 'user');
+
+-- A user may update their own profile but CANNOT change their role.
+-- The WITH CHECK pins role to its existing value, so a logged-in user cannot
+-- self-promote to admin from the browser anon client. (Without WITH CHECK,
+-- `update profiles set role='admin'` would succeed — a privilege-escalation bug.)
+create policy "update own profile (role locked)" on profiles
+  for update to authenticated
+  using (auth.uid() = id)
+  with check (
+    auth.uid() = id
+    and role = (select p.role from profiles p where p.id = auth.uid())
+  );
+
+-- Defense in depth: revoke direct UPDATE of the role column from clients.
+revoke update (role) on profiles from authenticated, anon;
 ```
 
 > Role escalation to `admin` is performed server-side via `OWNER_EMAIL` only

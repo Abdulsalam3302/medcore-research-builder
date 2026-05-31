@@ -62,17 +62,30 @@ export function InfoHint({
         type="button"
         aria-label={title || "More information"}
         aria-describedby={open ? id : undefined}
-        aria-expanded={open}
-        className="inline-flex h-[15px] w-[15px] items-center justify-center rounded-full border border-med-line bg-white text-[10px] font-semibold leading-none text-med-sub hover:border-med-brand hover:text-med-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-med-brand/40"
+        // 24px touch target (WCAG 2.5.8) with a smaller visual glyph; negative
+        // margin keeps it from disturbing inline layout.
+        className="inline-flex h-6 w-6 -my-1.5 items-center justify-center text-med-sub hover:text-med-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-med-brand/40 rounded-full"
         onFocus={show}
         onBlur={hide}
+        // Dismiss on Escape without moving focus (WCAG 1.4.13).
+        onKeyDown={(e) => {
+          if (e.key === "Escape" && open) {
+            e.stopPropagation();
+            setOpen(false);
+          }
+        }}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           setOpen((o) => !o);
         }}
       >
-        i
+        <span
+          aria-hidden
+          className="inline-flex h-[15px] w-[15px] items-center justify-center rounded-full border border-med-line bg-white text-[10px] font-semibold leading-none"
+        >
+          i
+        </span>
       </button>
       {open && (
         <span

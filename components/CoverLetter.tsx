@@ -79,6 +79,7 @@ export function CoverLetter({ project }: { project: ProjectState }) {
             }
           >
             <input
+              aria-label="Salutation"
               className="input text-sm"
               value={editor}
               onChange={(e) => setEditor(e.target.value)}
@@ -87,6 +88,7 @@ export function CoverLetter({ project }: { project: ProjectState }) {
           </Field>
           <Field label="Corresponding author name">
             <input
+              aria-label="Corresponding author name"
               className="input text-sm"
               value={author}
               onChange={(e) => setAuthor(e.target.value)}

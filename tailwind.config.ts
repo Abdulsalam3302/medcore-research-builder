@@ -18,7 +18,7 @@ const config: Config = {
           ink: "#0b1220",
           inkSoft: "#1f2a44",
           sub: "#5b6577",
-          subtle: "#8b94a6",
+          subtle: "#6b7385",
           line: "#e4e8ef",
           lineStrong: "#cdd4df",
           brand: "#0E6BA8",

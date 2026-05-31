@@ -73,25 +73,32 @@ export function WorkspaceHeader({
               Guided research mode
             </span>
             {autosave ? (
-              <span
-                aria-live="polite"
-                className="hidden md:inline-flex items-center gap-1.5 text-[11.5px] text-[var(--mc-ink-500)]"
-              >
+              autosave.localError ? (
+                <span role="alert" className="hidden md:inline-flex items-center gap-1.5 text-[11.5px] text-med-bad font-medium">
+                  <span className="rounded-full" style={{ width: 6, height: 6, background: "var(--mc-risk)" }} />
+                  Couldn&apos;t save locally — storage may be full. Export your work now.
+                </span>
+              ) : (
                 <span
-                  className="rounded-full"
-                  style={{
-                    width: 6,
-                    height: 6,
-                    background: "var(--mc-verified)",
-                    boxShadow: "0 0 0 3px rgba(4,120,87,0.16)",
-                  }}
-                />
-                {autosave.saving
-                  ? "Saving your workspace..."
-                  : savedAgo
-                    ? `Workspace saved · ${savedAgo}`
-                    : "Workspace saved"}
-              </span>
+                  aria-live="polite"
+                  className="hidden md:inline-flex items-center gap-1.5 text-[11.5px] text-[var(--mc-ink-500)]"
+                >
+                  <span
+                    className="rounded-full"
+                    style={{
+                      width: 6,
+                      height: 6,
+                      background: "var(--mc-verified)",
+                      boxShadow: "0 0 0 3px rgba(4,120,87,0.16)",
+                    }}
+                  />
+                  {autosave.saving
+                    ? "Saving your workspace..."
+                    : savedAgo
+                      ? `Workspace saved · ${savedAgo}`
+                      : "Workspace saved"}
+                </span>
+              )
             ) : null}
           </div>
 

@@ -251,11 +251,12 @@ export type TwoSampleTestResult = {
   mean1: number;
   mean2?: number;
   meanDiff: number;
-  diff95CI: [number, number];
-  t: number;
-  df: number;
-  pTwoSided: number;
+  diff95CI?: [number, number];
+  t?: number;
+  df?: number;
+  pTwoSided?: number;
   hedgesG?: number;
+  warning?: string;
 };
 
 export function welchTTest(a: number[], b: number[]): TwoSampleTestResult {
@@ -268,6 +269,15 @@ export function welchTTest(a: number[], b: number[]): TwoSampleTestResult {
   const v1 = variance(x);
   const v2 = variance(y);
   const se = Math.sqrt(v1 / n1 + v2 / n2);
+  if (n1 < 2 || n2 < 2 || !Number.isFinite(se) || se === 0) {
+    return {
+      test: "welch_t",
+      n1, n2,
+      mean1: m1, mean2: m2,
+      meanDiff: m1 - m2,
+      warning: "Too few observations or zero variance — statistic not computable",
+    };
+  }
   const t = (m1 - m2) / se;
   const dfNum = (v1 / n1 + v2 / n2) ** 2;
   const dfDen = (v1 ** 2) / (n1 * n1 * (n1 - 1)) + (v2 ** 2) / (n2 * n2 * (n2 - 1));
@@ -301,6 +311,15 @@ export function pairedTTest(pre: number[], post: number[]): TwoSampleTestResult 
   const m = mean(diffs);
   const sd = Math.sqrt(variance(diffs));
   const se = sd / Math.sqrt(diffs.length);
+  if (diffs.length < 2 || !Number.isFinite(se) || se === 0) {
+    return {
+      test: "paired_t",
+      n1: diffs.length,
+      mean1: m,
+      meanDiff: m,
+      warning: "Too few observations or zero variance — statistic not computable",
+    };
+  }
   const t = m / se;
   const df = diffs.length - 1;
   const tcrit = tInverse(0.975, df);
@@ -322,9 +341,11 @@ export type ChiSquareResult = {
   df?: number;
   p: number;
   oddsRatio?: number;
-  riskRatio?: number;
-  riskDifference?: number;
+  riskRatio?: number | null;
+  riskDifference?: number | null;
   ci95OR?: [number, number];
+  ci95RR?: [number, number];
+  ci95RD?: [number, number];
   warning?: string;
 };
 
@@ -349,22 +370,67 @@ export function chiSquare(observed: number[][]): ChiSquareResult {
   const df = (rows - 1) * (cols - 1);
   const p = 1 - gammaP(df / 2, chi2 / 2);
   let or: number | undefined;
-  let rr: number | undefined;
-  let rd: number | undefined;
+  let rr: number | null | undefined;
+  let rd: number | null | undefined;
   let ci95OR: [number, number] | undefined;
+  let ci95RR: [number, number] | undefined;
+  let ci95RD: [number, number] | undefined;
+  let zeroCellCorrected = false;
   if (rows === 2 && cols === 2) {
     const [a, b] = observed[0];
     const [c, d] = observed[1];
+    const z = 1.959964;
+
+    // Odds ratio with Haldane–Anscombe 0.5 continuity correction.
     const aa = a + 0.5, bb = b + 0.5, cc = c + 0.5, dd = d + 0.5;
     or = (aa * dd) / (bb * cc);
     const seLogOr = Math.sqrt(1 / aa + 1 / bb + 1 / cc + 1 / dd);
-    const z = 1.959964;
     const logOr = Math.log(or);
     ci95OR = [Math.exp(logOr - z * seLogOr), Math.exp(logOr + z * seLogOr)];
-    const p1 = a / (a + b);
-    const p2 = c / (c + d);
-    rr = p1 / p2;
-    rd = p1 - p2;
+
+    // Risk ratio / risk difference: apply the same +0.5 correction whenever any
+    // cell is zero so the estimates and their CIs are never non-finite.
+    zeroCellCorrected = a === 0 || b === 0 || c === 0 || d === 0;
+    const ca = zeroCellCorrected ? aa : a;
+    const cb = zeroCellCorrected ? bb : b;
+    const cc2 = zeroCellCorrected ? cc : c;
+    const cd = zeroCellCorrected ? dd : d;
+    const n1 = ca + cb;
+    const n2 = cc2 + cd;
+    const p1 = ca / n1;
+    const p2 = cc2 / n2;
+
+    const rrVal = p1 / p2;
+    if (Number.isFinite(rrVal)) {
+      rr = rrVal;
+      // SE(ln RR) = sqrt(1/a − 1/(a+b) + 1/c − 1/(c+d)); CI = exp(lnRR ± z·SE).
+      const seLogRr = Math.sqrt(1 / ca - 1 / n1 + 1 / cc2 - 1 / n2);
+      const logRr = Math.log(rrVal);
+      if (Number.isFinite(seLogRr) && Number.isFinite(logRr)) {
+        ci95RR = [Math.exp(logRr - z * seLogRr), Math.exp(logRr + z * seLogRr)];
+      }
+    } else {
+      rr = null;
+    }
+
+    const rdVal = p1 - p2;
+    if (Number.isFinite(rdVal)) {
+      rd = rdVal;
+      // Wald SE = sqrt(p1(1−p1)/n1 + p2(1−p2)/n2); CI = rd ± z·SE.
+      const seRd = Math.sqrt((p1 * (1 - p1)) / n1 + (p2 * (1 - p2)) / n2);
+      if (Number.isFinite(seRd)) {
+        ci95RD = [rdVal - z * seRd, rdVal + z * seRd];
+      }
+    } else {
+      rd = null;
+    }
+  }
+  const warnings: string[] = [];
+  if (lowExpected) {
+    warnings.push("Expected count < 5 in at least one cell — consider Fisher's exact.");
+  }
+  if (zeroCellCorrected) {
+    warnings.push("Zero cell detected — +0.5 continuity correction applied to risk ratio / risk difference.");
   }
   return {
     test: "chi_square",
@@ -377,7 +443,9 @@ export function chiSquare(observed: number[][]): ChiSquareResult {
     riskRatio: rr,
     riskDifference: rd,
     ci95OR,
-    warning: lowExpected ? "Expected count < 5 in at least one cell — consider Fisher's exact." : undefined,
+    ci95RR,
+    ci95RD,
+    warning: warnings.length ? warnings.join(" ") : undefined,
   };
 }
 

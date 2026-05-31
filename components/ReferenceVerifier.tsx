@@ -114,6 +114,7 @@ export function ReferenceVerifier({
         />
         <CardBody className="grid gap-3">
           <textarea
+            aria-label="References to verify"
             className="textarea min-h-[180px] font-mono text-xs"
             placeholder={`Paste references — one per line, blank-line separated, or numbered (Vancouver, AMA, APA, RIS-like). DOIs and PMIDs are auto-detected.`}
             value={project.references.raw}

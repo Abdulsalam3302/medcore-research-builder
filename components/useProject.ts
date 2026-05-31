@@ -9,6 +9,8 @@ export type AutosaveStatus = {
   savedAt: number | null;
   saving: boolean;
   cloud?: "idle" | "syncing" | "synced" | "error";
+  /** True when the last local (browser) save failed — e.g. storage full/disabled. */
+  localError?: boolean;
 };
 
 export function useProject(): {
@@ -120,11 +122,18 @@ export function useProject(): {
   function commit(p: ProjectState) {
     projectRef.current = p;
     setAutosave((a) => ({ ...a, saving: true }));
-    const ok = saveProject(p);
-    if (!ok) {
+    const okSaved = saveProject(p);
+    if (!okSaved) {
       console.warn("useProject: local save failed (storage quota?)");
     }
-    setAutosave({ savedAt: Date.now(), saving: false, cloud: autosave.cloud });
+    // Use the functional updater so we never write a stale `cloud` value, and
+    // record localError so the header can warn instead of falsely showing "saved".
+    setAutosave((a) => ({
+      savedAt: okSaved ? Date.now() : a.savedAt,
+      saving: false,
+      cloud: a.cloud,
+      localError: !okSaved,
+    }));
     queueCloudSync(p);
   }
 
