@@ -89,6 +89,7 @@ export function VersionHistory({
         />
         <CardBody className="grid gap-3">
           <input
+            aria-label="Snapshot label (optional)"
             className="input text-[13px]"
             placeholder="Label (optional)"
             value={label}
@@ -155,6 +156,7 @@ export function VersionHistory({
               selected ? (
                 <div className="flex items-center gap-2">
                   <select
+                    aria-label="Section to compare"
                     className="input text-[12.5px] max-w-[160px]"
                     value={section}
                     onChange={(e) =>

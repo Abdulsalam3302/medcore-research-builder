@@ -10,3 +10,8 @@ out
 tsconfig.tsbuildinfo
 .design-import/
 step by step.zip
+
+# Playwright
+/test-results
+/playwright-report
+/.playwright

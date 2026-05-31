@@ -22,6 +22,7 @@ const PHASE_HELP: Record<string, string> = {
 };
 
 export type LifecycleKey =
+  | "overview"
   | "launch"
   | "protocol"
   | "type"
@@ -51,6 +52,7 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
+  { key: "overview", label: "Overview", phase: "Pre-Research" },
   { key: "launch", label: "Research Launch", phase: "Pre-Research" },
   { key: "protocol", label: "Protocol / Proposal Studio", phase: "Pre-Research" },
   { key: "type", label: "Study Design Selector", phase: "Pre-Research" },

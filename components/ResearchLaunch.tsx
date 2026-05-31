@@ -89,6 +89,7 @@ export function ResearchLaunch({
       <Hero
         summary={summary}
         answers={answers}
+        fresh={!project.researchLaunch}
         onJump={onJump}
         delta={delta}
         baseline={baseline}
@@ -832,6 +833,7 @@ const BUDGET_ITEMS: { key: keyof NonNullable<ResearchLaunchAnswers["budgetItems"
 function Hero({
   summary,
   answers,
+  fresh,
   onJump,
   delta,
   baseline,
@@ -839,20 +841,29 @@ function Hero({
 }: {
   summary: ReturnType<typeof scoreLaunch>;
   answers: ResearchLaunchAnswers;
+  fresh?: boolean;
   onJump?: (k: string) => void;
   delta: number | null;
   baseline: { score: number; capturedAt: string } | null;
   onResetBaseline: () => void;
 }) {
   const score = summary.totalScore;
-  const tone =
-    score >= 75 ? "good" : score >= 45 ? "warn" : "bad";
-  const verdict =
-    score >= 75
-      ? "Ready to start drafting"
-      : score >= 45
-      ? "Workable, but pre-work outstanding"
-      : "Pre-research preparation incomplete";
+  // Brand-new, empty project: don't greet authors with a red "failing" verdict.
+  const isFreshStart = fresh && score === 0;
+  const tone = isFreshStart
+    ? "info"
+    : score >= 75
+    ? "good"
+    : score >= 45
+    ? "warn"
+    : "bad";
+  const verdict = isFreshStart
+    ? "Let's get you set up — answer a few quick questions below"
+    : score >= 75
+    ? "Ready to start drafting"
+    : score >= 45
+    ? "Workable, but pre-work outstanding"
+    : "Pre-research preparation incomplete";
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-med-line bg-hero-mesh shadow-soft">

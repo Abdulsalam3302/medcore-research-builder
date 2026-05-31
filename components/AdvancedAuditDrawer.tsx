@@ -42,15 +42,36 @@ export function AdvancedAuditDrawer({
   const [status, setStatus] = useState<StatusPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<Element | null>(null);
 
-  // Focus management + Escape-to-close while the dialog is open.
+  // Focus management + Escape-to-close + focus trap while the dialog is open.
   useEffect(() => {
     if (!open) return;
     previouslyFocused.current = document.activeElement;
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      // Trap Tab within the dialog (WCAG modal expectation).
+      if (e.key === "Tab" && panelRef.current) {
+        const focusables = panelRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const activeEl = document.activeElement;
+        if (e.shiftKey && activeEl === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && activeEl === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener("keydown", onKey);
     return () => {
@@ -83,6 +104,7 @@ export function AdvancedAuditDrawer({
         onClick={onClose}
       />
       <aside
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="audit-drawer-title"

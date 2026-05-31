@@ -18,15 +18,19 @@ type FinderBody = {
 
 /** GET — dataset stats, or a single journal record via ?id=. */
 export async function GET(req: Request) {
-  const limited = await enforceRateLimit(req, "search");
-  if (limited) return limited;
-  const id = new URL(req.url).searchParams.get("id");
-  if (id) {
-    const journal = getJournalById(id);
-    if (!journal) return bad("Journal not found", 404);
-    return ok({ journal });
+  try {
+    const limited = await enforceRateLimit(req, "search");
+    if (limited) return limited;
+    const id = new URL(req.url).searchParams.get("id");
+    if (id) {
+      const journal = getJournalById(id);
+      if (!journal) return bad("Journal not found", 404);
+      return ok({ journal });
+    }
+    return ok({ counts: journalCount() });
+  } catch (e) {
+    return handleError(e);
   }
-  return ok({ counts: journalCount() });
 }
 
 /** POST — rank journals for a manuscript profile + filters. */

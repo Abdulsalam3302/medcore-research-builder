@@ -52,17 +52,14 @@ export async function GET() {
       configured: Boolean(webSearchConfigured()),
       provider: webSearchConfigured(),
     },
+    // Only expose whether cloud sync is available — not the project subdomain,
+    // exact LLM provider, app URL, or owner config (avoid fingerprinting the
+    // stack on an unauthenticated endpoint).
     supabase: {
       configured: isSupabaseConfigured(),
-      projectRef: process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/https:\/\/([^.]+)/)?.[1] ?? null,
     },
     rateLimit: {
-      backend: rateLimitBackend(),
       durable: rateLimitBackend() === "redis",
-    },
-    app: {
-      url: process.env.NEXT_PUBLIC_APP_URL || process.env.APP_BASE_URL || null,
-      ownerConfigured: Boolean(process.env.OWNER_EMAIL),
     },
   });
 }

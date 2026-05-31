@@ -28,8 +28,9 @@ type Paper = {
 
 /** Build a Vancouver-style citation line from a real Europe PMC record. */
 function toVancouver(p: Paper): string {
-  const authors = p.authors.length
-    ? p.authors.slice(0, 6).join(", ") + (p.authors.length > 6 ? ", et al." : "")
+  const a = p.authors || [];
+  const authors = a.length
+    ? a.slice(0, 6).join(", ") + (a.length > 6 ? ", et al." : "")
     : "[authors]";
   const bits = [`${authors}. ${p.title}.`];
   if (p.journal) bits.push(`${p.journal}.`);
@@ -103,6 +104,7 @@ export function LiteratureSearch({ project, update }: { project: ProjectState; u
         <CardBody className="grid gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <input
+              aria-label="Literature search query"
               className="input flex-1 min-w-[220px]"
               placeholder="e.g. empagliflozin cardiovascular outcomes type 2 diabetes"
               value={q}
@@ -172,8 +174,8 @@ export function LiteratureSearch({ project, update }: { project: ProjectState; u
                   </div>
                 </div>
                 <div className="text-[12px] text-med-sub mt-1">
-                  {p.authors.slice(0, 4).join(", ")}
-                  {p.authors.length > 4 ? ", et al." : ""}
+                  {(p.authors || []).slice(0, 4).join(", ")}
+                  {(p.authors || []).length > 4 ? ", et al." : ""}
                   {p.journal ? ` · ${p.journal}` : ""}
                   {p.year ? ` · ${p.year}` : ""}
                   {p.pmid ? ` · PMID ${p.pmid}` : ""}

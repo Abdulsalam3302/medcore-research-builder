@@ -27,6 +27,10 @@ const RouteSkeleton = () => (
   </div>
 );
 
+const Overview = dynamic(
+  () => import("@/components/Overview").then((m) => m.Overview),
+  { loading: RouteSkeleton, ssr: false },
+);
 const ResearchTypeWizard = dynamic(
   () => import("@/components/ResearchTypeWizard").then((m) => m.ResearchTypeWizard),
   { loading: RouteSkeleton, ssr: false },
@@ -184,6 +188,14 @@ export default function WorkspaceApp() {
         <main id="main-content" className="p-4 md:p-6 lg:p-8 flex-1 max-w-[1400px] w-full mx-auto">
           {!ready ? (
             <div className="muted">Loading…</div>
+          ) : active === "overview" ? (
+            <ResearchPhaseShell
+              phaseLabel="Your manuscript"
+              title="Overview"
+              subtitle="Pick up where you left off — every step of the manuscript at a glance."
+            >
+              <Overview project={project} onJump={(k) => setActive(k as LifecycleKey)} />
+            </ResearchPhaseShell>
           ) : active === "launch" ? (
             <ResearchPhaseShell
               phaseLabel="Pre-Research Workspace"
@@ -240,7 +252,7 @@ export default function WorkspaceApp() {
               title="Methods"
               subtitle="Create transparent, guideline-aligned methods reporting."
             >
-              <SectionBuilder section="methods" project={project} update={update} />
+              <SectionBuilder section="methods" project={project} update={update} onJump={(k) => setActive(k as LifecycleKey)} />
             </ResearchPhaseShell>
           ) : active === "introduction" ? (
             <ResearchPhaseShell
@@ -248,7 +260,7 @@ export default function WorkspaceApp() {
               title="Introduction"
               subtitle="Frame burden, gap, rationale, and objective clearly."
             >
-              <SectionBuilder section="introduction" project={project} update={update} />
+              <SectionBuilder section="introduction" project={project} update={update} onJump={(k) => setActive(k as LifecycleKey)} />
             </ResearchPhaseShell>
           ) : active === "results" ? (
             <ResearchPhaseShell
@@ -262,7 +274,7 @@ export default function WorkspaceApp() {
                 manuscriptType={project.researchTypeAnswers?.manuscriptType}
                 expandedNotes={project.researchTypeAnswers?.expandedNotes}
               />
-              <SectionBuilder section="results" project={project} update={update} />
+              <SectionBuilder section="results" project={project} update={update} onJump={(k) => setActive(k as LifecycleKey)} />
               <VideoSupplementSlot sectionId="intra-results-lab" />
             </ResearchPhaseShell>
           ) : active === "discussion" ? (
@@ -271,7 +283,7 @@ export default function WorkspaceApp() {
               title="Discussion"
               subtitle="Build cautious, clinically meaningful interpretation without overclaiming."
             >
-              <SectionBuilder section="discussion" project={project} update={update} />
+              <SectionBuilder section="discussion" project={project} update={update} onJump={(k) => setActive(k as LifecycleKey)} />
             </ResearchPhaseShell>
           ) : active === "conclusion" ? (
             <ResearchPhaseShell
@@ -279,7 +291,7 @@ export default function WorkspaceApp() {
               title="Conclusion"
               subtitle="Summarize findings with cautious, evidence-aligned language."
             >
-              <SectionBuilder section="conclusion" project={project} update={update} />
+              <SectionBuilder section="conclusion" project={project} update={update} onJump={(k) => setActive(k as LifecycleKey)} />
             </ResearchPhaseShell>
           ) : active === "appendix" ? (
             <ResearchPhaseShell
@@ -407,6 +419,7 @@ function MobileTabs({
   onSelect: (k: LifecycleKey) => void;
 }) {
   const items: { key: LifecycleKey; label: string }[] = [
+    { key: "overview", label: "Overview" },
     { key: "launch", label: "Launch" },
     { key: "protocol", label: "Protocol" },
     { key: "type", label: "Design" },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import type { LLMRefineResponse, ProjectState } from "@/lib/types";
 import { guidelineById } from "@/lib/guidelines";
 import { buildContextBundle } from "@/lib/agents/contextBundle";
@@ -85,12 +85,16 @@ export function SectionBuilder({
   section,
   project,
   update,
+  onJump,
 }: {
   section: "introduction" | "methods" | "results" | "discussion" | "conclusion";
   project: ProjectState;
   update: (fn: (p: ProjectState) => ProjectState) => void;
+  onJump?: (k: string) => void;
 }) {
   const meta = SECTION_HELP[section];
+  const draftId = useId();
+  const notesId = useId();
   const [busy, setBusy] = useState<
     null | "refine" | "generate" | "enhance" | "complete"
   >(null);
@@ -351,8 +355,23 @@ export function SectionBuilder({
             }
           />
           <CardBody className="grid gap-3">
+            {!guidelineId && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4">
+                <p className="text-sm text-med-ink leading-relaxed">
+                  Choose your study design first — it sets the reporting
+                  checklist for this section.
+                </p>
+                <button
+                  type="button"
+                  className="btn-primary mt-3"
+                  onClick={() => onJump?.("type")}
+                >
+                  Go to Study Design Selector →
+                </button>
+              </div>
+            )}
             <div className="flex items-center justify-between">
-              <label className="label">Draft</label>
+              <label className="label" htmlFor={draftId}>Draft</label>
               <WordBudgetBadge
                 section={sectionWords}
                 sectionBudget={sectionBudget}
@@ -362,6 +381,7 @@ export function SectionBuilder({
               />
             </div>
             <textarea
+              id={draftId}
               className="textarea min-h-[260px]"
               placeholder={meta.placeholder}
               value={project.sections[section] || ""}
@@ -372,8 +392,9 @@ export function SectionBuilder({
                 }))
               }
             />
-            <label className="label">Notes for the assistant (optional)</label>
+            <label className="label" htmlFor={notesId}>Notes for the assistant (optional)</label>
             <textarea
+              id={notesId}
               className="textarea min-h-[80px]"
               placeholder="Anything that's not in the draft but the assistant should know."
               value={contextNotes}
@@ -579,6 +600,7 @@ export function SectionBuilder({
                                         <div className="flex gap-2 mt-2">
                                           <input
                                             className="input text-xs"
+                                            aria-label={`Your answer: ${q}`}
                                             placeholder="Your answer"
                                             value={completeAnswers[k] || ""}
                                             onChange={(e) =>
@@ -835,7 +857,7 @@ function RefinementDiffCard({
     hunks.map((h) => h.op === "change"),
   );
   // Reset when hunks change (new refinement run).
-  useMemo(() => {
+  useEffect(() => {
     setAccept(hunks.map((h) => h.op === "change"));
   }, [hunks]);
 

@@ -108,7 +108,7 @@ export function Collaboration({
               />
             </div>
             <div className="flex items-center gap-2">
-              <input className="input text-[12.5px] font-mono" value={link} readOnly />
+              <input aria-label="Inline share link (data in URL)" className="input text-[12.5px] font-mono" value={link} readOnly />
               <CopyButton text={link} label="Copy" />
               <button type="button" className="btn-ghost text-[12px]" onClick={regenerate}>
                 Refresh
@@ -145,7 +145,7 @@ export function Collaboration({
               </button>
               {serverLink ? (
                 <>
-                  <input className="input text-[12.5px] font-mono flex-1 min-w-[200px]" value={serverLink} readOnly />
+                  <input aria-label="Private share link (token only)" className="input text-[12.5px] font-mono flex-1 min-w-[200px]" value={serverLink} readOnly />
                   <CopyButton text={serverLink} label="Copy" />
                 </>
               ) : null}
@@ -186,6 +186,7 @@ export function Collaboration({
         />
         <CardBody className="grid gap-3">
           <textarea
+            aria-label="Co-author exported project JSON"
             className="textarea min-h-[120px] font-mono text-[12px]"
             placeholder='{"version":"2.1.0", ... }'
             value={pasted}

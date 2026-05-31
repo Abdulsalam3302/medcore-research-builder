@@ -2,7 +2,28 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
+/**
+ * Content-Security-Policy. 'unsafe-inline' is required for Next's inline
+ * hydration runtime (a nonce pipeline would be the stricter option); the policy
+ * still blocks external/injected scripts, framing, plugins, and base-tag
+ * hijacking. Plotly is loaded from its CDN for charts. connect-src covers the
+ * same-origin API plus Supabase (the only direct client egress).
+ */
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://cdn.plot.ly",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.plot.ly",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "form-action 'self'",
+].join("; ");
+
 const SECURITY_HEADERS: Record<string, string> = {
+  "Content-Security-Policy": CSP,
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "Referrer-Policy": "strict-origin-when-cross-origin",

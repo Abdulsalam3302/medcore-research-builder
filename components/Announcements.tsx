@@ -187,12 +187,14 @@ function AdminComposer({ onChanged }: { onChanged: () => void }) {
           <h3 className="font-semibold text-med-ink text-[14px]">Post an announcement</h3>
         </div>
         <input
+          aria-label="Announcement title"
           className="input"
           placeholder="Title (e.g. New journals added to the finder)"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
         <textarea
+          aria-label="Announcement body"
           className="textarea min-h-[90px]"
           placeholder="Write your update to users…"
           value={body}
@@ -200,10 +202,10 @@ function AdminComposer({ onChanged }: { onChanged: () => void }) {
         />
         <div className="flex flex-wrap items-center gap-3">
           <select
+            aria-label="Announcement type"
             className="input max-w-[160px]"
             value={kind}
             onChange={(e) => setKind(e.target.value as Announcement["kind"])}
-            aria-label="Announcement type"
           >
             <option value="release">Release</option>
             <option value="update">Update</option>
