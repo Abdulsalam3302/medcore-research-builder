@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import type { ProjectState } from "@/lib/types";
 import type { GeneratedOutput, UploadedDataProfile } from "@/lib/lifecycle";
 import type { ResultsInterpretation } from "@/lib/results/interpret";
@@ -27,6 +27,10 @@ export function ResultsDataLab({
   const [interpreting, setInterpreting] = useState(false);
   const [interpretError, setInterpretError] = useState<string | null>(null);
   const [interpretation, setInterpretation] = useState<ResultsInterpretation | null>(null);
+  const primaryOutcomeId = useId();
+  const outcomeTypeId = useId();
+  const groupsId = useId();
+  const covariatesId = useId();
 
   const resultsText = project.sections.results || "";
 
@@ -161,24 +165,24 @@ export function ResultsDataLab({
           <div className="card">
             <div className="card-body grid md:grid-cols-2 gap-3">
               <div>
-                <label className="label inline-flex items-center gap-1.5">
+                <label className="label inline-flex items-center gap-1.5" htmlFor={primaryOutcomeId}>
                   Primary outcome
                   <InfoHint
                     title="Define variable roles"
                     text="Naming your primary outcome, its type, comparison groups, and confounders tells the tool how to infer each variable's role and which analysis fits. The primary outcome should be the single pre-specified endpoint your study is powered to answer — fixing it now guards against cherry-picking a more flattering result later."
                   />
                 </label>
-                <input className="input" value={primaryOutcome} onChange={(e) => setPrimaryOutcome(e.target.value)} />
+                <input id={primaryOutcomeId} className="input" value={primaryOutcome} onChange={(e) => setPrimaryOutcome(e.target.value)} />
               </div>
               <div>
-                <label className="label inline-flex items-center gap-1.5">
+                <label className="label inline-flex items-center gap-1.5" htmlFor={outcomeTypeId}>
                   Outcome type
                   <InfoHint
                     title="Why outcome type drives the test"
                     text="The outcome's data type decides the right analysis: continuous outcomes use means and mean differences, binary use risk/odds ratios, time-to-event use hazard ratios and survival curves, counts use rate ratios. Mislabelling it here leads to the wrong effect measure and a misleading result, so pick the type that matches how the variable was actually measured."
                   />
                 </label>
-                <select className="input" value={outcomeType} onChange={(e) => setOutcomeType(e.target.value as OutcomeType)}>
+                <select id={outcomeTypeId} className="input" value={outcomeType} onChange={(e) => setOutcomeType(e.target.value as OutcomeType)}>
                   <option value="continuous">Continuous</option>
                   <option value="binary">Binary</option>
                   <option value="time-to-event">Time-to-event</option>
@@ -187,12 +191,12 @@ export function ResultsDataLab({
                 </select>
               </div>
               <div>
-                <label className="label">Comparison groups / exposure</label>
-                <input className="input" value={groups} onChange={(e) => setGroups(e.target.value)} />
+                <label className="label" htmlFor={groupsId}>Comparison groups / exposure</label>
+                <input id={groupsId} className="input" value={groups} onChange={(e) => setGroups(e.target.value)} />
               </div>
               <div>
-                <label className="label">Covariates / confounders</label>
-                <input className="input" value={covariates} onChange={(e) => setCovariates(e.target.value)} />
+                <label className="label" htmlFor={covariatesId}>Covariates / confounders</label>
+                <input id={covariatesId} className="input" value={covariates} onChange={(e) => setCovariates(e.target.value)} />
               </div>
             </div>
           </div>

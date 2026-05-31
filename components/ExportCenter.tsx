@@ -4,9 +4,9 @@ import { useState } from "react";
 import type { ProjectState } from "@/lib/types";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { complianceToMarkdown, projectToMarkdown, referencesToCSV } from "@/lib/export";
-import { complianceToDocxBlob, downloadBlob, projectToDocxBlob } from "@/lib/docx";
 import { downloadAsFile } from "@/lib/store";
 import { InfoHint } from "./ui/InfoHint";
+import { useConfirm } from "./ui/ConfirmDialog";
 
 export function ExportCenter({
   project,
@@ -24,12 +24,17 @@ export function ExportCenter({
     .toLowerCase() || "manuscript";
 
   const [busy, setBusy] = useState<string | null>(null);
+  const { confirm, notify } = useConfirm();
 
   async function exportDocx() {
     setBusy("docx");
     try {
+      // Lazy-load the heavy docx library only when the user actually exports.
+      const { downloadBlob, projectToDocxBlob } = await import("@/lib/docx");
       const blob = await projectToDocxBlob(project);
       downloadBlob(`${titleSlug}.docx`, blob);
+    } catch {
+      notify("Couldn't build the Word document. Please try again.", "error");
     } finally {
       setBusy(null);
     }
@@ -37,8 +42,11 @@ export function ExportCenter({
   async function exportComplianceDocx() {
     setBusy("compliance-docx");
     try {
+      const { complianceToDocxBlob, downloadBlob } = await import("@/lib/docx");
       const blob = await complianceToDocxBlob(project);
       downloadBlob(`${titleSlug}.compliance.docx`, blob);
+    } catch {
+      notify("Couldn't build the compliance report. Please try again.", "error");
     } finally {
       setBusy(null);
     }
@@ -92,7 +100,7 @@ export function ExportCenter({
             desc="Full project state — for backup, sharing, or import elsewhere."
             onClick={() => downloadAsFile(`${titleSlug}.project.json`, JSON.stringify(project, null, 2), "application/json")}
           />
-          <ImportBtn onImport={onImport} />
+          <ImportBtn onImport={onImport} onError={(m) => notify(m, "error")} />
           <ExportBtn
             title="Manuscript Markdown (raw)"
             desc="Plain markdown version — useful for git or pandoc post-processing."
@@ -111,8 +119,16 @@ export function ExportCenter({
             title="Reset project"
             desc="Wipe all local drafts. This cannot be undone."
             danger
-            onClick={() => {
-              if (confirm("Reset the project? Local drafts will be lost.")) onReset();
+            onClick={async () => {
+              const yes = await confirm({
+                title: "Reset project",
+                message:
+                  "This permanently wipes all local drafts in this browser and cannot be undone. There's no server copy — export your Project JSON first if you might need this work again.",
+                confirmLabel: "Reset",
+                cancelLabel: "Keep my work",
+                danger: true,
+              });
+              if (yes) onReset();
             }}
           />
           <div className="md:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-med-sub">
@@ -204,7 +220,13 @@ function ExportBtn({
   );
 }
 
-function ImportBtn({ onImport }: { onImport: (p: ProjectState) => void }) {
+function ImportBtn({
+  onImport,
+  onError,
+}: {
+  onImport: (p: ProjectState) => void;
+  onError: (message: string) => void;
+}) {
   return (
     <label className="text-left rounded-lg border border-med-line bg-white hover:bg-slate-50 p-4 cursor-pointer">
       <div className="font-medium text-med-ink">Import project JSON</div>
@@ -221,7 +243,7 @@ function ImportBtn({ onImport }: { onImport: (p: ProjectState) => void }) {
             const parsed = JSON.parse(txt);
             onImport(parsed);
           } catch {
-            alert("Invalid JSON file");
+            onError("That file isn't a valid MedCore project (.json).");
           }
           e.target.value = "";
         }}

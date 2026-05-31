@@ -20,6 +20,7 @@ import { QualityExcellenceGate } from "@/components/QualityExcellenceGate";
 import { OriginalityCitationGuard } from "@/components/OriginalityCitationGuard";
 import { PostPublicationImpactStudio } from "@/components/PostPublicationImpactStudio";
 import { ResearchPhaseShell } from "@/components/ResearchPhaseShell";
+import { ConfirmProvider } from "@/components/ui/ConfirmDialog";
 
 const RouteSkeleton = () => (
   <div className="card-elevated p-6">
@@ -168,6 +169,7 @@ export default function WorkspaceApp() {
   }
 
   return (
+    <ConfirmProvider>
     <div className="min-h-screen flex bg-med-bg">
       <a
         href="#main-content"
@@ -408,6 +410,7 @@ export default function WorkspaceApp() {
         </footer>
       </div>
     </div>
+    </ConfirmProvider>
   );
 }
 

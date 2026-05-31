@@ -12,6 +12,7 @@ import { diffStrings } from "@/lib/textDiff";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { InfoHint } from "./ui/InfoHint";
+import { useConfirm } from "./ui/ConfirmDialog";
 
 const SECTIONS: Array<keyof ProjectState["sections"]> = [
   "introduction",
@@ -32,6 +33,7 @@ export function VersionHistory({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [label, setLabel] = useState("");
   const [section, setSection] = useState<keyof ProjectState["sections"]>("introduction");
+  const { confirm } = useConfirm();
 
   function refresh() {
     setSnaps(loadSnapshots());
@@ -176,12 +178,15 @@ export function VersionHistory({
                   >
                     <button
                       className="btn-secondary text-[12px]"
-                      onClick={() => {
-                        if (
-                          confirm(
+                      onClick={async () => {
+                        const yes = await confirm({
+                          title: "Restore snapshot",
+                          message:
                             "Restore this snapshot? Your current draft will be replaced (you can snapshot it first).",
-                          )
-                        ) {
+                          confirmLabel: "Restore",
+                          danger: true,
+                        });
+                        if (yes) {
                           onRestore(selected.state);
                         }
                       }}
@@ -191,8 +196,14 @@ export function VersionHistory({
                   </InfoHint>
                   <button
                     className="btn-ghost text-rose-700 text-[12px]"
-                    onClick={() => {
-                      if (confirm("Delete this snapshot?")) {
+                    onClick={async () => {
+                      const yes = await confirm({
+                        title: "Delete snapshot",
+                        message: "Delete this snapshot?",
+                        confirmLabel: "Delete",
+                        danger: true,
+                      });
+                      if (yes) {
                         deleteSnapshot(selected.id);
                         setSelectedId(null);
                         refresh();

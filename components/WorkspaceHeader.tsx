@@ -7,6 +7,7 @@ import { LogoMark } from "./ui/Logo";
 import { AuthButton } from "./AuthButton";
 import { IconDownload, IconUpload, IconReset } from "./ui/Icon";
 import { AdvancedAuditDrawer } from "./AdvancedAuditDrawer";
+import { useConfirm } from "./ui/ConfirmDialog";
 
 function formatAgo(ms: number): string {
   if (ms < 1500) return "just now";
@@ -34,6 +35,7 @@ export function WorkspaceHeader({
 }) {
   const [savedTick, setSavedTick] = useState(0);
   const [openAudit, setOpenAudit] = useState(false);
+  const { confirm } = useConfirm();
 
   useEffect(() => {
     if (!autosave?.savedAt) return;
@@ -136,8 +138,14 @@ export function WorkspaceHeader({
               aria-label="Reset project"
               className="btn-icon text-med-bad hover:bg-rose-50 hover:text-med-bad"
               title="Reset project"
-              onClick={() => {
-                if (confirm("Reset the project? Local drafts will be lost.")) onReset();
+              onClick={async () => {
+                const yes = await confirm({
+                  title: "Reset project",
+                  message: "Reset the project? Local drafts will be lost.",
+                  confirmLabel: "Reset",
+                  danger: true,
+                });
+                if (yes) onReset();
               }}
             >
               <IconReset size={16} />

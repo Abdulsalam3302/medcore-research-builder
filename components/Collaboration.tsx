@@ -15,6 +15,7 @@ import {
   type MergePreviewItem,
 } from "@/lib/share";
 import { InfoHint } from "./ui/InfoHint";
+import { useConfirm } from "./ui/ConfirmDialog";
 
 export function Collaboration({
   project,
@@ -34,6 +35,7 @@ export function Collaboration({
   const [serverLink, setServerLink] = useState<string>("");
   const [serverExpiry, setServerExpiry] = useState<string>("");
   const [serverNote, setServerNote] = useState<string>("");
+  const { confirm } = useConfirm();
 
   function regenerate() {
     const r = makeShareLink(project);
@@ -205,14 +207,15 @@ export function Collaboration({
         <MergeView
           decisions={decisions}
           onChange={setDecisions}
-          onApply={() => {
-            if (
-              !confirm(
+          onApply={async () => {
+            const yes = await confirm({
+              title: "Apply merge",
+              message:
                 "Apply this merge? Selected fields will overwrite your current project and cannot be undone (consider exporting or saving a snapshot first).",
-              )
-            ) {
-              return;
-            }
+              confirmLabel: "Apply merge",
+              danger: true,
+            });
+            if (!yes) return;
             onApplyMerged(applyMerge(project, remote, decisions));
           }}
         />
