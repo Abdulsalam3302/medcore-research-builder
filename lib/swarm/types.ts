@@ -71,6 +71,12 @@ export type SwarmContext = {
   title: string;
   design: string;
   referenceCount: number;
+  /**
+   * Design-derived expert directives (from the selected design's guideline +
+   * pitfalls and every selected "special feature"'s agent hints). Injected into
+   * each agent so the review applies the study's exact reporting expectations.
+   */
+  expertDirectives: string[];
 };
 
 /** Raw JSON shape each agent is asked to emit (before normalization). */

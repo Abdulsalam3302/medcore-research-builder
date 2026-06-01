@@ -1,4 +1,4 @@
-import type { FeatureCategory, FeatureSpec } from "../types";
+import type { FeatureCategory, FeatureEvidence, FeatureSpec } from "../types";
 
 /* ============================================================
    Feature catalog.
@@ -6,9 +6,15 @@ import type { FeatureCategory, FeatureSpec } from "../types";
    supporting documents, and "agent hints" — prompt fragments
    we inject into every downstream LLM call so the assistant
    knows the specific reporting expectations.
+
+   `rawFeatures` is the authored catalogue. The exported `features`
+   is derived from it: it is de-duplicated by id (a few ids were
+   authored twice) and each feature is decorated with real-world,
+   verifiable usage `evidence` (see featureEvidence below). Only
+   evidence-backed features are surfaced as such in the UI.
    ============================================================ */
 
-export const features: FeatureSpec[] = [
+const rawFeatures: FeatureSpec[] = [
   /* ============ AI / ML ============ */
   {
     id: "ai.tripod-ai",
@@ -887,6 +893,355 @@ export const featureCategories: { id: FeatureCategory; label: string; emoji: str
   { id: "implementation_qi", label: "Implementation / QI", emoji: "🛠" },
   { id: "decentralized_digital", label: "Decentralized / digital", emoji: "📱" },
 ];
+
+/* ============================================================
+   Real-world EVIDENCE for each feature.
+
+   `verifyUrl` is a LIVE search (PubMed, EQUATOR, or the official
+   site) that returns the actual published articles which used the
+   guideline/feature — so users can confirm the evidence first-hand
+   instead of trusting a hard-coded citation. `publishedUse` is added
+   only where a landmark statement/exemplar is verified. `status`:
+   "established" = in routine published use; "emerging" = adopted but
+   newer; "forthcoming" = guideline still under development (we do NOT
+   claim published use). Only features with an entry here are shown as
+   evidence-backed in the Study Design Selector.
+   ============================================================ */
+
+const pubmed = (term: string) =>
+  `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(term)}`;
+
+export const featureEvidence: Record<string, FeatureEvidence> = {
+  "ai.tripod-ai": {
+    exampleOfUse:
+      "Reporting a clinical risk/prognostic model (regression or ML) with development and external validation, calibration and discrimination, and fairness across subgroups.",
+    verifyUrl: pubmed('"TRIPOD+AI" OR "TRIPOD-AI"'),
+    publishedUse:
+      "Collins GS, et al. TRIPOD+AI statement: updated guidance for reporting clinical prediction models that use regression or machine learning methods. BMJ. 2024;385:e078378.",
+    status: "established",
+  },
+  "ai.consort-ai": {
+    exampleOfUse:
+      "Reporting a randomised controlled trial whose intervention is an AI/ML system — describing model version, integration, human oversight, and error analysis.",
+    verifyUrl: pubmed('"CONSORT-AI"'),
+    publishedUse:
+      "Liu X, Cruz Rivera S, Moher D, et al. Reporting guidelines for clinical trial reports for interventions involving artificial intelligence: the CONSORT-AI extension. Nat Med. 2020;26:1364-1374.",
+    status: "established",
+  },
+  "ai.decide-ai": {
+    exampleOfUse:
+      "Reporting an early-stage, small-scale live evaluation of an AI decision-support tool before a full trial — human–AI interaction, safety, and learning curve.",
+    verifyUrl: pubmed('"DECIDE-AI"'),
+    publishedUse:
+      "Vasey B, Nagendran M, Campbell B, et al. Reporting guideline for the early-stage clinical evaluation of decision support systems driven by AI: DECIDE-AI. Nat Med. 2022;28:924-933.",
+    status: "established",
+  },
+  "ai.claim-imaging": {
+    exampleOfUse:
+      "Reporting an AI model in medical imaging — modality, ground truth, train/test integrity (no leakage), and external validation site.",
+    verifyUrl: pubmed('"CLAIM" "artificial intelligence" medical imaging checklist'),
+    publishedUse:
+      "Tejani AS, et al. Checklist for Artificial Intelligence in Medical Imaging (CLAIM): 2024 Update. Radiol Artif Intell. 2024.",
+    status: "established",
+  },
+  "ai.tripod-llm": {
+    exampleOfUse:
+      "Reporting a study that uses a large language model — model version/date, verbatim prompts, temperature/seed, evaluation set, and hallucination handling.",
+    verifyUrl: pubmed('"TRIPOD-LLM"'),
+    publishedUse:
+      "Gallifant J, et al. The TRIPOD-LLM reporting guideline for studies using large language models. Nat Med. 2024.",
+    status: "emerging",
+  },
+  "ai.bridge-ai": {
+    exampleOfUse:
+      "Planning ahead for AI-in-digital-health reporting; principles only until the guideline is published.",
+    verifyUrl:
+      "https://www.equator-network.org/library/reporting-guidelines-under-development/",
+    status: "forthcoming",
+  },
+
+  "equity.progress-plus": {
+    exampleOfUse:
+      "Reporting outcomes disaggregated across equity strata (place, race, occupation, gender, education, SES…) with interaction tests or equity-gap measures.",
+    verifyUrl: pubmed('"PROGRESS-Plus" equity'),
+    publishedUse:
+      "O'Neill J, et al. Applying an equity lens to interventions: using PROGRESS ensures consideration of socially stratifying factors. J Clin Epidemiol. 2014;67(1):56-64.",
+    status: "established",
+  },
+  "equity.sager": {
+    exampleOfUse:
+      "Reporting sex- and gender-disaggregated analyses, distinguishing biological sex from social gender across methods, results, and discussion.",
+    verifyUrl: pubmed('"SAGER guidelines" sex gender reporting'),
+    publishedUse:
+      "Heidari S, et al. Sex and Gender Equity in Research: rationale for the SAGER guidelines. Res Integr Peer Rev. 2016;1:2.",
+    status: "established",
+  },
+  "equity.indigenous": {
+    exampleOfUse:
+      "Reporting health research conducted with Indigenous communities — governance, relationships, capacity, and dissemination.",
+    verifyUrl: pubmed('"CONSIDER statement" Indigenous'),
+    publishedUse:
+      "Huria T, et al. Consolidated criteria for strengthening reporting of health research involving indigenous peoples: the CONSIDER statement. BMC Med Res Methodol. 2019;19:173.",
+    status: "established",
+  },
+
+  "specialty.surgery": {
+    exampleOfUse:
+      "Staging a surgical innovation study within the IDEAL framework (stages 1–5) and reporting learning-curve and complication grading.",
+    verifyUrl: pubmed('"IDEAL framework" surgery innovation'),
+    publishedUse:
+      "McCulloch P, et al. No surgical innovation without evaluation: the IDEAL recommendations. Lancet. 2009;374(9695):1105-1112.",
+    status: "established",
+  },
+  "specialty.infectious": {
+    exampleOfUse:
+      "Reporting molecular epidemiology of an infectious disease — sequencing methods, case definitions, and source attribution.",
+    verifyUrl: pubmed('"STROME-ID"'),
+    publishedUse:
+      "Field N, et al. Strengthening the Reporting of Molecular Epidemiology for Infectious Diseases (STROME-ID). Lancet Infect Dis. 2014;14(4):341-352.",
+    status: "established",
+  },
+  "specialty.genetics": {
+    exampleOfUse:
+      "Reporting a genetic-association/GWAS study — variant calling, Hardy–Weinberg, population stratification, and genome-wide significance.",
+    verifyUrl: pubmed('"STREGA" genetic association reporting'),
+    publishedUse:
+      "Little J, et al. STrengthening the REporting of Genetic Association studies (STREGA). PLoS Med. 2009;6(2):e22.",
+    status: "established",
+  },
+
+  "methods.diagnostic-test": {
+    exampleOfUse:
+      "Reporting a diagnostic-accuracy study — index test, reference standard, thresholds, blinding, and flow/timing.",
+    verifyUrl: pubmed('"STARD 2015" diagnostic accuracy'),
+    publishedUse:
+      "Bossuyt PM, et al. STARD 2015: an updated list of essential items for reporting diagnostic accuracy studies. BMJ. 2015;351:h5527.",
+    status: "established",
+  },
+  "methods.adaptive": {
+    exampleOfUse:
+      "Reporting a pre-specified adaptive trial — adaptation rules, type-I error control, and bias adjustment.",
+    verifyUrl: pubmed('"Adaptive designs CONSORT Extension" ACE'),
+    publishedUse:
+      "Dimairo M, et al. The Adaptive designs CONSORT Extension (ACE) statement. BMJ. 2020;369:m115.",
+    status: "established",
+  },
+  "methods.mr": {
+    exampleOfUse:
+      "Reporting a Mendelian randomization study — instrument strength (F-statistics), MR-Egger/weighted-median, and pleiotropy sensitivity analyses.",
+    verifyUrl: pubmed('"STROBE-MR" Mendelian randomization'),
+    publishedUse:
+      "Skrivankova VW, et al. Strengthening the Reporting of Observational Studies in Epidemiology Using Mendelian Randomization: the STROBE-MR statement. JAMA. 2021;326(16):1614-1621.",
+    status: "established",
+  },
+  "methods.target-trial": {
+    exampleOfUse:
+      "Emulating a hypothetical RCT from observational data — explicit protocol (eligibility, strategies, follow-up, outcome, causal contrast) and where the emulation falls short.",
+    verifyUrl: pubmed('"target trial emulation"'),
+    publishedUse:
+      "Hernán MA, Robins JM. Using big data to emulate a target trial when a randomized trial is not available. Am J Epidemiol. 2016;183(8):758-764.",
+    status: "established",
+  },
+  "methods.bayesian": {
+    exampleOfUse:
+      "Reporting a Bayesian analysis — priors and justification, posterior summaries with credible intervals, MCMC diagnostics, and prior-sensitivity.",
+    verifyUrl: pubmed('"Bayesian" clinical trial "credible interval" reporting'),
+    status: "established",
+  },
+  "methods.causal-inference": {
+    exampleOfUse:
+      "Making a causal claim from data — DAG, named estimand, identification assumptions, and an E-value for unmeasured confounding.",
+    verifyUrl: pubmed('"directed acyclic graph" "E-value" causal'),
+    publishedUse:
+      "VanderWeele TJ, Ding P. Sensitivity analysis in observational research: introducing the E-value. Ann Intern Med. 2017;167(4):268-274.",
+    status: "established",
+  },
+  "methods.subgroup": {
+    exampleOfUse:
+      "Reporting pre-specified subgroup analyses with interaction tests and multiplicity control — avoiding within-subgroup p-value claims.",
+    verifyUrl: pubmed("subgroup analysis interaction test pre-specified trial"),
+    status: "established",
+  },
+  "methods.sensitivity": {
+    exampleOfUse:
+      "Reporting robustness/sensitivity analyses — E-value, leave-one-out, or tipping-point — to show how far conclusions could be from the truth.",
+    verifyUrl: pubmed("sensitivity analysis robustness E-value tipping point"),
+    status: "established",
+  },
+  "methods.missing-data": {
+    exampleOfUse:
+      "Handling missing data beyond complete-case — pattern, mechanism (MCAR/MAR/MNAR), multiple imputation or IPW, and sensitivity to assumptions.",
+    verifyUrl: pubmed("multiple imputation missing data clinical reporting"),
+    publishedUse:
+      "Sterne JAC, et al. Multiple imputation for missing data in epidemiological and clinical research. BMJ. 2009;338:b2393.",
+    status: "established",
+  },
+  "methods.economic-eval": {
+    exampleOfUse:
+      "Reporting a cost-effectiveness/economic evaluation alongside a trial or model — perspective, horizon, discounting, ICER, and probabilistic sensitivity analyses.",
+    verifyUrl: pubmed('"CHEERS 2022"'),
+    publishedUse:
+      "Husereau D, et al. Consolidated Health Economic Evaluation Reporting Standards 2022 (CHEERS 2022). BMJ. 2022;376:e067975.",
+    status: "established",
+  },
+
+  "intervention.tidier": {
+    exampleOfUse:
+      "Describing any intervention so it can be replicated — the 12 TIDieR items (what, who, how, where, when, how much, tailoring, fidelity).",
+    verifyUrl: pubmed('"TIDieR" intervention description replication'),
+    publishedUse:
+      "Hoffmann TC, et al. Better reporting of interventions: TIDieR checklist and guide. BMJ. 2014;348:g1687.",
+    status: "established",
+  },
+  "intervention.credeci": {
+    exampleOfUse:
+      "Reporting development and evaluation of a complex intervention — components, theory, dose, fidelity, and context.",
+    verifyUrl: pubmed('"CReDECI 2" complex intervention'),
+    publishedUse:
+      "Möhler R, et al. Criteria for Reporting the Development and Evaluation of Complex Interventions in healthcare: revised guideline (CReDECI 2). Trials. 2015;16:204.",
+    status: "established",
+  },
+  "intv.digital-health": {
+    exampleOfUse:
+      "Reporting a web/mobile digital health intervention — platform, content, dosage, security, and engagement metrics.",
+    verifyUrl: pubmed('"CONSORT-EHEALTH"'),
+    publishedUse:
+      "Eysenbach G; CONSORT-EHEALTH Group. CONSORT-EHEALTH: improving and standardizing evaluation reports of web-based and mobile health interventions. J Med Internet Res. 2011;13(4):e126.",
+    status: "established",
+  },
+
+  "pp.gripp2": {
+    exampleOfUse:
+      "Reporting patient and public involvement (PPI) — aims, methods of involvement, impact on the study, and reflections.",
+    verifyUrl: pubmed('"GRIPP2" patient public involvement'),
+    publishedUse:
+      "Staniszewska S, et al. GRIPP2 reporting checklists: tools to improve reporting of patient and public involvement in research. BMJ. 2017;358:j3453.",
+    status: "established",
+  },
+  "pp.pro": {
+    exampleOfUse:
+      "Reporting patient-reported outcomes in a trial — instrument, administration, missing-data handling, and minimal clinically important difference.",
+    verifyUrl: pubmed('"CONSORT-PRO" patient-reported outcomes'),
+    publishedUse:
+      "Calvert M, et al. Reporting of patient-reported outcomes in randomized trials: the CONSORT PRO extension. JAMA. 2013;309(8):814-822.",
+    status: "established",
+  },
+
+  "open.preregistration": {
+    exampleOfUse:
+      "Pre-registering hypotheses and the analysis plan (OSF / ClinicalTrials.gov / PROSPERO) before data collection, then disclosing any deviations.",
+    verifyUrl: pubmed("preregistration protocol registration research"),
+    publishedUse:
+      "Nosek BA, et al. The preregistration revolution. Proc Natl Acad Sci USA. 2018;115(11):2600-2606.",
+    status: "established",
+  },
+  "open.data-sharing": {
+    exampleOfUse:
+      "Writing a specific data-availability statement — what data, where (repository + DOI), license, and any restrictions, under FAIR principles.",
+    verifyUrl: pubmed("FAIR data sharing availability statement"),
+    publishedUse:
+      "Wilkinson MD, et al. The FAIR Guiding Principles for scientific data management and stewardship. Sci Data. 2016;3:160018.",
+    status: "established",
+  },
+  "open.code": {
+    exampleOfUse:
+      "Sharing a versioned analysis-code repository with a DOI (e.g. Zenodo) and a code-availability statement specifying the license.",
+    verifyUrl: pubmed("code availability reproducibility repository Zenodo"),
+    status: "established",
+  },
+  "open.preprint": {
+    exampleOfUse:
+      "Posting and citing a preprint (medRxiv/bioRxiv) with a DOI, after confirming the target journal permits preprints.",
+    verifyUrl: pubmed("preprint medRxiv biomedical research"),
+    status: "established",
+  },
+
+  "harms.consort-harms": {
+    exampleOfUse:
+      "Reporting trial harms in detail — definitions, severity grading (CTCAE), collection method, attribution, and balanced benefit-vs-harm presentation.",
+    verifyUrl: pubmed('"CONSORT" harms extension adverse events'),
+    publishedUse:
+      "Junqueira DR, et al. CONSORT Harms 2022 statement, explanation, and elaboration: updated guideline for the reporting of harms in randomised trials. BMJ. 2023;381:e073725.",
+    status: "established",
+  },
+  "harms.adverse": {
+    exampleOfUse:
+      "Pre-specifying adverse-event outcomes with severity grading and full numerator/denominator, distinguishing pre-specified from surveillance harms.",
+    verifyUrl: pubmed('"CONSORT" harms extension adverse events'),
+    publishedUse:
+      "Junqueira DR, et al. CONSORT Harms 2022 statement. BMJ. 2023;381:e073725.",
+    status: "established",
+  },
+
+  "impl.stari": {
+    exampleOfUse:
+      "Reporting an implementation study — the implementation strategy and the clinical intervention as separate layers, with a process evaluation.",
+    verifyUrl: pubmed('"StaRI" implementation studies'),
+    publishedUse:
+      "Pinnock H, et al. Standards for Reporting Implementation Studies (StaRI) statement. BMJ. 2017;356:i6795.",
+    status: "established",
+  },
+  "qi.proctor-implementation-outcomes": {
+    exampleOfUse:
+      "Reporting implementation outcomes — acceptability, adoption, appropriateness, feasibility, fidelity, penetration, sustainability, and cost.",
+    verifyUrl: pubmed("Proctor implementation outcomes"),
+    publishedUse:
+      "Proctor E, et al. Outcomes for implementation research: conceptual distinctions, measurement challenges, and research agenda. Adm Policy Ment Health. 2011;38(2):65-76.",
+    status: "established",
+  },
+  "impl.trace": {
+    exampleOfUse:
+      "Planning ahead for transparent reporting of intervention adaptations; principles only until TRACE is published.",
+    verifyUrl:
+      "https://www.equator-network.org/library/reporting-guidelines-under-development/",
+    status: "forthcoming",
+  },
+
+  "dd.dct": {
+    exampleOfUse:
+      "Reporting decentralized/remote trial procedures — e-consent, telehealth, wearables, data flows, and digital-equity considerations.",
+    verifyUrl: pubmed("decentralized clinical trial reporting remote"),
+    status: "forthcoming",
+  },
+  "dd.ehealth": {
+    exampleOfUse:
+      "Reporting an internet/mobile health intervention — technology, version, interactivity, and engagement.",
+    verifyUrl: pubmed('"CONSORT-EHEALTH"'),
+    publishedUse:
+      "Eysenbach G; CONSORT-EHEALTH Group. CONSORT-EHEALTH. J Med Internet Res. 2011;13(4):e126.",
+    status: "established",
+  },
+
+  "qual.ai-assistance": {
+    exampleOfUse:
+      "Disclosing generative-AI assistance per ICMJE — tool, version, dates, sections used, and author responsibility for the final content.",
+    verifyUrl:
+      "https://www.icmje.org/recommendations/browse/roles-and-responsibilities/defining-the-role-of-authors-and-contributors.html",
+    publishedUse:
+      "ICMJE. Recommendations for the Conduct, Reporting, Editing, and Publication of Scholarly Work in Medical Journals (AI/large language models guidance).",
+    status: "emerging",
+  },
+};
+
+/* ============================================================
+   Build the exported catalogue: de-duplicate by id (first wins,
+   but inherit evidence for any id) and attach evidence.
+   ============================================================ */
+
+function buildFeatures(): FeatureSpec[] {
+  const byId = new Map<string, FeatureSpec>();
+  for (const f of rawFeatures) {
+    if (!byId.has(f.id)) {
+      byId.set(f.id, { ...f, evidence: featureEvidence[f.id] });
+    }
+  }
+  return Array.from(byId.values());
+}
+
+export const features: FeatureSpec[] = buildFeatures();
+
+/** Features that carry verifiable real-world usage evidence. */
+export const evidenceBackedFeatures = features.filter((f) => f.evidence);
 
 export const featureById = (id: string) => features.find((f) => f.id === id);
 export const featuresByCategory = (cat: FeatureCategory) => features.filter((f) => f.category === cat);

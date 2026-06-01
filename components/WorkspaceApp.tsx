@@ -230,22 +230,19 @@ export default function WorkspaceApp() {
               title="Study Design Selector"
               subtitle="Select design, align guideline requirements, and configure context."
             >
-              <ResearchTypeWizard project={project} update={update} />
+              <ResearchTypeWizard
+                project={project}
+                update={update}
+                onJump={(k) => setActive(k as LifecycleKey)}
+              />
             </ResearchPhaseShell>
           ) : active === "title" ? (
             <ResearchPhaseShell
               phaseLabel="Pre-Research Workspace"
               title="Literature & Gap Explorer"
-              subtitle="Develop title and novelty positioning with trusted evidence support."
+              subtitle="Develop the title and novelty positioning, and search real evidence live — one place to turn the literature into a defensible gap and title."
             >
               <TitleLab project={project} update={update} />
-            </ResearchPhaseShell>
-          ) : active === "literature" ? (
-            <ResearchPhaseShell
-              phaseLabel="Pre-Research Workspace"
-              title="Literature Search (live)"
-              subtitle="Search real peer-reviewed papers and preprints via Europe PMC, then add any to your references in one click."
-            >
               <LiteratureSearch project={project} update={update} />
             </ResearchPhaseShell>
           ) : active === "methods" ? (
@@ -426,8 +423,7 @@ function MobileTabs({
     { key: "launch", label: "Launch" },
     { key: "protocol", label: "Protocol" },
     { key: "type", label: "Design" },
-    { key: "title", label: "Gap" },
-    { key: "literature", label: "Lit search" },
+    { key: "title", label: "Lit & Gap" },
     { key: "introduction", label: "Intro" },
     { key: "methods", label: "Methods" },
     { key: "results", label: "Results" },

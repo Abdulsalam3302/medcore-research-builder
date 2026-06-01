@@ -15,8 +15,122 @@ type StatusPayload = {
   openCitations?: { configured: boolean };
   clinicalTrials?: { configured: boolean };
   webSearch?: { configured: boolean; provider: string | null };
+  supabase?: { configured: boolean };
+  rateLimit?: { durable: boolean };
   version?: string;
 };
+
+/**
+ * Verified access/configuration suggestions. Each maps to an environment
+ * variable the app actually reads (see app/api/status/route.ts and
+ * lib/scholarly/*), so enabling it has a real, predictable benefit. `active`
+ * reads the live status payload so the drawer shows what is already unlocked.
+ */
+const accessSuggestions: Array<{
+  envVar: string;
+  label: string;
+  benefit: string;
+  active: (s: StatusPayload | null) => boolean;
+}> = [
+  {
+    envVar: "NCBI_API_KEY",
+    label: "PubMed / NCBI key",
+    benefit: "Raises the NCBI E-utilities rate limit (~3→10 requests/sec) so reference checks and searches are faster and fail less.",
+    active: (s) => Boolean(s?.pubmed?.keyConfigured),
+  },
+  {
+    envVar: "CROSSREF_MAILTO",
+    label: "Crossref polite-pool email",
+    benefit: "Enters Crossref's faster, more reliable 'polite pool' for DOI metadata resolution.",
+    active: (s) => Boolean(s?.crossref?.mailto),
+  },
+  {
+    envVar: "OPENALEX_MAILTO",
+    label: "OpenAlex polite-pool email",
+    benefit: "Enters OpenAlex's polite pool for more reliable open scholarly-graph lookups.",
+    active: (s) => Boolean(s?.openalex?.mailto),
+  },
+  {
+    envVar: "SEMANTIC_SCHOLAR_API_KEY",
+    label: "Semantic Scholar key",
+    benefit: "Higher rate limits for citation-graph and relevance lookups.",
+    active: (s) => Boolean(s?.semanticScholar?.keyConfigured),
+  },
+  {
+    envVar: "UNPAYWALL_EMAIL",
+    label: "Unpaywall email",
+    benefit: "Unlocks open-access availability checks so the app can point you to free full text legally.",
+    active: (s) => Boolean(s?.unpaywall?.configured),
+  },
+  {
+    envVar: "TAVILY_API_KEY / SERPAPI_API_KEY",
+    label: "Web-search fallback",
+    benefit: "Enables a general-web fallback when scholarly indexes don't cover a query.",
+    active: (s) => Boolean(s?.webSearch?.configured),
+  },
+  {
+    envVar: "SUPABASE_URL / SUPABASE_ANON_KEY",
+    label: "Cloud sync & sharing",
+    benefit: "Enables server-stored share links and multi-device project sync (otherwise drafts stay local-only).",
+    active: (s) => Boolean(s?.supabase?.configured),
+  },
+  {
+    envVar: "REDIS / UPSTASH credentials",
+    label: "Durable rate limiting",
+    benefit: "Uses a shared store for rate limits so protection holds across serverless instances.",
+    active: (s) => Boolean(s?.rateLimit?.durable),
+  },
+];
+
+/**
+ * High-impact, verified integrations a deployer can connect. Each links to the
+ * canonical source so it can be confirmed first-hand — consistent with the
+ * platform's no-fabrication ethos. The full vetted catalogue lives in the
+ * Tools & MCP Directory.
+ */
+const recommendedIntegrations: Array<{
+  name: string;
+  category: string;
+  why: string;
+  verifyUrl: string;
+}> = [
+  {
+    name: "NCBI E-utilities (PubMed)",
+    category: "Biomedical literature",
+    why: "Official PubMed/PMC programmatic access — already used for reference verification; add a key for higher throughput.",
+    verifyUrl: "https://www.ncbi.nlm.nih.gov/books/NBK25501/",
+  },
+  {
+    name: "Crossref REST API",
+    category: "DOI metadata",
+    why: "Authoritative DOI metadata and resolution for reference integrity.",
+    verifyUrl: "https://www.crossref.org/documentation/retrieve-metadata/rest-api/",
+  },
+  {
+    name: "OpenAlex",
+    category: "Scholarly graph",
+    why: "Open works/authors/venues graph for positioning, fields, and citation context.",
+    verifyUrl: "https://docs.openalex.org/",
+  },
+  {
+    name: "Unpaywall",
+    category: "Open access",
+    why: "Legal open-access full-text locations for cited works.",
+    verifyUrl: "https://unpaywall.org/products/api",
+  },
+  {
+    name: "ClinicalTrials.gov API",
+    category: "Trial registry",
+    why: "Verify trial registration, status, and outcomes for trial manuscripts.",
+    verifyUrl: "https://clinicaltrials.gov/data-api/api",
+  },
+  {
+    name: "Model Context Protocol servers",
+    category: "MCP",
+    why: "Connect AI assistants to databases, filesystems, and scientific data sources — see the full vetted list in Tools & MCP Directory.",
+    verifyUrl: "https://github.com/modelcontextprotocol/servers",
+  },
+];
 
 const sourceRows: Array<{ key: keyof StatusPayload; label: string; hint: string }> = [
   { key: "llm", label: "Writing assistant", hint: "Drafting engine status" },
@@ -145,6 +259,64 @@ export function AdvancedAuditDrawer({
               })}
             </div>
           )}
+          {/* Verified access & configuration suggestions. */}
+          <section className="grid gap-2">
+            <div className="text-[11px] uppercase tracking-wide text-med-sub font-semibold">
+              Access & configuration suggestions
+            </div>
+            <div className="text-xs text-med-sub">
+              Each suggestion maps to an environment variable the app actually reads, so enabling it
+              has a real, predictable benefit. Items already active are marked.
+            </div>
+            <div className="grid gap-2">
+              {accessSuggestions.map((sug) => {
+                const on = sug.active(status);
+                return (
+                  <div key={sug.envVar} className="border border-med-line rounded-lg p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-medium text-sm text-med-ink">{sug.label}</div>
+                      <Badge kind={on ? "good" : "neutral"}>{on ? "active" : "suggested"}</Badge>
+                    </div>
+                    <div className="text-xs text-med-sub mt-1">{sug.benefit}</div>
+                    <code className="mt-1 inline-block text-[10.5px] text-med-ink bg-slate-100 rounded px-1.5 py-0.5">
+                      {sug.envVar}
+                    </code>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Verified recommended integrations & MCP servers. */}
+          <section className="grid gap-2">
+            <div className="text-[11px] uppercase tracking-wide text-med-sub font-semibold">
+              Recommended integrations & MCP servers
+            </div>
+            <div className="text-xs text-med-sub">
+              High-impact, verifiable sources. Every link points to the canonical documentation so you
+              can confirm it first-hand before connecting.
+            </div>
+            <div className="grid gap-2">
+              {recommendedIntegrations.map((it) => (
+                <div key={it.name} className="border border-med-line rounded-lg p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="font-medium text-sm text-med-ink">{it.name}</div>
+                    <Badge kind="neutral">{it.category}</Badge>
+                  </div>
+                  <div className="text-xs text-med-sub mt-1">{it.why}</div>
+                  <a
+                    href={it.verifyUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] text-med-brand hover:underline mt-1 inline-block"
+                  >
+                    Verify at source →
+                  </a>
+                </div>
+              ))}
+            </div>
+          </section>
+
           <div className="border border-med-line rounded-lg p-3 bg-slate-50 text-xs text-med-sub">
             Audit notes: query strings, source counts, dedup metrics, DOI/PMID checks, and inclusion/exclusion
             rationale can be surfaced here in future API iterations.

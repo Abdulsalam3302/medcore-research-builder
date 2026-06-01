@@ -220,6 +220,27 @@ export type FeatureCategory =
   | "implementation_qi"
   | "decentralized_digital";
 
+/**
+ * Real-world evidence that a feature is genuinely used in the published
+ * literature. We deliberately avoid hard-coding specific DOIs (which risk going
+ * stale or being mis-cited): `verifyUrl` is a LIVE PubMed/EQUATOR query that
+ * returns the actual articles that used this reporting guideline/feature, so a
+ * user can confirm the evidence themselves. `publishedUse`, when present, is a
+ * verified landmark citation. Only features with evidence are surfaced as
+ * "evidence-backed"; `forthcoming` marks guidelines still under development
+ * (no published use yet) so we never overstate.
+ */
+export type FeatureEvidence = {
+  /** Concrete "you'd use this when…" scenario (first-party guidance). */
+  exampleOfUse: string;
+  /** Live, verifiable search returning published articles that used this. */
+  verifyUrl: string;
+  /** Optional verified landmark citation (statement or exemplar use). */
+  publishedUse?: string;
+  /** Maturity of the guideline's real-world adoption. */
+  status: "established" | "emerging" | "forthcoming";
+};
+
 export type FeatureSpec = {
   id: string;                       // "ai.tripod-ai"
   category: FeatureCategory;
@@ -230,6 +251,7 @@ export type FeatureSpec = {
   addSupportingDocs?: SupportingDocument[];
   agentHints: string[];             // prompt fragments injected into LLM context
   recommendedFor?: string[];        // design ids that this is most useful with
+  evidence?: FeatureEvidence;       // real-world, verifiable usage evidence
 };
 
 /* ============================================================

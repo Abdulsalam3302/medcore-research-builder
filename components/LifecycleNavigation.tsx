@@ -45,19 +45,91 @@ export type LifecycleKey =
   | "announcements"
   | "about";
 
+type PhaseName =
+  | "Platform"
+  | "Pre-Research"
+  | "Intra-Research"
+  | "Post-Research"
+  | "Quality & Empowerment"
+  | "Post-Publication";
+
 type NavItem = {
   key: LifecycleKey;
   label: string;
-  phase: "Pre-Research" | "Intra-Research" | "Post-Research" | "Quality & Empowerment" | "Post-Publication" | "Platform";
+  phase: PhaseName;
 };
 
+/**
+ * Per-phase accent colours. Each group header is rendered bold and in its own
+ * colour so the lifecycle reads as distinct, scannable stages. The active item
+ * inside a group also picks up the phase colour for a cohesive feel.
+ * `dotClass` paints the small leading marker; `headClass` paints the header
+ * label + the hairline divider.
+ */
+const PHASE_THEME: Record<
+  PhaseName,
+  { headClass: string; dotClass: string; activeClass: string; barClass: string }
+> = {
+  Platform: {
+    headClass: "text-violet-700",
+    dotClass: "bg-violet-500",
+    activeClass: "bg-violet-50 text-violet-800",
+    barClass: "bg-violet-400",
+  },
+  "Pre-Research": {
+    headClass: "text-sky-700",
+    dotClass: "bg-sky-500",
+    activeClass: "bg-sky-50 text-sky-800",
+    barClass: "bg-sky-400",
+  },
+  "Intra-Research": {
+    headClass: "text-teal-700",
+    dotClass: "bg-teal-500",
+    activeClass: "bg-teal-50 text-teal-800",
+    barClass: "bg-teal-400",
+  },
+  "Post-Research": {
+    headClass: "text-amber-700",
+    dotClass: "bg-amber-500",
+    activeClass: "bg-amber-50 text-amber-800",
+    barClass: "bg-amber-400",
+  },
+  "Quality & Empowerment": {
+    headClass: "text-fuchsia-700",
+    dotClass: "bg-fuchsia-500",
+    activeClass: "bg-fuchsia-50 text-fuchsia-800",
+    barClass: "bg-fuchsia-400",
+  },
+  "Post-Publication": {
+    headClass: "text-rose-700",
+    dotClass: "bg-rose-500",
+    activeClass: "bg-rose-50 text-rose-800",
+    barClass: "bg-rose-400",
+  },
+};
+
+/** Order the groups render in. Platform sits first, at the top. */
+const PHASE_ORDER: PhaseName[] = [
+  "Platform",
+  "Pre-Research",
+  "Intra-Research",
+  "Post-Research",
+  "Quality & Empowerment",
+  "Post-Publication",
+];
+
 const NAV_ITEMS: NavItem[] = [
+  { key: "announcements", label: "Announcements", phase: "Platform" },
+  { key: "about", label: "About MedCore", phase: "Platform" },
+
   { key: "overview", label: "Overview", phase: "Pre-Research" },
   { key: "launch", label: "Research Launch", phase: "Pre-Research" },
   { key: "protocol", label: "Protocol / Proposal Studio", phase: "Pre-Research" },
   { key: "type", label: "Study Design Selector", phase: "Pre-Research" },
+  // Literature & Gap Explorer now contains the live Literature Search too —
+  // one circle for evidence work (title/gap + live search). No separate lane.
   { key: "title", label: "Literature & Gap Explorer", phase: "Pre-Research" },
-  { key: "literature", label: "Literature Search (live)", phase: "Pre-Research" },
+
   { key: "introduction", label: "Introduction", phase: "Intra-Research" },
   { key: "methods", label: "Methods", phase: "Intra-Research" },
   { key: "results", label: "Results", phase: "Intra-Research" },
@@ -75,9 +147,6 @@ const NAV_ITEMS: NavItem[] = [
 
   { key: "impact-studio", label: "Post-Publication Impact Studio", phase: "Post-Publication" },
   { key: "export", label: "Export Center", phase: "Post-Publication" },
-
-  { key: "announcements", label: "Announcements", phase: "Platform" },
-  { key: "about", label: "About MedCore", phase: "Platform" },
 ];
 
 export function LifecycleNavigation({
@@ -93,6 +162,7 @@ export function LifecycleNavigation({
     (acc[item.phase] ||= []).push(item);
     return acc;
   }, {});
+  const orderedPhases = PHASE_ORDER.filter((p) => groups[p]?.length);
 
   const readySections = Object.values(project.sections).filter((s) => s.trim().length > 60).length;
 
@@ -103,34 +173,47 @@ export function LifecycleNavigation({
       </div>
 
       <nav aria-label="Research lifecycle" className="px-3 py-4 flex-1 overflow-y-auto space-y-5">
-        {Object.entries(groups).map(([phase, items]) => (
-          <section key={phase}>
-            <div className="mc-eyebrow px-2 pb-1.5 text-[10.5px] text-[var(--mc-ink-400)] inline-flex items-center gap-1">
-              {phase}
-              {PHASE_HELP[phase] && <InfoHint side="right" title={`${phase} phase`} text={PHASE_HELP[phase]} />}
-            </div>
-            <div className="space-y-1">
-              {items.map((item) => {
-                const isActive = active === item.key;
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => onSelect(item.key)}
-                    aria-current={isActive ? "page" : undefined}
-                    className={`w-full text-left rounded-lg px-2.5 py-2 text-[13px] transition ${
-                      isActive
-                        ? "bg-[var(--mc-blue-50)] text-[var(--mc-blue-700)] font-semibold"
-                        : "text-[var(--mc-ink-700)] hover:bg-slate-50"
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        ))}
+        {orderedPhases.map((phase) => {
+          const items = groups[phase];
+          const theme = PHASE_THEME[phase];
+          return (
+            <section key={phase}>
+              <div
+                className={`px-2 pb-1.5 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] ${theme.headClass}`}
+              >
+                <span className={`h-2 w-2 rounded-full ${theme.dotClass}`} aria-hidden />
+                {phase}
+                {PHASE_HELP[phase] && <InfoHint side="right" title={`${phase} phase`} text={PHASE_HELP[phase]} />}
+              </div>
+              <div className="space-y-1">
+                {items.map((item) => {
+                  const isActive = active === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => onSelect(item.key)}
+                      aria-current={isActive ? "page" : undefined}
+                      className={`relative w-full text-left rounded-lg pl-3.5 pr-2.5 py-2 text-[13px] transition ${
+                        isActive
+                          ? `${theme.activeClass} font-semibold`
+                          : "text-[var(--mc-ink-700)] hover:bg-slate-50"
+                      }`}
+                    >
+                      {isActive && (
+                        <span
+                          className={`absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r ${theme.barClass}`}
+                          aria-hidden
+                        />
+                      )}
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
       </nav>
 
       <div className="px-4 py-4 border-t border-[var(--mc-line-soft)] space-y-2">

@@ -51,9 +51,12 @@ type RegistryPayload = {
 export function ResearchTypeWizard({
   project,
   update,
+  onJump,
 }: {
   project: ProjectState;
   update: (fn: (p: ProjectState) => ProjectState) => void;
+  /** Jump to another workspace lane (e.g. the full Journal Finder). */
+  onJump?: (key: string) => void;
 }) {
   const answers = project.researchTypeAnswers;
   const [registry, setRegistry] = useState<RegistryPayload | null>(null);
@@ -269,6 +272,7 @@ export function ResearchTypeWizard({
             setStep(3);
           }}
           onBack={() => setStep(1)}
+          onOpenFinder={onJump ? () => onJump("journal-finder") : undefined}
         />
       )}
 
@@ -677,11 +681,13 @@ function JournalPicker({
   selectedId,
   onSelect,
   onBack,
+  onOpenFinder,
 }: {
   journals: JournalSpec[];
   selectedId?: string;
   onSelect: (id: string) => void;
   onBack: () => void;
+  onOpenFinder?: () => void;
 }) {
   const [q, setQ] = useState("");
   const [otherName, setOtherName] = useState("");
@@ -713,6 +719,29 @@ function JournalPicker({
         right={<button className="btn-ghost text-xs" onClick={onBack}>← Back</button>}
       />
       <CardBody className="grid gap-4">
+        {onOpenFinder && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="text-2xl" aria-hidden>🎯</div>
+            <div className="flex-1">
+              <div className="font-semibold text-amber-900 text-sm inline-flex items-center gap-1.5">
+                Choose your journal in the full Journal Finder
+                <InfoHint
+                  title="Why use the Journal Finder"
+                  text="The Journal Finder is the dedicated Post-Research tool: it compares fit, indexing (WoS SCIE/ESCI, Scopus, PubMed/MEDLINE, DOAJ, Saudi SDL), cost, speed, and predatory-risk signals across journals — far more than a quick pick here. Pick there for a confident, evidence-backed choice; this quick selector only locks a reference/format style for drafting."
+                />
+              </div>
+              <div className="text-[12.5px] text-amber-900/80 mt-0.5">
+                Compare indexation, fit, cost, and speed across journals — then your choice flows back here.
+              </div>
+            </div>
+            <button type="button" className="btn-primary shrink-0" onClick={onOpenFinder}>
+              Open Journal Finder →
+            </button>
+          </div>
+        )}
+        <div className="text-[12px] text-med-sub">
+          Or pick a quick style below just to lock a reference/abstract format for drafting:
+        </div>
         <input
           className="input"
           placeholder="Search journal or publisher…"
@@ -865,12 +894,14 @@ function FeaturesPicker({
           <span className="inline-flex items-center gap-1.5">
             Special features
             <InfoHint
-              title="Why add features"
-              text="Features pull in the right reporting-guideline extensions for your study's specifics — e.g. TIDieR for intervention detail, CONSORT-PRO for patient-reported outcomes, or data-sharing statements. Declaring them up front means the relevant checklist items and supporting documents are expected and prepared, rather than discovered as gaps in peer review."
+              title="What features are — and how to use them"
+              text={
+                "Each feature is a recognised reporting-guideline extension or method (e.g. TIDieR for intervention detail, CONSORT-PRO for patient-reported outcomes, STARD for diagnostic accuracy, TRIPOD+AI for prediction models). Turning one on does three things: (1) its checklist items and supporting documents are added to your package, (2) its agent-hints are injected into every draft and into the Review & Improve swarm, and (3) it appears as a dedicated reviewer lens. Every feature shown is evidence-backed: each card carries a concrete example of use and a live link to the published articles that actually used it, so you can see how it's applied. Guidelines still under development are clearly badged 'forthcoming' and make no published-use claim. How to use: open a card, read the example of use, click 'See published articles using this' to study real exemplars, then enable the ones that fit your study."
+              }
             />
           </span>
         }
-        subtitle="Features attach reporting-guideline extensions, checklist items, supporting documents, and agent-hints. We auto-suggest the most suitable ones based on your design, manuscript type, and notes — expert add-ons live in the 'Expert add-ons' tab."
+        subtitle="Features attach reporting-guideline extensions, checklist items, supporting documents, and agent-hints — and feed extra reviewer lenses into Review & Improve. We auto-suggest the most suitable ones for your design, manuscript type, and notes; expert add-ons live in the 'Expert add-ons' tab. Every feature is evidence-backed with an example of use and a live link to published articles that used it."
         right={
           <div className="flex gap-2">
             <button className="btn-ghost text-xs" onClick={onBack}>← Back</button>
@@ -997,37 +1028,83 @@ function RecGroup({
           const f = rec.feature;
           const on = selectedIds.includes(f.id);
           return (
-            <button
+            <div
               key={f.id}
-              onClick={() => onToggle(f.id)}
-              className={`text-left border rounded-lg p-3 transition ${
-                on ? "border-med-brand bg-sky-50" : `${toneCls} hover:bg-white`
+              className={`border rounded-lg p-3 transition ${
+                on ? "border-med-brand bg-sky-50" : `${toneCls}`
               }`}
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="font-medium text-med-ink text-sm">{f.name}</div>
-                {on ? (
-                  <Badge kind="info">on</Badge>
-                ) : (
-                  <Badge kind={tone === "emerald" ? "good" : "info"}>
-                    {tone === "emerald" ? "core" : "suggested"}
-                  </Badge>
-                )}
-              </div>
-              <div className="muted text-xs mt-1">{f.description}</div>
-              <div className="text-[11px] text-med-sub mt-1 italic">{rec.reason}</div>
-              {f.addExtensions && f.addExtensions.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {f.addExtensions.map((e, i) => (
-                    <Badge key={i} kind="neutral">+ {e.acronym}</Badge>
-                  ))}
+              <button
+                type="button"
+                onClick={() => onToggle(f.id)}
+                className="text-left w-full"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="font-medium text-med-ink text-sm">{f.name}</div>
+                  {on ? (
+                    <Badge kind="info">on</Badge>
+                  ) : (
+                    <Badge kind={tone === "emerald" ? "good" : "info"}>
+                      {tone === "emerald" ? "core" : "suggested"}
+                    </Badge>
+                  )}
                 </div>
-              )}
-            </button>
+                <div className="muted text-xs mt-1">{f.description}</div>
+                <div className="text-[11px] text-med-sub mt-1 italic">{rec.reason}</div>
+                {f.addExtensions && f.addExtensions.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {f.addExtensions.map((e, i) => (
+                      <Badge key={i} kind="neutral">+ {e.acronym}</Badge>
+                    ))}
+                  </div>
+                )}
+              </button>
+              <FeatureEvidenceBlock ev={f.evidence} />
+            </div>
           );
         })}
       </div>
     </section>
+  );
+}
+
+/** Verifiable real-world evidence shown under a feature card. */
+function FeatureEvidenceBlock({ ev }: { ev?: FeatureSpec["evidence"] }) {
+  if (!ev) return null;
+  const tone = ev.status === "established" ? "good" : ev.status === "emerging" ? "info" : "warn";
+  const label =
+    ev.status === "forthcoming"
+      ? "forthcoming"
+      : ev.status === "emerging"
+      ? "emerging · evidence-backed"
+      : "evidence-backed";
+  return (
+    <div className="mt-2 border-t border-med-line/70 pt-2 grid gap-1">
+      <div className="flex items-center gap-1.5">
+        <Badge kind={tone}>{label}</Badge>
+        <span className="text-[10px] uppercase tracking-wide text-med-sub font-semibold">
+          Example of use
+        </span>
+      </div>
+      <div className="text-[11px] text-med-sub leading-relaxed">{ev.exampleOfUse}</div>
+      {ev.publishedUse && (
+        <div className="text-[11px] text-med-ink leading-relaxed">
+          <span className="font-medium">Published use: </span>
+          <span className="italic">{ev.publishedUse}</span>
+        </div>
+      )}
+      <a
+        href={ev.verifyUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-[11px] text-med-brand hover:underline w-fit"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {ev.status === "forthcoming"
+          ? "Guideline status & development →"
+          : "See published articles using this →"}
+      </a>
+    </div>
   );
 }
 
@@ -1041,25 +1118,27 @@ function FeatureCardSmall({
   onToggle: () => void;
 }) {
   return (
-    <button
-      onClick={onToggle}
-      className={`text-left border rounded-lg p-3 transition ${
-        on ? "border-med-brand bg-sky-50" : "border-med-line hover:bg-slate-50"
+    <div
+      className={`border rounded-lg p-3 transition ${
+        on ? "border-med-brand bg-sky-50" : "border-med-line"
       }`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="font-medium text-med-ink text-sm">{f.name}</div>
-        {on && <Badge kind="info">on</Badge>}
-      </div>
-      <div className="muted text-xs mt-1">{f.description}</div>
-      {f.addExtensions && f.addExtensions.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-2">
-          {f.addExtensions.map((e, i) => (
-            <Badge key={i} kind="neutral">+ {e.acronym}</Badge>
-          ))}
+      <button type="button" onClick={onToggle} className="text-left w-full">
+        <div className="flex items-start justify-between gap-2">
+          <div className="font-medium text-med-ink text-sm">{f.name}</div>
+          {on && <Badge kind="info">on</Badge>}
         </div>
-      )}
-    </button>
+        <div className="muted text-xs mt-1">{f.description}</div>
+        {f.addExtensions && f.addExtensions.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {f.addExtensions.map((e, i) => (
+              <Badge key={i} kind="neutral">+ {e.acronym}</Badge>
+            ))}
+          </div>
+        )}
+      </button>
+      <FeatureEvidenceBlock ev={f.evidence} />
+    </div>
   );
 }
 

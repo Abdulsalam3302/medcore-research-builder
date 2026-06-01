@@ -8,6 +8,7 @@
 
 import type { ProjectState } from "@/lib/types";
 import { analyzeCoherence, type CoherenceReport } from "@/lib/coherence";
+import { buildExpertise } from "./expertise";
 import { AGENT_LAYER } from "./agents";
 import type {
   AgentFinding,
@@ -67,6 +68,8 @@ export function buildSwarmContext(project: ProjectState): SwarmContext {
     `CONCLUSION:\n${excerpt(s.conclusion)}`,
   ].join("\n\n");
 
+  const expertDirectives = buildExpertise(project).directives;
+
   return {
     text,
     coherenceIssues: coherence.issues.map((i) => ({
@@ -80,6 +83,7 @@ export function buildSwarmContext(project: ProjectState): SwarmContext {
     title,
     design,
     referenceCount,
+    expertDirectives,
   };
 }
 

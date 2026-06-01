@@ -116,12 +116,19 @@ ${LENS[role]}`;
         .join("\n")
     : "(no deterministic coherence issues detected)";
 
+  const directivesBlock = ctx.expertDirectives?.length
+    ? ctx.expertDirectives.map((d) => `- ${d}`).join("\n")
+    : "(no design-specific directives — none were selected in the Study Design Selector)";
+
   const prompt = `You are reviewing the manuscript below through your specific lens. Other specialist agents cover other lenses — focus on yours and avoid generic comments outside your remit.
 
 MANUSCRIPT CONTEXT:
 """
 ${ctx.text}
 """
+
+DESIGN-SPECIFIC EXPERT DIRECTIVES (derived from the author's selected study design, its reporting guideline, and the special features they enabled — apply EVERY directive that falls within your lens, and check the manuscript against it. These encode the exact reporting standard this study must meet):
+${directivesBlock}
 
 DETERMINISTIC COHERENCE SIGNALS (already computed — fold these in, do not re-derive; build on or qualify them as relevant to your lens):
 ${coherenceBlock}

@@ -19,6 +19,7 @@
 import { useMemo, useState } from "react";
 import type { ProjectState } from "@/lib/types";
 import type { SwarmReport } from "@/lib/swarm/types";
+import { buildExpertise, type AppliedLens } from "@/lib/swarm/expertise";
 import {
   evaluateManuscript,
   evaluateWithReport,
@@ -261,6 +262,94 @@ function SwarmPanel({ report, mode }: { report: SwarmReport; mode: string }) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Applied expert lenses (auto-derived from the Study Design Selector) */
+/* ------------------------------------------------------------------ */
+
+const LENS_META: Record<AppliedLens["kind"], { label: string; tone: BadgeKind; icon: string }> = {
+  guideline: { label: "Reporting guideline", tone: "good", icon: "📋" },
+  feature: { label: "Special-feature lens", tone: "info", icon: "✨" },
+  extension: { label: "Guideline extension", tone: "neutral", icon: "➕" },
+  pitfall: { label: "Design pitfall watch", tone: "warn", icon: "⚠️" },
+};
+
+function ExpertLensPanel({ project }: { project: ProjectState }) {
+  const expertise = useMemo(() => buildExpertise(project), [project]);
+  const { lenses, directives, designName, guidelineLabel } = expertise;
+
+  if (lenses.length === 0) {
+    return (
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-[12px] text-med-sub">
+        No design-specific lenses yet. Pick a study design (and its special features) in the{" "}
+        <strong>Study Design Selector</strong> and they will be applied here automatically — the
+        review then checks your draft against your exact reporting guideline, its known pitfalls, and
+        every feature you enabled.
+      </div>
+    );
+  }
+
+  const grouped = lenses.reduce<Record<AppliedLens["kind"], AppliedLens[]>>(
+    (acc, l) => {
+      (acc[l.kind] ||= []).push(l);
+      return acc;
+    },
+    {} as Record<AppliedLens["kind"], AppliedLens[]>,
+  );
+  const order: AppliedLens["kind"][] = ["guideline", "feature", "extension", "pitfall"];
+
+  return (
+    <div className="rounded-xl border border-fuchsia-200 bg-fuchsia-50/50 p-4 grid gap-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-semibold text-fuchsia-900 inline-flex items-center gap-1.5">
+          🧠 Applied expert lenses
+          <InfoHint
+            title="Where these come from"
+            text="Everything you chose in the Study Design Selector — your design's reporting guideline, its known pitfalls, and every special feature you enabled — is converted into review directives and handed to every agent in the swarm. So the review doesn't just check generic quality: it checks your draft against the exact standard your study must meet, automatically. The more you configure upfront, the more expert reviewers you get here for free."
+          />
+        </span>
+        <Badge kind="info">{lenses.length} lenses</Badge>
+        <Badge kind="neutral">{directives.length} directives</Badge>
+        {guidelineLabel && <Badge kind="good">{guidelineLabel}</Badge>}
+      </div>
+      <p className="text-[12px] text-fuchsia-900/80">
+        {designName ? (
+          <>
+            Because you selected <strong>{designName}</strong>, the swarm below automatically applies{" "}
+            <strong>{lenses.length}</strong> design-specific reviewers on top of its standard methodology,
+            statistics, literature, integrity, clarity and reproducibility passes.
+          </>
+        ) : (
+          <>These reviewers run on top of the standard swarm passes.</>
+        )}
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {order
+          .filter((k) => grouped[k]?.length)
+          .map((kind) => (
+            <div key={kind} className="rounded-lg border border-fuchsia-200/70 bg-white p-3 grid gap-1.5">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-fuchsia-700 inline-flex items-center gap-1">
+                <span aria-hidden>{LENS_META[kind].icon}</span>
+                {LENS_META[kind].label}
+                <span className="text-med-sub font-normal">· {grouped[kind].length}</span>
+              </div>
+              <ul className="grid gap-1">
+                {grouped[kind].slice(0, 8).map((l, i) => (
+                  <li key={i} className="text-[12px] text-med-ink">
+                    <span className="font-medium">{l.label}</span>
+                    {l.detail ? <span className="text-med-sub"> — {l.detail}</span> : null}
+                  </li>
+                ))}
+                {grouped[kind].length > 8 && (
+                  <li className="text-[11px] text-med-sub">+ {grouped[kind].length - 8} more</li>
+                )}
+              </ul>
+            </div>
+          ))}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Main component                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -366,6 +455,11 @@ export function ReviewImprove({ project }: { project: ProjectState }) {
             />
           </div>
           <ScorePanel title="Quick heuristic evaluation" ev={initial} />
+        </section>
+
+        {/* Applied expert lenses — auto-derived from the Study Design Selector. */}
+        <section className="grid gap-3 border-t border-slate-100 pt-5">
+          <ExpertLensPanel project={project} />
         </section>
 
         {/* STEP 2 */}
