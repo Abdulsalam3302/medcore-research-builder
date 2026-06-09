@@ -179,6 +179,70 @@ await check("POST /api/journals/finder (Saudi-only filter)", async () => {
   }
 });
 
+await check("POST /api/mcp (tools/list)", async () => {
+  const { status, json } = await postJson(
+    "/api/mcp",
+    { jsonrpc: "2.0", id: 1, method: "tools/list" },
+    200,
+  );
+  if (status !== 200) throw new Error(`status ${status}`);
+  const tools = json.result?.tools;
+  if (!Array.isArray(tools) || tools.length < 5) throw new Error("MCP tools missing");
+  if (!tools.some((t) => t.name === "find_journals")) throw new Error("find_journals tool missing");
+});
+
+await check("POST /api/mcp (initialize)", async () => {
+  const { json } = await postJson(
+    "/api/mcp",
+    {
+      jsonrpc: "2.0",
+      id: 2,
+      method: "initialize",
+      params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "smoke", version: "0" } },
+    },
+    200,
+  );
+  if (!json.result?.serverInfo?.name) throw new Error("initialize missing serverInfo");
+});
+
+await check("POST /api/mcp (tools/call check_coherence — offline engine)", async () => {
+  const { json } = await postJson(
+    "/api/mcp",
+    {
+      jsonrpc: "2.0",
+      id: 3,
+      method: "tools/call",
+      params: {
+        name: "check_coherence",
+        arguments: {
+          title: "Metformin and mortality in type 2 diabetes",
+          introduction: "We aimed to assess metformin and mortality.",
+          methods: "Retrospective cohort study of adults with type 2 diabetes.",
+          results: "Mortality was lower with metformin (HR 0.82, 95% CI 0.7–0.95).",
+          discussion: "Metformin was associated with lower mortality.",
+          conclusion: "Metformin was associated with reduced mortality.",
+        },
+      },
+    },
+    200,
+  );
+  const sc = json.result?.structuredContent;
+  if (json.result?.isError) throw new Error("coherence tool errored");
+  if (typeof sc?.score !== "number") throw new Error("coherence score missing");
+});
+
+await check("GET /api/preprints/search", async () => {
+  let p;
+  try {
+    p = await getJson("/api/preprints/search?query=covid+vaccine&page_size=3");
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (looksLikeUpstream(msg)) throw new UpstreamUnavailable(msg);
+    throw e;
+  }
+  if (!Array.isArray(p.results)) throw new Error("results missing");
+});
+
 await check("GET /api/announcements", async () => {
   const a = await getJson("/api/announcements");
   if (!Array.isArray(a.announcements) || a.announcements.length < 1) {

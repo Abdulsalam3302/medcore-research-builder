@@ -865,7 +865,10 @@ function FeaturesPicker({
   );
   const core = recommendations.filter((r) => r.tier === "core");
   const reco = recommendations.filter((r) => r.tier === "recommended");
-  const recommendedIds = new Set(recommendations.map((r) => r.feature.id));
+  const recommendedIds = useMemo(
+    () => new Set(recommendations.map((r) => r.feature.id)),
+    [recommendations]
+  );
 
   const expertFeatures = useMemo(() => {
     const q = search.trim().toLowerCase();

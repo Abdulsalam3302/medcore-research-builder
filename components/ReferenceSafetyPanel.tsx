@@ -62,7 +62,10 @@ function scoreBadgeKind(score: number): "good" | "warn" | "bad" {
 }
 
 export function ReferenceSafetyPanel({ project }: { project: ProjectState }) {
-  const verifications = project.references?.verifications || [];
+  const verifications = useMemo(
+    () => project.references?.verifications || [],
+    [project.references?.verifications]
+  );
 
   const sectionsText = useMemo(() => {
     const s = project.sections || ({} as ProjectState["sections"]);
