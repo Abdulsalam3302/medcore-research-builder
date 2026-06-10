@@ -63,6 +63,7 @@ export function PlotlyPreview({
       return;
     }
     setLoading(true);
+    const node = ref.current;
     ensurePlotly()
       .then(() => {
         if (cancelled || !ref.current || !window.Plotly) return;
@@ -87,9 +88,9 @@ export function PlotlyPreview({
       });
     return () => {
       cancelled = true;
-      if (ref.current && window.Plotly) {
+      if (node && window.Plotly) {
         try {
-          window.Plotly.purge(ref.current);
+          window.Plotly.purge(node);
         } catch {
           /* noop */
         }

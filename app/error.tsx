@@ -15,7 +15,7 @@ export default function Error({
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-med-bg p-6">
-      <div className="card-elevated max-w-lg w-full p-6 text-center">
+      <div role="alert" aria-live="assertive" className="card-elevated max-w-lg w-full p-6 text-center">
         <h1 className="display-title text-xl">Something went wrong</h1>
         <p className="muted mt-2 text-sm">
           An unexpected error occurred. Your draft in browser storage is usually safe — try

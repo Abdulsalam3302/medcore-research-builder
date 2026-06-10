@@ -49,6 +49,27 @@ const MCP_SERVERS_REPO = "https://github.com/modelcontextprotocol/servers";
 const MCP_SITE = "https://modelcontextprotocol.io/";
 
 export const mcpServers: MCPServer[] = [
+  /* ── MedCore's own server ────────────────────────────────────────────── */
+  {
+    id: "medcore",
+    name: "MedCore Research Builder (this platform)",
+    vendor: "MedCore",
+    category: "Biomedical & scientific data",
+    capability:
+      "Journal finder, EQUATOR study-design registry, anti-hallucination reference verification, manuscript coherence checks, and preprint search — served from this platform's own /api/mcp endpoint.",
+    useInResearch:
+      "Connect your AI assistant (Claude Desktop, Claude Code, IDE agents) directly to MedCore's engines: rank target journals, pull design-specific reporting checklists, verify citations, and run coherence checks without leaving your editor.",
+    confidence: "established",
+    verifyUrl: "https://medcore-research-builder.vercel.app/api/mcp",
+    note:
+      "First-party Streamable HTTP MCP server built into this app. Add it with: claude mcp add --transport http medcore https://medcore-research-builder.vercel.app/api/mcp",
+    icon: "🩺",
+    plainSummary:
+      "MedCore itself is an MCP server — your AI assistant can use the platform's journal finder, design registry, and reference verifier as tools.",
+    useCase:
+      "You'd use this when drafting in your own editor and you want the assistant to verify your reference list or shortlist journals using MedCore's curated data.",
+  },
+
   /* ── Databases ───────────────────────────────────────────────────────── */
   {
     id: "postgres",

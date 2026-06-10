@@ -7,6 +7,23 @@ A free, no-login, reporting-guideline-driven workspace for building the core of 
 **Live app:** https://medcore-research-builder.vercel.app  
 **Repository:** https://github.com/Abdulsalam3302/medcore-research-builder
 
+## What’s new in v3.8
+
+- **First-party MCP server** — MedCore's engines (journal finder, design
+  registry, reference verification, coherence checks, preprint search) are now
+  exposed to any Model Context Protocol client at `/api/mcp`
+  (Streamable HTTP, stateless). See [`docs/MCP_SERVER.md`](docs/MCP_SERVER.md).
+  ```bash
+  claude mcp add --transport http medcore https://medcore-research-builder.vercel.app/api/mcp
+  ```
+- **Preprint search API** — `/api/preprints/search` queries bioRxiv/medRxiv and
+  other preprints via Europe PMC's `SRC:PPR` source (free, keyless), with
+  explicit *not peer reviewed* labelling.
+- **Lint gate** — `npm run lint` (next/core-web-vitals) now passes clean and
+  runs in CI; React hook dependency hazards fixed.
+- **Sync you can trust** — cloud-sync failures and local-storage save failures
+  now surface as visible alerts (including on mobile) instead of failing silently.
+
 ## What’s new in v3
 
 - **Journal Finder** — a deep journal-suggestion engine over WoS SCIE/ESCI,

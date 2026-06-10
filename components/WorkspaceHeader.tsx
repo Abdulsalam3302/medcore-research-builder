@@ -76,9 +76,14 @@ export function WorkspaceHeader({
             </span>
             {autosave ? (
               autosave.localError ? (
-                <span role="alert" className="hidden md:inline-flex items-center gap-1.5 text-[11.5px] text-med-bad font-medium">
+                <span role="alert" className="inline-flex items-center gap-1.5 text-[11.5px] text-med-bad font-medium">
                   <span className="rounded-full" style={{ width: 6, height: 6, background: "var(--mc-risk)" }} />
                   Couldn&apos;t save locally — storage may be full. Export your work now.
+                </span>
+              ) : autosave.cloud === "error" ? (
+                <span role="alert" className="inline-flex items-center gap-1.5 text-[11.5px] text-amber-700 font-medium">
+                  <span className="rounded-full" style={{ width: 6, height: 6, background: "#b45309" }} />
+                  Cloud sync failed — your draft is safe in this browser; sync retries on your next edit.
                 </span>
               ) : (
                 <span

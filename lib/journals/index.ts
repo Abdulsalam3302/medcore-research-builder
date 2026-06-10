@@ -23,7 +23,6 @@ import { saudiJournals } from "./saudi";
 // runs at deploy time, so we load it defensively without a hard import.
 let generatedJournals: JournalRecord[] = [];
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
   const mod = require("./generated");
   if (Array.isArray(mod.generatedJournals)) generatedJournals = mod.generatedJournals;
 } catch {

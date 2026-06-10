@@ -45,7 +45,7 @@ export function ResearchLaunch({
   update: Update;
   onJump?: (k: string) => void;
 }) {
-  const answers = project.researchLaunch || {};
+  const answers = useMemo(() => project.researchLaunch || {}, [project.researchLaunch]);
   const summary = useMemo(() => scoreLaunch(answers), [answers]);
   const [baseline, setBaseline] = useState<{ score: number; capturedAt: string } | null>(
     null,
