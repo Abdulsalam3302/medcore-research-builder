@@ -108,6 +108,14 @@ const About = dynamic(() => import("@/components/About").then((m) => m.About), {
   loading: RouteSkeleton,
   ssr: false,
 });
+const SubmissionPipeline = dynamic(
+  () => import("@/components/SubmissionPipeline").then((m) => m.SubmissionPipeline),
+  { loading: RouteSkeleton, ssr: false },
+);
+const PublicationClub = dynamic(
+  () => import("@/components/PublicationClub").then((m) => m.PublicationClub),
+  { loading: RouteSkeleton, ssr: false },
+);
 
 export default function WorkspaceApp() {
   const { project, setProject, update, ready, autosave } = useProject();
@@ -317,6 +325,22 @@ export default function WorkspaceApp() {
             >
               <JournalFinder project={project} />
             </ResearchPhaseShell>
+          ) : active === "pipeline" ? (
+            <ResearchPhaseShell
+              phaseLabel="Post-Research Submission"
+              title="Submission Pipeline"
+              subtitle="Track every target journal from shortlist → formatting → submission → peer review → publication, with stage-by-stage best practice."
+            >
+              <SubmissionPipeline project={project} update={update} onJump={(k) => setActive(k as LifecycleKey)} />
+            </ResearchPhaseShell>
+          ) : active === "club" ? (
+            <ResearchPhaseShell
+              phaseLabel="Community"
+              title="Publication Club"
+              subtitle="Meet researchers, post and join research opportunities, and share MedCore projects — initiate and finish research together."
+            >
+              <PublicationClub />
+            </ResearchPhaseShell>
           ) : active === "submission" ? (
             <ResearchPhaseShell
               phaseLabel="Post-Research Submission"
@@ -432,7 +456,9 @@ function MobileTabs({
     { key: "references", label: "Refs" },
     { key: "appendix", label: "Appendix" },
     { key: "journal-finder", label: "Journals" },
+    { key: "pipeline", label: "Pipeline" },
     { key: "submission", label: "Submit" },
+    { key: "club", label: "Club" },
     { key: "review", label: "Review" },
     { key: "skills", label: "Skills" },
     { key: "toolkit", label: "Tools" },

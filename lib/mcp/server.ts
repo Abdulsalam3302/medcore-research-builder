@@ -20,13 +20,14 @@ import type { ReferenceVerification } from "@/lib/types";
 import { parseReferenceBlock } from "@/lib/references/parser";
 import { markDuplicates, verifyReference } from "@/lib/references/verify";
 import { europepmcSearch } from "@/lib/scholarly/europepmc";
+import { doajSearchJournals } from "@/lib/scholarly/doaj";
 
 export const MCP_PROTOCOL_VERSION = "2025-03-26";
 
 export const SERVER_INFO = {
   name: "medcore-research-builder",
   title: "MedCore Research Builder",
-  version: "3.8.0",
+  version: "3.9.0",
 };
 
 export const SERVER_INSTRUCTIONS = [
@@ -141,6 +142,22 @@ export const MCP_TOOLS: McpToolDef[] = [
         discussion: { type: "string" },
         conclusion: { type: "string" },
       },
+    },
+  },
+  {
+    name: "check_open_access_journal",
+    title: "Check a journal in DOAJ",
+    description:
+      "Look a journal up in the Directory of Open Access Journals (DOAJ) by title or ISSN. A DOAJ " +
+      "listing is a strong legitimacy signal for an open-access journal; absence is a caution flag " +
+      "for the predatory self-check. Returns license, APC, publisher, and the official DOAJ link.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Journal title or ISSN, e.g. 'Annals of Saudi Medicine' or '0256-4947'." },
+        limit: { type: "number", description: "Max journals to return (default 5, max 20)." },
+      },
+      required: ["query"],
     },
   },
   {
@@ -303,6 +320,21 @@ function toolCheckCoherence(args: Record<string, unknown>) {
   return analyzeCoherence(project);
 }
 
+async function toolCheckDoaj(args: Record<string, unknown>) {
+  const query = str(args.query);
+  if (!query) throw new McpToolError("'query' (journal title or ISSN) is required.");
+  const limit = Math.min(Math.max(num(args.limit) ?? 5, 1), 20);
+  const journals = await doajSearchJournals(query, limit);
+  return {
+    count: journals.length,
+    journals,
+    note:
+      journals.length === 0
+        ? "Not found in DOAJ. For an open-access journal this is a caution flag — verify indexing at the official sources before trusting it."
+        : "DOAJ listing confirmed for the returned titles — still cross-check scope, APC, and indexing at the journal's official site.",
+  };
+}
+
 async function toolSearchPreprints(args: Record<string, unknown>) {
   const query = str(args.query);
   if (!query) throw new McpToolError("'query' is required.");
@@ -349,6 +381,9 @@ export async function callMcpTool(
         break;
       case "search_preprints":
         result = await toolSearchPreprints(args);
+        break;
+      case "check_open_access_journal":
+        result = await toolCheckDoaj(args);
         break;
       default:
         return {

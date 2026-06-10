@@ -30,6 +30,7 @@ streams, nothing stored server-side.
 | `get_study_design` | Full detail for one design: when-to-use checklist, manuscript sections, per-section reporting checklist, extensions, pitfalls. |
 | `verify_references` | Parse a citation block and verify each entry against PubMed, Crossref, OpenAlex, Europe PMC, Semantic Scholar. Flags unverified / mismatched / duplicate / possibly-retracted references (max 20 per call). |
 | `check_coherence` | Deterministic offline coherence analysis: title↔content, design↔claims, objective↔conclusion, results↔discussion numbers + causal language, citation order. Returns 0–100 score with located issues. |
+| `check_open_access_journal` | Verify a journal's DOAJ listing by title or ISSN (license, APC, publisher) — legitimacy signal for the predatory self-check. |
 | `search_preprints` | Search bioRxiv/medRxiv and other preprints via Europe PMC's `SRC:PPR` source. |
 
 ## Honesty & safety guarantees

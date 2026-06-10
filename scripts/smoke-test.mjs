@@ -231,6 +231,36 @@ await check("POST /api/mcp (tools/call check_coherence — offline engine)", asy
   if (typeof sc?.score !== "number") throw new Error("coherence score missing");
 });
 
+await check("POST /api/mcp (tools/list includes DOAJ check)", async () => {
+  const { json } = await postJson("/api/mcp", { jsonrpc: "2.0", id: 9, method: "tools/list" }, 200);
+  const tools = json.result?.tools || [];
+  if (!tools.some((t) => t.name === "check_open_access_journal")) {
+    throw new Error("check_open_access_journal tool missing");
+  }
+});
+
+await check("GET /api/club/posts (public board, degrades without Supabase)", async () => {
+  const c = await getJson("/api/club/posts");
+  if (!Array.isArray(c.posts)) throw new Error("posts array missing");
+  if (typeof c.configured !== "boolean") throw new Error("configured flag missing");
+});
+
+await check("POST /api/club/posts (unauthenticated → 401/503, never 500)", async () => {
+  const r = await fetch(`${BASE}/api/club/posts`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ kind: "meet", title: "Smoke test post title", description: "x".repeat(30) }),
+  });
+  if (![401, 503, 429].includes(r.status)) {
+    throw new Error(`expected 401/503, got ${r.status}`);
+  }
+});
+
+await check("GET /api/doaj/search (missing query → 400)", async () => {
+  const r = await fetch(`${BASE}/api/doaj/search`);
+  if (r.status !== 400) throw new Error(`expected 400, got ${r.status}`);
+});
+
 await check("GET /api/preprints/search", async () => {
   let p;
   try {

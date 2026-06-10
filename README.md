@@ -7,6 +7,25 @@ A free, no-login, reporting-guideline-driven workspace for building the core of 
 **Live app:** https://medcore-research-builder.vercel.app  
 **Repository:** https://github.com/Abdulsalam3302/medcore-research-builder
 
+## What’s new in v3.9
+
+- **Submission Pipeline** — track every target journal from shortlist →
+  formatting → submission → peer review → revision → acceptance → publication,
+  with stage-by-stage best practice (ICMJE/COPE-aligned), duration stats, and
+  a full status timeline. New lane under Post-Research.
+- **Publication Club** — a community board (new Community phase): post and
+  join research opportunities, meet researchers by specialty, and share
+  MedCore projects via tokenized share links so studies are initiated *and*
+  finished on the platform. Supabase-backed (`docs/CLUB_TABLES.sql`), browse
+  as guest, post/join with a free account; plain-text only, RLS-enforced,
+  strict rate limits.
+- **DOAJ integration** — `/api/doaj/search` (articles + journals) and a new
+  `check_open_access_journal` MCP tool: verify a journal's DOAJ listing
+  (license, APC, publisher) as a legitimacy signal for the predatory check.
+- **Security** — HSTS header (2-year max-age) added to the middleware
+  security set; community endpoints are auth-gated, length-capped,
+  control-character-stripped, and rate-limited.
+
 ## What’s new in v3.8
 
 - **First-party MCP server** — MedCore's engines (journal finder, design

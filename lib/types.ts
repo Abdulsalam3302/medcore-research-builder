@@ -639,6 +639,47 @@ export type ProjectState = {
     verifications: ReferenceVerification[];
   };
   appendices?: AppendixSection[];
+  /** Journal submission tracker — selection → submission → peer review → publication. */
+  submissions?: SubmissionRecord[];
+};
+
+/* ============================================================
+   v3.9 — Submission pipeline (journal selection → publication)
+   ============================================================ */
+
+export type SubmissionStatus =
+  | "shortlisted"
+  | "formatting"
+  | "submitted"
+  | "under_review"
+  | "major_revision"
+  | "minor_revision"
+  | "accepted"
+  | "rejected"
+  | "withdrawn"
+  | "published";
+
+export type SubmissionEvent = {
+  /** Status entered. */
+  status: SubmissionStatus;
+  /** ISO date the status was recorded. */
+  at: string;
+  note?: string;
+};
+
+export type SubmissionRecord = {
+  id: string;
+  journalName: string;
+  /** Journal Finder id when the journal came from the dataset. */
+  journalId?: string;
+  status: SubmissionStatus;
+  /** Full status history, oldest first — powers the timeline + duration stats. */
+  history: SubmissionEvent[];
+  notes?: string;
+  /** Manuscript/tracking id assigned by the journal's submission system. */
+  manuscriptId?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export const emptyProject = (): ProjectState => ({
@@ -658,4 +699,5 @@ export const emptyProject = (): ProjectState => ({
   sectionFeedback: {},
   references: { raw: "", verifications: [] },
   appendices: [],
+  submissions: [],
 });
