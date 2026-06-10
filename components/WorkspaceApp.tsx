@@ -380,7 +380,7 @@ export default function WorkspaceApp() {
               title="Review & Improve"
               subtitle="Initial score → AI peer-review swarm → final score. Fix issues and re-run to prove your manuscript is getting better."
             >
-              <ReviewImprove project={project} />
+              <ReviewImprove project={project} onJump={(k) => setActive(k as LifecycleKey)} />
             </ResearchPhaseShell>
           ) : active === "library" ? (
             <ResearchPhaseShell
@@ -471,6 +471,7 @@ function MobileTabs({
   onSelect: (k: LifecycleKey) => void;
 }) {
   const items: { key: LifecycleKey; label: string }[] = [
+    { key: "about", label: "About" },
     { key: "overview", label: "Overview" },
     { key: "launch", label: "Launch" },
     { key: "protocol", label: "Protocol" },
@@ -494,7 +495,6 @@ function MobileTabs({
     { key: "impact-studio", label: "Impact" },
     { key: "export", label: "Export" },
     { key: "announcements", label: "News" },
-    { key: "about", label: "About" },
   ];
   return (
     <nav

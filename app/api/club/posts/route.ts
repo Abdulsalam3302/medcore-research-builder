@@ -1,4 +1,5 @@
 import { bad, handleError, ok, safeJson, enforceRateLimit, BadRequestError } from "../../_utils";
+import { clubTablesMissing } from "../_shared";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { getAppUser } from "@/lib/auth";
 
@@ -31,7 +32,10 @@ export async function GET(req: Request) {
       .limit(50);
     if (kind && KINDS.has(kind)) query = query.eq("kind", kind);
     const { data, error } = await query;
-    if (error) throw error;
+    if (error) {
+      if (clubTablesMissing(error)) return ok({ configured: false, posts: [] });
+      throw error;
+    }
 
     // Tell the signed-in caller which posts are theirs / already joined.
     const user = await getAppUser();
@@ -95,7 +99,12 @@ export async function POST(req: Request) {
       })
       .select("id, created_at")
       .single();
-    if (error) throw error;
+    if (error) {
+      if (clubTablesMissing(error)) {
+        return bad("The community board isn't set up yet — a maintainer must run docs/CLUB_TABLES.sql in the Supabase SQL editor.", 503);
+      }
+      throw error;
+    }
     return ok({ created: true, id: data.id, createdAt: data.created_at });
   } catch (e) {
     return handleError(e);
