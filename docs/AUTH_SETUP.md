@@ -99,7 +99,13 @@ create policy "read announcements" on announcements
 -- so users cannot post. Add rows from the Supabase Table editor or SQL editor.
 ```
 
-To post: insert a row (e.g. `insert into announcements (id, kind, title, body, pinned) values ('2026-06-promo','update','New journals added','We expanded the Journal Finder...', true);`).
+To post from the app (recommended): set `SUPABASE_SERVICE_ROLE_KEY` in your
+host env and sign in with the `OWNER_EMAIL` account — the Announcements lane
+then shows an admin composer to post, edit, and delete live announcements.
+The service key is server-only and used exclusively after the admin check, so
+the table keeps zero public write policies.
+
+To post via SQL instead: insert a row (e.g. `insert into announcements (id, kind, title, body, pinned) values ('2026-06-promo','update','New journals added','We expanded the Journal Finder...', true);`).
 
 ## 5. Environment variables
 

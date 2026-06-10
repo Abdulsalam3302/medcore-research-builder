@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { mergeAnnouncements, staticAnnouncements, type Announcement } from "@/lib/announcements";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { Card, CardBody } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { useConfirm } from "./ui/ConfirmDialog";
@@ -26,6 +25,7 @@ export function Announcements() {
   const [items, setItems] = useState<Announcement[]>(() => mergeAnnouncements());
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [editing, setEditing] = useState<Announcement | null>(null);
   const { confirm } = useConfirm();
 
   function refresh() {
@@ -48,19 +48,14 @@ export function Announcements() {
       })
       .finally(() => !cancelled && setLoading(false));
 
-    // Detect admin (owner) to show the composer. Profile role is set server-side.
-    if (isSupabaseConfigured()) {
-      const supabase = createClient();
-      supabase.auth.getUser().then(async ({ data }) => {
-        if (cancelled || !data.user) return;
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", data.user.id)
-          .maybeSingle();
-        if (!cancelled && profile?.role === "admin") setIsAdmin(true);
-      });
-    }
+    // Detect admin (owner) via the server — this honors OWNER_EMAIL promotion,
+    // which a client-side profiles read cannot see.
+    fetch("/api/me", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d?.role === "admin") setIsAdmin(true);
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -83,7 +78,16 @@ export function Announcements() {
         </CardBody>
       </Card>
 
-      {isAdmin && <AdminComposer onChanged={refresh} />}
+      {isAdmin && (
+        <AdminComposer
+          editing={editing}
+          onCancelEdit={() => setEditing(null)}
+          onChanged={() => {
+            setEditing(null);
+            refresh();
+          }}
+        />
+      )}
 
       <div className="grid gap-3">
         {items.map((a) => {
@@ -101,6 +105,18 @@ export function Announcements() {
                     <time className="text-[11.5px] text-med-sub whitespace-nowrap">
                       {new Date(a.date).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
                     </time>
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        className="text-[11px] text-med-brand hover:underline"
+                        onClick={() => {
+                          setEditing(a);
+                          if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                      >
+                        Edit
+                      </button>
+                    )}
                     {isAdmin && (
                       <button
                         type="button"
@@ -151,14 +167,33 @@ export function Announcements() {
   );
 }
 
-/** Owner/admin composer to post a new announcement without touching SQL. */
-function AdminComposer({ onChanged }: { onChanged: () => void }) {
+/** Owner/admin composer to post or edit an announcement without touching SQL. */
+function AdminComposer({
+  editing,
+  onCancelEdit,
+  onChanged,
+}: {
+  editing: Announcement | null;
+  onCancelEdit: () => void;
+  onChanged: () => void;
+}) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [kind, setKind] = useState<Announcement["kind"]>("update");
   const [pinned, setPinned] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+
+  // Load the post being edited into the form (id is kept so save = update).
+  useEffect(() => {
+    if (editing) {
+      setTitle(editing.title);
+      setBody(editing.body);
+      setKind(editing.kind);
+      setPinned(Boolean(editing.pinned));
+      setMsg(null);
+    }
+  }, [editing]);
 
   async function post() {
     if (!title.trim() || !body.trim()) {
@@ -171,14 +206,23 @@ function AdminComposer({ onChanged }: { onChanged: () => void }) {
       const r = await fetch("/api/admin/announcements", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), body: body.trim(), kind, pinned }),
+        body: JSON.stringify({
+          id: editing?.id,
+          date: editing?.date,
+          title: title.trim(),
+          body: body.trim(),
+          kind,
+          pinned,
+          ctaLabel: editing?.ctaLabel,
+          ctaHref: editing?.ctaHref,
+        }),
       });
       const d = (await r.json()) as { saved?: boolean; error?: string };
       if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
       setTitle("");
       setBody("");
       setPinned(false);
-      setMsg("Posted ✓");
+      setMsg(editing ? "Updated ✓" : "Posted ✓");
       onChanged();
     } catch (e) {
       setMsg(e instanceof Error ? e.message : String(e));
@@ -190,9 +234,26 @@ function AdminComposer({ onChanged }: { onChanged: () => void }) {
   return (
     <Card>
       <CardBody className="grid gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Badge kind="info">Admin</Badge>
-          <h3 className="font-semibold text-med-ink text-[14px]">Post an announcement</h3>
+          <h3 className="font-semibold text-med-ink text-[14px]">
+            {editing ? `Editing: ${editing.title.slice(0, 48)}` : "Post an announcement"}
+          </h3>
+          {editing && (
+            <button
+              type="button"
+              className="text-[11.5px] text-med-sub hover:underline"
+              onClick={() => {
+                onCancelEdit();
+                setTitle("");
+                setBody("");
+                setPinned(false);
+                setMsg(null);
+              }}
+            >
+              Cancel edit
+            </button>
+          )}
         </div>
         <input
           aria-label="Announcement title"
@@ -225,7 +286,7 @@ function AdminComposer({ onChanged }: { onChanged: () => void }) {
             Pin to top
           </label>
           <button type="button" className="btn-primary" onClick={post} disabled={busy}>
-            {busy ? "Posting…" : "Post announcement"}
+            {busy ? "Saving…" : editing ? "Save changes" : "Post announcement"}
           </button>
           {msg && <span role="alert" className="text-[12px] text-med-sub">{msg}</span>}
         </div>

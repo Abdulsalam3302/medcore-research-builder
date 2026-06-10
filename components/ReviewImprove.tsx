@@ -32,6 +32,88 @@ import { InfoHint } from "./ui/InfoHint";
 import { ProgressRing } from "./ui/ProgressRing";
 import { CopyButton } from "./ui/CopyButton";
 import { Spinner } from "./ui/Spinner";
+import { downloadAsFile } from "@/lib/store";
+
+/* ------------------------------------------------------------------ */
+/* Action plan: every dimension maps to the lane where you fix it      */
+/* ------------------------------------------------------------------ */
+
+const DIMENSION_FIX: Record<string, { lane: string; laneLabel: string; action: string }> = {
+  structure: { lane: "introduction", laneLabel: "Manuscript sections", action: "Draft each IMRaD section to at least a substantive paragraph — empty sections are the single biggest score drag." },
+  coherence: { lane: "discussion", laneLabel: "Discussion", action: "Align the title, objective, numbers, and causal language across sections — the coherence check pinpoints each mismatch." },
+  "statistical-rigor": { lane: "results", laneLabel: "Results Lab", action: "Report effect sizes with 95% CIs, exact p-values, and name the statistical test — the Statistician Copilot helps." },
+  "reporting-completeness": { lane: "type", laneLabel: "Study Design Selector", action: "Apply your design's reporting checklist (CONSORT/STROBE/PRISMA…) item by item." },
+  "reference-quality": { lane: "references", laneLabel: "Citation Verification", action: "Verify every reference and resolve flagged, unverified, or retracted citations." },
+  significance: { lane: "title", laneLabel: "Literature & Gap Explorer", action: "Sharpen the gap statement: who benefits, what changes in practice, and why now." },
+  novelty: { lane: "title", laneLabel: "Literature & Gap Explorer", action: "Run the novelty scan and position your contribution explicitly against the closest published work." },
+  "title-quality": { lane: "title", laneLabel: "Title Lab", action: "Refine the title: declare the design, name the population, stay specific and concise." },
+  "abstract-quality": { lane: "submission", laneLabel: "Submission & Quality", action: "Build a structured abstract that mirrors your target journal's required format." },
+  readability: { lane: "introduction", laneLabel: "Manuscript sections", action: "Shorten long sentences and simplify jargon — use the language tools inside each section editor." },
+  "ai-writing-patterns": { lane: "discussion", laneLabel: "Discussion", action: "Rework templated, repetitive phrasing into specific, varied prose grounded in your actual findings." },
+  "originality-risk": { lane: "references", laneLabel: "Citation Verification", action: "Rewrite or properly quote overlapping passages and cite every borrowed idea." },
+};
+
+/** Rank the dimensions where the most points are recoverable. */
+function buildActionPlan(ev: ManuscriptEvaluation, topN = 4) {
+  return [...ev.dimensions]
+    .map((d) => ({ d, recoverable: Math.round(d.weight * (100 - d.score) * 100) / 100 }))
+    .filter((x) => x.d.score < 90)
+    .sort((a, b) => b.recoverable - a.recoverable)
+    .slice(0, topN);
+}
+
+function ActionPlan({
+  ev,
+  onJump,
+}: {
+  ev: ManuscriptEvaluation;
+  onJump?: (lane: string) => void;
+}) {
+  const plan = buildActionPlan(ev);
+  if (plan.length === 0) {
+    return (
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-[12.5px] text-emerald-900">
+        Every dimension is ≥90 — outstanding. Run the swarm review for the final expert pass.
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-xl border border-sky-200 bg-sky-50/40 p-4 grid gap-3">
+      <div className="flex items-center gap-1.5">
+        <span className="text-sm font-semibold text-med-ink">🎯 Your fastest path to a better paper</span>
+        <InfoHint
+          title="How this plan is ordered"
+          text="Each step is ranked by recoverable points: the dimension's weight × how far it is from 100. Fixing the top item moves your overall score more than anything else. Work top-down, then re-score — the plan re-ranks itself as you improve."
+        />
+      </div>
+      <ol className="grid gap-2.5">
+        {plan.map(({ d, recoverable }, i) => {
+          const fix = DIMENSION_FIX[d.dimension];
+          return (
+            <li key={d.dimension} className="rounded-lg border border-slate-200 bg-white p-3 flex items-start gap-3 flex-wrap">
+              <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-600 text-white text-[12px] font-semibold">
+                {i + 1}
+              </span>
+              <div className="flex-1 min-w-[220px]">
+                <div className="flex items-center gap-2 flex-wrap text-[12.5px]">
+                  <span className="font-semibold text-med-ink capitalize">{dimLabel(d.dimension)}</span>
+                  <Badge kind={scoreKind(d.score)}>{d.score}/100</Badge>
+                  <span className="text-[11px] text-med-sub">≈ +{Math.ceil(recoverable)} pts available</span>
+                </div>
+                <p className="mt-1 text-[12.5px] text-med-sub">{fix?.action || d.detail}</p>
+              </div>
+              {fix && onJump && (
+                <button type="button" className="btn-secondary text-xs shrink-0" onClick={() => onJump(fix.lane)}>
+                  {fix.laneLabel} →
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /* Small presentational helpers                                       */
@@ -353,9 +435,25 @@ function ExpertLensPanel({ project }: { project: ProjectState }) {
 /* Main component                                                     */
 /* ------------------------------------------------------------------ */
 
-export function ReviewImprove({ project }: { project: ProjectState }) {
+export function ReviewImprove({
+  project,
+  onJump,
+}: {
+  project: ProjectState;
+  onJump?: (lane: string) => void;
+}) {
   // STEP 1 — deterministic, instant.
   const initial = useMemo(() => evaluateManuscript(project), [project]);
+
+  // Readiness: scoring a near-empty draft as "F" is technically right but
+  // useless guidance. Below this bar we lead with what to draft, not a grade.
+  const readiness = useMemo(() => {
+    const s = project.sections || ({} as ProjectState["sections"]);
+    const substantive = (["introduction", "methods", "results", "discussion", "conclusion"] as const)
+      .filter((k) => (s[k] || "").trim().length > 120);
+    const hasTitle = Boolean(project.titleFinal || project.titleInputs?.draftTitle);
+    return { substantive: substantive.length, hasTitle, ready: substantive.length >= 2 };
+  }, [project]);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -429,6 +527,45 @@ export function ReviewImprove({ project }: { project: ProjectState }) {
     return lines.join("\n");
   }, [initial, final, deltas, overallDelta]);
 
+  /** Full review report as Markdown — for co-authors and supervisors. */
+  function downloadReport() {
+    const ev = final ?? initial;
+    const lines: string[] = [];
+    lines.push(`# MedCore Review Report`);
+    lines.push(``);
+    lines.push(`- Title: ${project.titleFinal || project.titleInputs?.draftTitle || "(untitled draft)"}`);
+    lines.push(`- Date: ${new Date().toISOString().slice(0, 10)}`);
+    lines.push(`- Initial score: ${initial.overall}/100 (grade ${initial.grade})`);
+    if (final) lines.push(`- Final score (swarm-adjusted): ${final.overall}/100 (grade ${final.grade}), delta ${overallDelta >= 0 ? "+" : ""}${overallDelta}`);
+    lines.push(``);
+    lines.push(`## Prioritized action plan`);
+    for (const [i, { d, recoverable }] of buildActionPlan(ev, 6).entries()) {
+      const fix = DIMENSION_FIX[d.dimension];
+      lines.push(`${i + 1}. **${dimLabel(d.dimension)}** — ${d.score}/100 (≈ +${Math.ceil(recoverable)} pts available)`);
+      lines.push(`   - ${fix?.action || d.detail}`);
+    }
+    lines.push(``);
+    lines.push(`## Dimension scores`);
+    for (const d of ev.dimensions) {
+      lines.push(`- ${dimLabel(d.dimension)}: ${d.score}/100 — ${d.detail}`);
+    }
+    if (report?.findings?.length) {
+      lines.push(``);
+      lines.push(`## Swarm findings (${report.findings.length})`);
+      for (const f of report.findings) {
+        lines.push(`- [${f.severity}] (${f.agent}${f.section ? ` · ${f.section}` : ""}) ${f.issue}${f.recommendation ? ` → ${f.recommendation}` : ""}`);
+      }
+    }
+    if (report?.humanReviewRequired?.length) {
+      lines.push(``);
+      lines.push(`## Human review required`);
+      for (const h of report.humanReviewRequired) lines.push(`- ${h}`);
+    }
+    lines.push(``);
+    lines.push(`> Heuristic aid — not a guarantee of acceptance, originality, or AI-undetectability.`);
+    downloadAsFile(`medcore-review-report.md`, lines.join("\n"), "text/markdown");
+  }
+
   return (
     <Card>
       <CardHeader
@@ -442,6 +579,36 @@ export function ReviewImprove({ project }: { project: ProjectState }) {
         }
       />
       <CardBody className="grid gap-6">
+        {/* Readiness gate — guide first, grade second, on near-empty drafts. */}
+        {!readiness.ready && (
+          <section className="rounded-xl border border-sky-200 bg-sky-50/50 p-4 grid gap-3">
+            <h3 className="text-sm font-semibold text-med-ink">
+              👋 Your manuscript isn't ready to grade yet — and that's normal
+            </h3>
+            <p className="text-[12.5px] text-med-sub">
+              The score below reflects missing content, not bad writing
+              ({readiness.substantive}/5 sections have substantive text
+              {readiness.hasTitle ? "" : ", and there's no working title yet"}). Draft at least two
+              sections and a title, then come back — the review becomes genuinely useful from there.
+            </p>
+            {onJump && (
+              <div className="flex gap-2 flex-wrap">
+                {!readiness.hasTitle && (
+                  <button type="button" className="btn-primary text-xs" onClick={() => onJump("title")}>
+                    Start with the title →
+                  </button>
+                )}
+                <button type="button" className="btn-secondary text-xs" onClick={() => onJump("introduction")}>
+                  Draft the Introduction →
+                </button>
+                <button type="button" className="btn-secondary text-xs" onClick={() => onJump("methods")}>
+                  Draft the Methods →
+                </button>
+              </div>
+            )}
+          </section>
+        )}
+
         {/* STEP 1 */}
         <section className="grid gap-3">
           <div className="flex items-center gap-2">
@@ -455,6 +622,11 @@ export function ReviewImprove({ project }: { project: ProjectState }) {
             />
           </div>
           <ScorePanel title="Quick heuristic evaluation" ev={initial} />
+        </section>
+
+        {/* Prioritized action plan — always derived from the latest evaluation. */}
+        <section className="grid gap-3 border-t border-slate-100 pt-5">
+          <ActionPlan ev={final ?? initial} onJump={onJump} />
         </section>
 
         {/* Applied expert lenses — auto-derived from the Study Design Selector. */}
@@ -492,6 +664,9 @@ export function ReviewImprove({ project }: { project: ProjectState }) {
               )}
             </button>
             {report && <CopyButton text={copyText} label="Copy report" />}
+            <button type="button" className="btn-secondary text-xs" onClick={downloadReport}>
+              Download report (.md)
+            </button>
           </div>
 
           {error && (

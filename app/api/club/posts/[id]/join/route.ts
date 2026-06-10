@@ -1,4 +1,5 @@
 import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../../../_utils";
+import { clubTablesMissing } from "../../../_shared";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { getAppUser } from "@/lib/auth";
 
@@ -35,6 +36,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (error) {
       // unique(post_id, user_id) — joining twice is fine to report cleanly.
       if (String(error.code) === "23505") return ok({ joined: true, already: true });
+      if (clubTablesMissing(error)) {
+        return bad("The community board isn't set up yet — a maintainer must run docs/CLUB_TABLES.sql.", 503);
+      }
       throw error;
     }
     return ok({ joined: true });

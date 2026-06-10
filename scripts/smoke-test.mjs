@@ -273,6 +273,11 @@ await check("GET /api/preprints/search", async () => {
   if (!Array.isArray(p.results)) throw new Error("results missing");
 });
 
+await check("GET /api/me (role probe, never 500)", async () => {
+  const m = await getJson("/api/me");
+  if (typeof m.signedIn !== "boolean") throw new Error("signedIn flag missing");
+});
+
 await check("GET /api/announcements", async () => {
   const a = await getJson("/api/announcements");
   if (!Array.isArray(a.announcements) || a.announcements.length < 1) {
