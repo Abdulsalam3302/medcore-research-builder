@@ -42,6 +42,7 @@ export type LifecycleKey =
   | "submission"
   | "club"
   | "review"
+  | "library"
   | "toolkit"
   | "skills"
   | "impact-studio"
@@ -155,6 +156,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "submission", label: "Submission & Quality", phase: "Post-Research" },
 
   { key: "review", label: "Review & Improve (score + AI swarm)", phase: "Quality & Empowerment" },
+  { key: "library", label: "Library Navigator (find what you need)", phase: "Quality & Empowerment" },
   { key: "skills", label: "Research Skills & Tips", phase: "Quality & Empowerment" },
   { key: "toolkit", label: "Tools & MCP Directory", phase: "Quality & Empowerment" },
 

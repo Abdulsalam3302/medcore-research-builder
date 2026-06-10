@@ -27,7 +27,7 @@ export const MCP_PROTOCOL_VERSION = "2025-03-26";
 export const SERVER_INFO = {
   name: "medcore-research-builder",
   title: "MedCore Research Builder",
-  version: "3.9.0",
+  version: "3.10.0",
 };
 
 export const SERVER_INSTRUCTIONS = [

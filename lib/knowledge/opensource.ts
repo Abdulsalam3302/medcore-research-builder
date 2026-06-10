@@ -559,6 +559,128 @@ export const ossProjects: OSSProject[] = [
     useCase:
       "You run bioinformatics pipelines and need them to behave the same everywhere for reproducibility.",
   },
+
+  /* ── v3.10 additions — verified against official project pages ────────── */
+  {
+    id: "jamovi",
+    name: "jamovi",
+    org: "the jamovi project",
+    category: "Statistics",
+    whatItDoes:
+      "Free, open statistical spreadsheet built on R — t-tests, ANOVA, regression, factor analysis with a point-and-click interface.",
+    howItHelpsResearch:
+      "An SPSS-style experience with zero licence cost; analyses map to R code underneath, easing the path to reproducible scripts.",
+    language: "C++/R/JavaScript",
+    license: "AGPL-3.0/GPL",
+    confidence: "established",
+    verifyUrl: "https://www.jamovi.org/",
+    verifiedAt: "2026-06-10",
+    icon: "📊",
+    plainSummary:
+      "Free point-and-click statistics that feels like SPSS and is built on R.",
+    useCase:
+      "You need to run standard analyses for a paper but don't have an SPSS licence or R experience.",
+  },
+  {
+    id: "osf",
+    name: "OSF (Open Science Framework)",
+    org: "Center for Open Science",
+    category: "Reproducibility & workflows",
+    whatItDoes:
+      "Free platform to preregister studies, share protocols and materials, store data, and post preprints — across the whole project lifecycle.",
+    howItHelpsResearch:
+      "Preregistration timestamps your hypotheses and analysis plan before data collection — the strongest public defence against HARKing and outcome switching; reviewers and journals increasingly expect it.",
+    language: "Python",
+    license: "Apache-2.0",
+    confidence: "established",
+    verifyUrl: "https://osf.io/",
+    verifiedAt: "2026-06-10",
+    icon: "🏛️",
+    plainSummary:
+      "A free home for preregistrations, study materials, data, and preprints.",
+    useCase:
+      "You're about to collect data and want your hypotheses and analysis plan publicly timestamped first.",
+  },
+  {
+    id: "pandoc",
+    name: "Pandoc",
+    org: "jgm (John MacFarlane)",
+    category: "Reproducible research & notebooks",
+    whatItDoes:
+      "Universal document converter between Markdown, LaTeX, Word, HTML, and dozens of formats, with citation processing (CSL).",
+    howItHelpsResearch:
+      "Write once in Markdown and produce a journal-ready .docx or LaTeX submission — with references formatted from a .bib file in any of 10,000+ CSL journal styles.",
+    language: "Haskell",
+    license: "GPL-2.0+",
+    confidence: "established",
+    verifyUrl: "https://pandoc.org/",
+    verifiedAt: "2026-06-10",
+    icon: "🔄",
+    plainSummary:
+      "Converts your manuscript between Word, LaTeX, and Markdown without breaking citations.",
+    useCase:
+      "Journal A wants Word and journal B wants LaTeX — you convert the same source instead of rewriting.",
+  },
+  {
+    id: "openrefine",
+    name: "OpenRefine",
+    org: "OpenRefine",
+    category: "Reproducibility & workflows",
+    whatItDoes:
+      "Power tool for cleaning messy tabular data: clustering near-duplicate values, faceting, transformations — with a replayable operation history.",
+    howItHelpsResearch:
+      "Cleans free-text fields (drug names, sites, diagnoses) before analysis, and the exported operation history doubles as a reproducible data-cleaning audit trail.",
+    language: "Java",
+    license: "BSD-3-Clause",
+    confidence: "established",
+    verifyUrl: "https://openrefine.org/",
+    verifiedAt: "2026-06-10",
+    icon: "🧹",
+    plainSummary:
+      "Cleans messy spreadsheet data and keeps a replayable record of every fix.",
+    useCase:
+      "Your extraction sheet has 14 spellings of the same hospital — cluster and fix them in minutes, documented.",
+  },
+  {
+    id: "asreview",
+    name: "ASReview",
+    org: "ASReview (Utrecht University)",
+    category: "Systematic review & evidence synthesis",
+    whatItDoes:
+      "Active-learning screening tool: a model learns from your include/exclude decisions and surfaces the most likely relevant records first.",
+    howItHelpsResearch:
+      "Cuts title/abstract screening workload in systematic reviews substantially while keeping the human decision in the loop and exporting a transparent audit trail.",
+    language: "Python",
+    license: "Apache-2.0",
+    confidence: "established",
+    verifyUrl: "https://asreview.nl/",
+    verifiedAt: "2026-06-10",
+    icon: "🔍",
+    plainSummary:
+      "Machine-assisted screening that shows you the most relevant papers first — you still decide.",
+    useCase:
+      "Your search returned 8,000 records and the team needs screening done in weeks, defensibly.",
+  },
+  {
+    id: "prisma2020-flow",
+    name: "PRISMA2020 flow diagram",
+    org: "PRISMA flowdiagram (ESHackathon)",
+    category: "Systematic review & evidence synthesis",
+    whatItDoes:
+      "R package + Shiny app that draws the official PRISMA 2020 flow diagram from your screening counts.",
+    howItHelpsResearch:
+      "Produces the publication-required PRISMA flow figure exactly to the 2020 template — no box-drawing in PowerPoint, numbers stay consistent with your text.",
+    language: "R",
+    license: "MIT",
+    confidence: "established",
+    verifyUrl: "https://github.com/prisma-flowdiagram/PRISMA2020",
+    verifiedAt: "2026-06-10",
+    icon: "🪧",
+    plainSummary:
+      "Generates the standard systematic-review flow diagram from your counts.",
+    useCase:
+      "Your PRISMA review is accepted pending the official flow diagram — generate it from the numbers you already have.",
+  },
 ];
 
 /** Group projects by category, preserving first-seen category order. */

@@ -124,8 +124,11 @@ export function ProtocolStudio({ project }: { project: ProjectState }) {
 
       <div className="p-5 grid gap-3">
         <div className="text-sm text-med-sub">
-          Generate a structured protocol/proposal tailored to your design ({profile.label}). The
-          offline skeleton works with no API key. AI drafting expands it into prose.
+          <strong className="text-med-ink">MedCore develops your protocol/proposal for you</strong> —
+          you don&apos;t need to bring a document. Generate a structured draft tailored to your design
+          ({profile.label}): the offline skeleton works with no API key, and AI drafting expands it
+          into prose. Already have a protocol from elsewhere? Upload it in the readiness ladder below
+          to track it and start from it.
         </div>
         <div className="text-xs text-med-sub border border-med-line rounded-lg p-3 bg-slate-50">
           {profile.guidance}
