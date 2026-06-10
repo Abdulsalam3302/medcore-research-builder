@@ -3642,7 +3642,51 @@ export const researchSkills: ResearchSkill[] = [
     ],
     standards: ["GRADE"],
   },
+
+  /* ── v3.10 additions ───────────────────────────────────────────────── */
+  {
+    id: "ethics-ai-use-disclosure",
+    title: "Disclose AI assistance honestly (ICMJE-aligned)",
+    area: "ethics",
+    level: "beginner",
+    whatYouLearn:
+      "What journals now require you to say about AI/LLM use in writing or analysis, where to say it, and what AI may never be credited with (authorship).",
+    steps: [
+      "Check the target journal's AI policy in its author guidelines — most now follow ICMJE: AI tools cannot be authors and their use must be disclosed.",
+      "Describe WHAT the tool did (language editing, code drafting, literature triage), WHICH tool and version, and WHERE in the workflow — usually in Methods and/or Acknowledgements.",
+      "State explicitly that authors reviewed and take full responsibility for all AI-assisted content, including references and statistics.",
+      "Never list an AI tool as an author, and never cite AI output as a source — verify every claim and citation it touched against primary sources.",
+      "Keep your own record of prompts/outputs for major AI contributions in case editors ask.",
+    ],
+    pitfalls: [
+      "Disclosing vaguely ('AI was used') — editors want the tool, the task, and the human verification step.",
+      "Hiding AI use entirely: detection is unreliable, but misrepresentation discovered later is a misconduct finding, not a style issue.",
+      "Letting AI-introduced citations into the reference list unverified — this is the most common AI-related integrity failure.",
+    ],
+    standards: ["ICMJE", "COPE", "WAME"],
+  },
+  {
+    id: "productivity-orcid-identity",
+    title: "Set up ORCID so your work is always attributed to you",
+    area: "productivity",
+    level: "beginner",
+    whatYouLearn:
+      "Why a persistent researcher identifier matters and how to wire ORCID into submissions so publications, reviews, and grants accrue to one verified profile.",
+    steps: [
+      "Register a free ORCID iD (orcid.org) with an email you'll keep after training rotations.",
+      "Add your name variants (transliterations, with/without middle initials) so legacy papers can be claimed.",
+      "Connect ORCID in every journal submission system — most major publishers push the publication to your record automatically on acceptance.",
+      "Enable auto-update from Crossref/DataCite so new DOIs attach themselves to your profile.",
+      "Put the ORCID iD on your title page where required (many journals now mandate it for corresponding authors).",
+    ],
+    pitfalls: [
+      "Creating multiple ORCID iDs over the years — merge duplicates early, before records diverge.",
+      "Leaving the profile empty: an iD with no works doesn't help reviewers or grant panels identify you.",
+    ],
+    standards: ["ORCID", "ICMJE"],
+  },
 ];
+
 
 export function skillsByArea(): Record<SkillArea, ResearchSkill[]> {
   const map = {} as Record<SkillArea, ResearchSkill[]>;

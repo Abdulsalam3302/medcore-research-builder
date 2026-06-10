@@ -50,6 +50,7 @@ const FILES = [
   "lib/knowledge/mcp.ts",
   "lib/knowledge/skillchains.ts",
   "lib/knowledge/integrations.ts",
+  "lib/knowledge/navigator.ts",
   "lib/journals/anticipate.ts",
   "lib/journals/bestPractices.ts",
   "lib/journals/compare.ts",
@@ -218,6 +219,37 @@ try {
   const nInteg = integ.platformIntegrations?.length ?? 0;
   if (nInteg >= 8) ok(`platform integrations documented (${nInteg})`); else no("integrations", `${nInteg}`);
 } catch (e) { no("chains/integrations run", e.message); }
+
+// v3.10: Library Navigator — deterministic cross-catalog search
+try {
+  const nav = await load("knowledge/navigator.js");
+  const counts = nav.libraryCounts();
+  if (counts.total >= 360) ok(`navigator indexes the full library (${counts.total} entries)`); else no("navigator index", `${counts.total} (<360)`);
+
+  const stats = nav.searchLibrary({ text: "sample size calculation" });
+  if (stats.length > 0 && stats.some((r) => r.item.kind === "skill")) {
+    ok(`navigator free-text finds skills ("sample size" → ${stats[0].item.title.slice(0, 40)}…)`);
+  } else no("navigator free-text", JSON.stringify(stats.slice(0, 2)));
+
+  const submitPlatform = nav.searchLibrary({ stage: "submit", need: "platform" });
+  if (submitPlatform.some((r) => r.item.id === "journal-finder")) {
+    ok("navigator guided mode (submit + platform → Journal Finder)");
+  } else no("navigator guided", JSON.stringify(submitPlatform.map((r) => r.item.id)));
+
+  const mcpOnly = nav.searchLibrary({ need: "connect-ai", text: "preprint" });
+  if (mcpOnly.length > 0 && mcpOnly.every((r) => r.item.kind === "mcp")) {
+    ok(`navigator kind filter (connect-ai → MCP only, ${mcpOnly.length} hits)`);
+  } else no("navigator kind filter", JSON.stringify(mcpOnly.map((r) => r.item.key)));
+
+  const beginner = nav.searchLibrary({ stage: "review", need: "learn", maxLevel: "intermediate" });
+  const levelOk = beginner.every((r) => !r.item.level || ["beginner", "intermediate"].includes(r.item.level));
+  if (beginner.length > 0 && levelOk) ok("navigator level cap respects beginner-friendly filter"); else no("navigator level cap", `${beginner.length} hits, levelOk=${levelOk}`);
+
+  // Determinism: identical query twice must give identical ordering.
+  const a = nav.searchLibrary({ text: "journal indexing" }).map((r) => r.item.key).join("|");
+  const b = nav.searchLibrary({ text: "journal indexing" }).map((r) => r.item.key).join("|");
+  if (a === b && a.length > 0) ok("navigator is deterministic (same query → same ranking)"); else no("navigator determinism", "orderings differ");
+} catch (e) { no("navigator run", e.message); }
 
 // v4: journals enriched with 2026 data — free-APC + verifiedAt present
 try {

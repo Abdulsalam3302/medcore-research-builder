@@ -942,6 +942,95 @@ export const mcpServers: MCPServer[] = [
     useCase:
       "You'd use this to explore a public dataset someone shared as a Datasette site.",
   },
+  /* ── v3.10 additions — verified against official vendor pages ─────────── */
+  {
+    id: "huggingface",
+    name: "Hugging Face",
+    vendor: "Hugging Face (official)",
+    category: "Biomedical & scientific data",
+    capability:
+      "Official Hugging Face MCP server: search models, datasets, Spaces, and indexed research papers on the Hub.",
+    useInResearch:
+      "Find a pretrained biomedical model (e.g. clinical NER), a public dataset for a methods benchmark, or the paper behind a model card — directly from your AI assistant.",
+    confidence: "established",
+    verifyUrl: "https://huggingface.co/mcp",
+    icon: "🤗",
+    plainSummary:
+      "Connects your assistant to Hugging Face to find AI models, datasets, and the papers behind them.",
+    useCase:
+      "You'd use this when your methods section needs a named, citable model or public dataset rather than a vague 'an AI model was used'.",
+  },
+  {
+    id: "figma",
+    name: "Figma",
+    vendor: "Figma (official)",
+    category: "Productivity & collaboration",
+    capability:
+      "Official Figma MCP server: read designs into code/context and generate or edit designs, FigJam diagrams, and slides.",
+    useInResearch:
+      "Design graphical abstracts, conference posters, and study-flow figures with an assistant that can read and write the actual Figma file.",
+    confidence: "established",
+    verifyUrl: "https://developers.figma.com/docs/figma-mcp-server/",
+    icon: "🎨",
+    plainSummary:
+      "Lets your assistant help build posters, graphical abstracts, and diagrams inside Figma.",
+    useCase:
+      "You'd use this to turn your PRISMA flow numbers into a polished conference-ready figure.",
+  },
+  {
+    id: "npi-registry",
+    name: "NPI Registry (NPPES)",
+    vendor: "Community (CMS open API)",
+    category: "Biomedical & scientific data",
+    capability:
+      "Validate and look up US healthcare providers in the CMS NPPES NPI registry: credentials, specialty (taxonomy), practice locations.",
+    useInResearch:
+      "Verify co-investigators or site clinicians for US-based multicentre work, or build provider-level sampling frames for health-services research.",
+    confidence: "likely",
+    verifyUrl: "https://npiregistry.cms.hhs.gov/",
+    note: "The underlying NPPES API is official and free; verify the specific MCP wrapper you install. US providers only.",
+    icon: "🪪",
+    plainSummary:
+      "Looks up and verifies US clinicians and hospitals in the official government registry.",
+    useCase:
+      "You'd use this to confirm a collaborator's specialty and affiliation before listing them on a US grant or site agreement.",
+  },
+  {
+    id: "mermaid-diagrams",
+    name: "Mermaid diagrams",
+    vendor: "Community",
+    category: "Documents & PDF",
+    capability:
+      "Validate and render Mermaid diagram code (flowcharts, sequence, Gantt) to images.",
+    useInResearch:
+      "Draft study-flow diagrams (CONSORT/PRISMA-style), recruitment timelines, and analysis pipelines as text that renders to publication figures.",
+    confidence: "likely",
+    verifyUrl: "https://mermaid.js.org/",
+    note: "Mermaid itself is an established OSS project; community MCP wrappers exist — verify the one you install.",
+    icon: "📈",
+    plainSummary:
+      "Turns simple text into clean flow diagrams — useful for study-flow and timeline figures.",
+    useCase:
+      "You'd use this to sketch your participant-flow diagram in text and get a rendered image to refine.",
+  },
+  {
+    id: "worldbank-data",
+    name: "World Bank Open Data",
+    vendor: "Community (World Bank open API)",
+    category: "Biomedical & scientific data",
+    capability:
+      "Query World Bank development indicators (health expenditure, mortality, demographics) by country and year.",
+    useInResearch:
+      "Ground Introduction/Discussion burden statements in citable country-level indicators instead of unsourced claims.",
+    confidence: "likely",
+    verifyUrl: "https://data.worldbank.org/",
+    note: "The World Bank API is official and free; verify the specific MCP wrapper you install.",
+    icon: "🌍",
+    plainSummary:
+      "Gives your assistant citable country-level health and economic statistics.",
+    useCase:
+      "You'd use this to back 'health spending in country X rose…' with the actual indicator series and source.",
+  },
 ];
 
 /** Group servers by category, preserving first-seen category order. */

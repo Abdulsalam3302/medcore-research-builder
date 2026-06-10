@@ -116,6 +116,10 @@ const PublicationClub = dynamic(
   () => import("@/components/PublicationClub").then((m) => m.PublicationClub),
   { loading: RouteSkeleton, ssr: false },
 );
+const LibraryNavigator = dynamic(
+  () => import("@/components/LibraryNavigator").then((m) => m.LibraryNavigator),
+  { loading: RouteSkeleton, ssr: false },
+);
 
 export default function WorkspaceApp() {
   const { project, setProject, update, ready, autosave } = useProject();
@@ -213,6 +217,22 @@ export default function WorkspaceApp() {
               subtitle="Move from idea to feasible, protocol-ready research."
             >
               <ResearchLaunch project={project} update={update} onJump={(k) => setActive(k as LifecycleKey)} />
+              <section className="card-elevated p-4 md:p-5 flex items-start justify-between gap-4 flex-wrap">
+                <div className="flex-1 min-w-[260px]">
+                  <div className="eyebrow">Next: your protocol & proposal</div>
+                  <h3 className="font-display font-semibold text-med-ink text-[15px] mt-0.5">
+                    MedCore generates these for you — no document needed to start
+                  </h3>
+                  <p className="muted text-[12.5px] mt-1">
+                    The Protocol / Proposal Studio develops a design-aware protocol from what you
+                    entered above (offline skeleton, or full AI draft). Already wrote one elsewhere?
+                    Use <em>Upload existing</em> in the readiness ladder below to start from it instead.
+                  </p>
+                </div>
+                <button type="button" className="btn-primary" onClick={() => setActive("protocol")}>
+                  Generate my protocol →
+                </button>
+              </section>
               <ProtocolProposalAvailability project={project} />
               <LearningResourcePanel
                 sectionId="launch"
@@ -362,6 +382,14 @@ export default function WorkspaceApp() {
             >
               <ReviewImprove project={project} />
             </ResearchPhaseShell>
+          ) : active === "library" ? (
+            <ResearchPhaseShell
+              phaseLabel="Quality & Empowerment"
+              title="Library Navigator"
+              subtitle="One smart search across all skills, workflows, tips, tools, MCP servers, and built-in features — answer two questions or just describe your goal."
+            >
+              <LibraryNavigator onJump={(k) => setActive(k as LifecycleKey)} />
+            </ResearchPhaseShell>
           ) : active === "skills" ? (
             <ResearchPhaseShell
               phaseLabel="Quality & Empowerment"
@@ -460,6 +488,7 @@ function MobileTabs({
     { key: "submission", label: "Submit" },
     { key: "club", label: "Club" },
     { key: "review", label: "Review" },
+    { key: "library", label: "Library" },
     { key: "skills", label: "Skills" },
     { key: "toolkit", label: "Tools" },
     { key: "impact-studio", label: "Impact" },

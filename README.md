@@ -7,6 +7,25 @@ A free, no-login, reporting-guideline-driven workspace for building the core of 
 **Live app:** https://medcore-research-builder.vercel.app  
 **Repository:** https://github.com/Abdulsalam3302/medcore-research-builder
 
+## What’s new in v3.10
+
+- **Library Navigator** — one deterministic search across all 363 library
+  entries (185+ skills, 12 workflows, 69 tips, 29 open-source tools, 57 MCP
+  servers, 9 built-in features): answer two guided questions (stage + kind of
+  help) or type a goal, get a ranked shortlist with match reasons, inline
+  skill steps, official verify links, and jump-to-lane buttons. Offline,
+  instant, can never hallucinate an entry. New lane under Quality & Empowerment.
+- **Catalog upgrades (verified, deduplicated)** — MCP: official Hugging Face
+  and Figma servers, NPI Registry (NPPES), Mermaid diagrams, World Bank Open
+  Data. Open-source tools: jamovi, OSF, Pandoc, OpenRefine, ASReview,
+  PRISMA2020 flow diagram. Skills: ICMJE-aligned AI-use disclosure, ORCID
+  researcher identity. Every entry keeps the no-fabrication rule: an official
+  verify link, honest confidence labels.
+- **Protocol is generated, not uploaded** — the Studio and readiness ladder
+  now lead with *Generate* (design-aware skeleton or AI draft built for you);
+  *Upload existing* stays as a clearly-labelled option for documents you
+  already have. Research Launch gains a "Generate my protocol →" next step.
+
 ## What’s new in v3.9
 
 - **Submission Pipeline** — track every target journal from shortlist →

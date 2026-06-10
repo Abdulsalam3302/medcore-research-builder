@@ -125,6 +125,12 @@ export function ProtocolProposalAvailability({ project }: { project: ProjectStat
         <div className="p-5 grid gap-3">
           <div className="text-sm text-med-sub">
             Track all protocol-critical documents before drafting. This reduces ethics, methods, and submission failures.
+            <span className="block mt-1 text-[12.5px]">
+              <strong className="text-med-ink">MedCore generates these documents for you</strong> — use{" "}
+              <em>Generate</em> on any row (and the Protocol / Proposal Studio for full drafts).{" "}
+              <em>Upload existing</em> is optional, for when you already have a document and want to
+              track it or start from it.
+            </span>
           </div>
           <div className="overflow-x-auto border border-med-line rounded-lg">
             <table className="w-full text-sm">
@@ -145,8 +151,8 @@ export function ProtocolProposalAvailability({ project }: { project: ProjectStat
                     <span className="inline-flex items-center gap-1.5">
                       Actions
                       <InfoHint
-                        title="Upload vs generate skeleton"
-                        text="Upload attaches a document you've already written (the filename is recorded locally so you can track it). Generate skeleton creates a starter outline from your project details to write into — it is a scaffold only, never a finished or approved document. Anything generated still needs full human and ethics review before use."
+                        title="Generate first — upload only if you already have it"
+                        text="Generate is the main path: MedCore creates a design-aware starter document from your project details for you to develop (it is a scaffold, never a finished or approved document — full human and ethics review is required). Upload existing is optional: if you already wrote this document elsewhere, attach it to start from it and track it here (the filename is recorded locally)."
                       />
                     </span>
                   </th>
@@ -220,17 +226,19 @@ export function ProtocolProposalAvailability({ project }: { project: ProjectStat
                         />
                         <button
                           type="button"
-                          className="btn-secondary text-xs"
-                          onClick={() => onUploadClick(item.id)}
+                          className="btn-primary text-xs"
+                          onClick={() => onGenerateSkeleton(item)}
+                          title="MedCore generates this document for you from your project details"
                         >
-                          {item.uploadedFile ? "Replace" : "Upload"}
+                          {item.generatedDraft ? "Regenerate" : "Generate"}
                         </button>
                         <button
                           type="button"
                           className="btn-secondary text-xs"
-                          onClick={() => onGenerateSkeleton(item)}
+                          onClick={() => onUploadClick(item.id)}
+                          title="Optional: only if you already have this document and want to start from it"
                         >
-                          {item.generatedDraft ? "Regenerate" : "Generate skeleton"}
+                          {item.uploadedFile ? "Replace upload" : "Upload existing"}
                         </button>
                       </div>
                     </td>
