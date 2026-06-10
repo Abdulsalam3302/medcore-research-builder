@@ -24,6 +24,9 @@ const CSP = [
 
 const SECURITY_HEADERS: Record<string, string> = {
   "Content-Security-Policy": CSP,
+  // Browsers ignore HSTS over plain HTTP, so this is safe for local dev and
+  // pins production (Vercel) traffic to HTTPS for two years.
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "Referrer-Policy": "strict-origin-when-cross-origin",

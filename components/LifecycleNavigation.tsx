@@ -19,6 +19,8 @@ const PHASE_HELP: Record<string, string> = {
     "Extend impact after acceptance: create responsible outreach assets, then export everything for submission and your records.",
   Platform:
     "Platform information: product news and updates, and the mission, vision, and principles behind MedCore.",
+  Community:
+    "Research is a team sport: post or join research opportunities, share MedCore projects to find collaborators, and meet researchers in your specialty — so projects are initiated and finished on the platform.",
 };
 
 export type LifecycleKey =
@@ -36,7 +38,9 @@ export type LifecycleKey =
   | "references"
   | "appendix"
   | "journal-finder"
+  | "pipeline"
   | "submission"
+  | "club"
   | "review"
   | "toolkit"
   | "skills"
@@ -51,7 +55,8 @@ type PhaseName =
   | "Intra-Research"
   | "Post-Research"
   | "Quality & Empowerment"
-  | "Post-Publication";
+  | "Post-Publication"
+  | "Community";
 
 type NavItem = {
   key: LifecycleKey;
@@ -106,6 +111,12 @@ const PHASE_THEME: Record<
     activeClass: "bg-rose-50 text-rose-800",
     barClass: "bg-rose-400",
   },
+  Community: {
+    headClass: "text-emerald-700",
+    dotClass: "bg-emerald-500",
+    activeClass: "bg-emerald-50 text-emerald-800",
+    barClass: "bg-emerald-400",
+  },
 };
 
 /** Order the groups render in. Platform sits first, at the top. */
@@ -116,6 +127,7 @@ const PHASE_ORDER: PhaseName[] = [
   "Post-Research",
   "Quality & Empowerment",
   "Post-Publication",
+  "Community",
 ];
 
 const NAV_ITEMS: NavItem[] = [
@@ -139,6 +151,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "appendix", label: "Appendix (optional)", phase: "Intra-Research" },
 
   { key: "journal-finder", label: "Journal Finder", phase: "Post-Research" },
+  { key: "pipeline", label: "Submission Pipeline", phase: "Post-Research" },
   { key: "submission", label: "Submission & Quality", phase: "Post-Research" },
 
   { key: "review", label: "Review & Improve (score + AI swarm)", phase: "Quality & Empowerment" },
@@ -147,6 +160,8 @@ const NAV_ITEMS: NavItem[] = [
 
   { key: "impact-studio", label: "Post-Publication Impact Studio", phase: "Post-Publication" },
   { key: "export", label: "Export Center", phase: "Post-Publication" },
+
+  { key: "club", label: "Publication Club", phase: "Community" },
 ];
 
 export function LifecycleNavigation({
