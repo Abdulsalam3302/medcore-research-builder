@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { trackRequestInMiddleware } from "@/lib/analytics/beacon";
 
 /**
  * Content-Security-Policy. 'unsafe-inline' is required for Next's inline
@@ -34,6 +35,17 @@ const SECURITY_HEADERS: Record<string, string> = {
   "X-DNS-Prefetch-Control": "on",
 };
 
+/** HSTS when the request is served over HTTPS (Vercel production). */
+function applySecurityHeaders(request: NextRequest, response: NextResponse) {
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    response.headers.set(key, value);
+  }
+  const proto = request.headers.get("x-forwarded-proto");
+  if (proto === "https" || process.env.VERCEL_ENV === "production") {
+    response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains");
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -42,12 +54,12 @@ export async function middleware(request: NextRequest) {
   }
 
   let response = NextResponse.next();
-  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
-    response.headers.set(key, value);
-  }
+  applySecurityHeaders(request, response);
   if (pathname.startsWith("/api/")) {
     response.headers.set("Cache-Control", "no-store, max-age=0");
   }
+
+  trackRequestInMiddleware(request);
 
   response = await updateSession(request, response);
   return response;

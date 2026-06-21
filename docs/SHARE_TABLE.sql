@@ -19,9 +19,6 @@ create table if not exists shared_projects (
 create index if not exists shared_projects_expires_at_idx
   on shared_projects (expires_at);
 
--- Row Level Security: sharing is anonymous, so the anon role must be able to
--- INSERT a new share and SELECT a row by its (secret) token. The token is the
--- only credential — never expose a listing/scan capability to anon.
 alter table shared_projects enable row level security;
 
 -- Allow anyone (incl. anon) to create a share link.
@@ -30,12 +27,13 @@ create policy "anon can insert shares"
   to anon, authenticated
   with check (true);
 
--- Allow anyone holding a token to read that row. The app always filters by
--- token, so this effectively gates reads on knowledge of the secret token.
-create policy "anon can select shares"
-  on shared_projects for select
-  to anon, authenticated
-  using (true);
+-- IMPORTANT: Do NOT grant anon/authenticated SELECT on the full table.
+-- A permissive SELECT policy (using (true)) lets anyone with the public
+-- anon key enumerate every share. Reads are performed server-side via
+-- SUPABASE_SERVICE_ROLE_KEY in GET /api/share, filtered by token only.
+
+-- If you previously created a permissive select policy, remove it:
+-- drop policy if exists "anon can select shares" on shared_projects;
 
 -- NOTE: Expired rows are NOT auto-deleted. Schedule a periodic cleanup, e.g.
 -- via pg_cron:

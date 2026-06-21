@@ -5,6 +5,13 @@ import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { LogoWordmark } from "@/components/ui/Logo";
 import Link from "next/link";
 
+function safeNextPath(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) {
+    return "/";
+  }
+  return raw;
+}
+
 export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -12,14 +19,31 @@ export default function AuthPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const configured = isSupabaseConfigured();
+  const [nextPath, setNextPath] = useState("/");
+
+  useEffect(() => {
+    setNextPath(safeNextPath(new URLSearchParams(window.location.search).get("next")));
+  }, []);
 
   useEffect(() => {
     if (!configured) return;
     const supabase = createClient();
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) window.location.href = "/";
+      if (data.session) window.location.href = nextPath;
     });
   }, [configured]);
+
+  async function trackAuth(eventType: "signup" | "login" | "auth_failed") {
+    try {
+      await fetch("/api/analytics/collect", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ eventType, mode }),
+      });
+    } catch {
+      /* non-blocking */
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,8 +54,12 @@ export default function AuthPage() {
     try {
       if (mode === "sign-in") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        window.location.href = "/";
+        if (error) {
+          void trackAuth("auth_failed");
+          throw error;
+        }
+        void trackAuth("login");
+        window.location.href = nextPath;
         return;
       }
       const { data, error } = await supabase.auth.signUp({
@@ -39,23 +67,29 @@ export default function AuthPage() {
         password,
         options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
       });
-      if (error) throw error;
+      if (error) {
+        void trackAuth("auth_failed");
+        throw error;
+      }
       // When email confirmation is disabled (recommended for this app), sign-up
       // returns an active session immediately — go straight into the workspace.
       if (data.session) {
-        window.location.href = "/";
+        void trackAuth("signup");
+        window.location.href = nextPath;
         return;
       }
       // Otherwise try an immediate sign-in (works when confirmation is off but
       // no session was returned). Fall back to a friendly message if it isn't.
       const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
       if (!signInErr) {
-        window.location.href = "/";
+        void trackAuth("signup");
+        window.location.href = nextPath;
         return;
       }
       setMsg("Account created. You can sign in now — no email confirmation needed.");
       setMode("sign-in");
     } catch (err) {
+      if (mode === "sign-in") void trackAuth("auth_failed");
       setMsg(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);

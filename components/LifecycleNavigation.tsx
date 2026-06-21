@@ -1,6 +1,7 @@
 "use client";
 
 import type { ProjectState } from "@/lib/types";
+import { trackFeature } from "@/lib/analytics/client";
 import { LogoWordmark } from "./ui/Logo";
 import { InfoHint } from "./ui/InfoHint";
 import { APP_VERSION } from "@/lib/constants";
@@ -209,7 +210,10 @@ export function LifecycleNavigation({
                     <button
                       key={item.key}
                       type="button"
-                      onClick={() => onSelect(item.key)}
+                      onClick={() => {
+                        trackFeature(`panel:${item.key}`);
+                        onSelect(item.key);
+                      }}
                       aria-current={isActive ? "page" : undefined}
                       className={`relative w-full text-left rounded-lg pl-3.5 pr-2.5 py-2 text-[13px] transition ${
                         isActive

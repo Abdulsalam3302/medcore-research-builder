@@ -1,6 +1,7 @@
-import { bad, handleError, ok, safeJson } from "../_utils";
+import { bad, enforceRateLimit, handleError, ok, safeJson } from "../_utils";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { getAppUser } from "@/lib/auth";
+import { trackFromRequest } from "@/lib/analytics/track";
 import type { ProjectState } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -9,8 +10,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** Cloud sync: load/save manuscript project for authenticated users. */
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const limited = await enforceRateLimit(req, "default");
+    if (limited) return limited;
     if (!isSupabaseConfigured()) return ok({ configured: false, project: null });
     const user = await getAppUser();
     if (!user) return bad("Sign in required for cloud sync", 401);
@@ -37,6 +40,8 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
+    const limited = await enforceRateLimit(req, "default");
+    if (limited) return limited;
     if (!isSupabaseConfigured()) return bad("Supabase not configured", 503);
     const user = await getAppUser();
     if (!user) return bad("Sign in required for cloud sync", 401);
@@ -73,6 +78,15 @@ export async function PUT(req: Request) {
       .single();
 
     if (error) throw error;
+
+    trackFromRequest(req, {
+      eventType: "project_sync",
+      category: "usage",
+      path: "/api/projects",
+      method: "PUT",
+      userId: user.id,
+    });
+
     return ok({ saved: true, updatedAt: data.updated_at });
   } catch (e) {
     return handleError(e);

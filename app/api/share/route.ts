@@ -1,6 +1,7 @@
 import { bad, enforceRateLimit, handleError, ok, safeJson } from "../_utils";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import { createClient, createServiceClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { getAppUser } from "@/lib/auth";
+import { trackFromRequest } from "@/lib/analytics/track";
 import type { ProjectState } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -56,6 +57,14 @@ export async function POST(req: Request) {
     });
     if (error) throw error;
 
+    trackFromRequest(req, {
+      eventType: "share_created",
+      category: "usage",
+      path: "/api/share",
+      userId: user?.id ?? null,
+      metadata: { anonymous: !user },
+    });
+
     const origin = originFromRequest(req);
     const url = `${origin}/?share=${token}`;
     return ok({ token, url, expiresAt });
@@ -74,9 +83,13 @@ export async function GET(req: Request) {
     if (limited) return limited;
     const token = new URL(req.url).searchParams.get("token");
     if (!token) return bad("token is required");
+    if (!/^[a-f0-9]{32,64}$/i.test(token)) return bad("invalid token", 400);
 
-    const supabase = createClient();
-    const { data, error } = await supabase
+    // Service-role read by token only — anon RLS must not allow table scans.
+    const admin = createServiceClient();
+    if (!admin) return bad("Server-stored sharing is unavailable.", 503);
+
+    const { data, error } = await admin
       .from("shared_projects")
       .select("state, expires_at")
       .eq("token", token)

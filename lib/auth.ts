@@ -1,4 +1,4 @@
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import { createClient, createServiceClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export type AppUser = {
   id: string;
@@ -31,8 +31,10 @@ export async function getAppUser(): Promise<AppUser | null> {
 export async function promoteOwnerIfNeeded(userId: string, email: string) {
   const owner = (process.env.OWNER_EMAIL || "").toLowerCase();
   if (!owner || email.toLowerCase() !== owner) return;
-  const supabase = createClient();
-  await supabase.from("profiles").upsert({
+  // Service role bypasses RLS — clients cannot self-promote (role column is locked).
+  const admin = createServiceClient();
+  if (!admin) return;
+  await admin.from("profiles").upsert({
     id: userId,
     email,
     role: "admin",

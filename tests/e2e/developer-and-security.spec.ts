@@ -35,6 +35,7 @@ test.describe("Security tester", () => {
     expect(h["x-content-type-options"]).toBe("nosniff");
     expect(h["x-frame-options"]).toBeTruthy();
     expect(h["referrer-policy"]).toBeTruthy();
+    expect(h["content-security-policy"]).toBeTruthy();
   });
 
   test("malformed JSON is rejected with 400, not 500/502", async () => {
@@ -47,6 +48,12 @@ test.describe("Security tester", () => {
     const ctx = await request.newContext({ baseURL: BASE });
     const res = await ctx.post("/api/admin/announcements", { data: { title: "x", body: "y" } });
     // 503 (no supabase) or 403 (not admin) — never 200 for an anonymous caller.
+    expect([401, 403, 503]).toContain(res.status());
+  });
+
+  test("admin observability endpoint is gated (not open)", async () => {
+    const ctx = await request.newContext({ baseURL: BASE });
+    const res = await ctx.get("/api/admin/observability");
     expect([401, 403, 503]).toContain(res.status());
   });
 

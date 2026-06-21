@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { BODY_LIMITS, RATE_LIMITS } from "@/lib/constants";
 import { checkRateLimit, clientKey } from "@/lib/rateLimit";
+import { trackFromRequest } from "@/lib/analytics/track";
 
 export function ok<T>(data: T, init?: ResponseInit) {
   return NextResponse.json(data, init);
@@ -18,6 +19,14 @@ export async function enforceRateLimit(req: Request, tier: RateTier = "default")
   const key = `${tier}:${clientKey(req)}`;
   const result = await checkRateLimit(key, limit, windowMs);
   if (!result.ok) {
+    trackFromRequest(req, {
+      eventType: "rate_limit",
+      category: "abuse",
+      path: new URL(req.url).pathname,
+      method: req.method,
+      metadata: { tier, retryAfterSec: result.retryAfterSec },
+      severity: "warn",
+    });
     return bad("Rate limit exceeded — please wait and try again.", 429, {
       retryAfterSec: result.retryAfterSec,
     });
