@@ -1,6 +1,6 @@
 import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import { GLOBAL_SYSTEM, REFINE_SECTION_SCHEMA } from "@/lib/prompts";
-import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
+import { callLLM, llmTracking, extractJSON, isLLMConfigured } from "@/lib/llm";
 import type { LLMRefineResponse, ResearchTypeAnswersV2 } from "@/lib/types";
 import { designById } from "@/lib/registry/designs";
 import { guidelineById } from "@/lib/guidelines";
@@ -108,6 +108,7 @@ Return ONLY the JSON object.`;
       maxTokens: 4000,
       temperature: 0.25,
       jsonOnly: true,
+      tracking: llmTracking(req, "/api/llm/generate-section"),
     });
     const parsed = extractJSON<LLMRefineResponse>(text);
     return ok(parsed);

@@ -8,7 +8,7 @@
 // offline. The deterministic coherence analysis is always folded in.
 
 import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
-import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
+import { callLLM, llmTracking, extractJSON, isLLMConfigured } from "@/lib/llm";
 import { analyzeCoherence } from "@/lib/coherence";
 import type { ProjectState } from "@/lib/types";
 import { buildAgentPrompt, parseAgentResponse, ALL_AGENTS, AGENT_LAYER } from "@/lib/swarm/agents";
@@ -77,7 +77,8 @@ export async function POST(req: Request) {
           prompt: spec.prompt,
           jsonOnly: true,
           maxTokens: 1800,
-        });
+      tracking: llmTracking(req, "/api/swarm/review"),
+    });
         const raw = extractJSON<RawAgentResponse>(text);
         const parsed = parseAgentResponse(role, raw);
         llmFindings.push(...parsed.findings);

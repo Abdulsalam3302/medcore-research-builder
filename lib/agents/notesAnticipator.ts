@@ -79,7 +79,8 @@ Return ONLY this JSON object:
     maxTokens: 2500,
     temperature: 0.1,
     jsonOnly: true,
-  });
+      tracking: { route: "agent/notesAnticipator" },
+    });
   const raw = extractJSON<Record<string, unknown>>(text);
 
   const out: ExpandedNotes = {

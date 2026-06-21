@@ -197,6 +197,7 @@ export async function recommendStat(args: {
       jsonOnly: true,
       temperature: 0.1,
       maxTokens: 1200,
+      tracking: { route: "agent/statRecommender" },
     });
     try {
       const parsed = JSON.parse(out) as StatRecommendation;

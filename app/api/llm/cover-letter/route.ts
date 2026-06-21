@@ -1,6 +1,6 @@
 import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import { GLOBAL_SYSTEM } from "@/lib/prompts";
-import { callLLM, isLLMConfigured } from "@/lib/llm";
+import { callLLM, llmTracking, isLLMConfigured } from "@/lib/llm";
 import { buildContextBundle, bundleToPromptBlock } from "@/lib/agents/contextBundle";
 import type { ProjectState } from "@/lib/types";
 
@@ -69,6 +69,7 @@ Return ONLY this JSON:
       prompt,
       jsonOnly: true,
       maxTokens: 1500,
+      tracking: llmTracking(req, "/api/llm/cover-letter"),
     });
     let parsed: { letter?: string; warnings?: string[] };
     try {

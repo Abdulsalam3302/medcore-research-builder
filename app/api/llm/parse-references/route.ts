@@ -1,5 +1,5 @@
 import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
-import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
+import { callLLM, llmTracking, extractJSON, isLLMConfigured } from "@/lib/llm";
 import { GLOBAL_SYSTEM, parseReferencesPrompt } from "@/lib/prompts";
 import { parseReferenceBlock } from "@/lib/references/parser";
 
@@ -25,6 +25,7 @@ export async function POST(req: Request) {
       maxTokens: 4000,
       temperature: 0.0,
       jsonOnly: true,
+      tracking: llmTracking(req, "/api/llm/parse-references"),
     });
     try {
       const data = extractJSON<{ references: Array<{ originalText: string; parsed: Record<string, unknown> }> }>(text);

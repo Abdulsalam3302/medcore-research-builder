@@ -1,7 +1,7 @@
 import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import type { ResearchTypeAnswersV2, TitleInputs } from "@/lib/types";
 import { runNoveltyCheck } from "@/lib/novelty";
-import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
+import { callLLM, llmTracking, extractJSON, isLLMConfigured } from "@/lib/llm";
 import { GLOBAL_SYSTEM } from "@/lib/prompts";
 import { buildContextBundle, bundleToPromptBlock } from "@/lib/agents/contextBundle";
 import { detectTitleConflicts } from "@/lib/alignment";
@@ -102,7 +102,8 @@ Return ONLY this JSON:
         maxTokens: 1800,
         temperature: 0.15,
         jsonOnly: true,
-      });
+      tracking: llmTracking(req, "/api/title/full-check"),
+    });
       assessment = extractJSON<Record<string, unknown>>(text);
     }
 

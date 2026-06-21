@@ -1,6 +1,6 @@
 import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import { GLOBAL_SYSTEM } from "@/lib/prompts";
-import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
+import { callLLM, llmTracking, extractJSON, isLLMConfigured } from "@/lib/llm";
 import { buildProtocolPrompt, type ProtocolDraftResult } from "@/lib/protocol/generator";
 import type { ProjectState } from "@/lib/types";
 
@@ -48,6 +48,7 @@ export async function POST(req: Request) {
       maxTokens: 4000,
       temperature: 0.2,
       jsonOnly: true,
+      tracking: llmTracking(req, "/api/llm/protocol-draft"),
     });
 
     const parsed = extractJSON<ProtocolDraftResult>(text);

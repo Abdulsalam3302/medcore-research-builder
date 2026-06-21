@@ -1,5 +1,5 @@
 import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
-import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
+import { callLLM, llmTracking, extractJSON, isLLMConfigured } from "@/lib/llm";
 import { GLOBAL_SYSTEM } from "@/lib/prompts";
 import {
   buildLanguageEditPrompt,
@@ -58,6 +58,7 @@ export async function POST(req: Request) {
       maxTokens: 4000,
       temperature: 0.3,
       jsonOnly: true,
+      tracking: llmTracking(req, "/api/llm/language-edit"),
     });
 
     const parsed = extractJSON<LanguageEditLLMResponse>(raw);

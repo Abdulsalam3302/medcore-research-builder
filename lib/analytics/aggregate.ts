@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rateLimitBackend } from "@/lib/rateLimit";
+import { countryLabel, isPrimaryGeo, PRIMARY_GEO_CODE } from "./countries";
 import type {
   ActivityFeedItem,
   DailyCount,
@@ -100,6 +101,8 @@ function summarizeEvent(e: RawEvent): string {
       return "Share link created";
     case "project_sync":
       return "Cloud project sync";
+    case "llm_call":
+      return `LLM · ${String(meta.route || e.path || "unknown")} · ${Number(meta.totalTokens || 0)} tokens`;
     default:
       return e.event_type.replace(/_/g, " ");
   }
@@ -303,6 +306,11 @@ export async function buildObservabilityPayload(rangeDays = 30): Promise<Observa
       topPages: [],
       topReferrers: [],
       topCountries: [],
+      geoInsight: {
+        primaryGeo: { code: PRIMARY_GEO_CODE, name: countryLabel(PRIMARY_GEO_CODE), count: 0, sharePct: 0 },
+        saHighlight: false,
+      },
+      llmOverview: { calls24h: 0, calls7d: 0, tokens7d: 0, errors7d: 0 },
       featureUsage: [],
       abuseSignals: { rateLimitByTier: [], topBlockedIps: [], authFailuresByHour: [] },
       alerts: [
@@ -356,6 +364,12 @@ export async function buildObservabilityPayload(rangeDays = 30): Promise<Observa
   const authFailures24h = events.filter((e) => e.event_type === "auth_failed" && e.created_at >= since24h).length;
   const apiCalls24h = events.filter((e) => e.event_type === "api_call" && e.created_at >= since24h).length;
 
+  const llmEvents = events.filter((e) => e.event_type === "llm_call");
+  const llm24h = llmEvents.filter((e) => e.created_at >= since24h);
+  const llm7d = llmEvents.filter((e) => e.created_at >= since7d);
+  const tokens7d = llm7d.reduce((sum, e) => sum + Number(e.metadata?.totalTokens || 0), 0);
+  const errors7d = llm7d.filter((e) => e.metadata?.error).length;
+
   const rateLimitEvents = events.filter((e) => e.event_type === "rate_limit");
   const authFailEvents = events.filter((e) => e.event_type === "auth_failed" && e.created_at >= since24h);
 
@@ -365,10 +379,15 @@ export async function buildObservabilityPayload(rangeDays = 30): Promise<Observa
     eventType: e.event_type,
     category: e.category as ActivityFeedItem["category"],
     path: e.path,
-    country: e.country,
+    country: e.country ? countryLabel(e.country) : null,
     severity: e.severity as ActivityFeedItem["severity"],
     summary: summarizeEvent(e),
   }));
+
+  const countryCounts = topCounts(pageViews, (e) => e.country || "XX");
+  const totalPv = pageViews.length || 1;
+  const saEntry = countryCounts.find((c) => isPrimaryGeo(c.label));
+  const saCount = saEntry?.count ?? 0;
 
   const retrospective = await buildRetrospective(admin);
 
@@ -390,7 +409,25 @@ export async function buildObservabilityPayload(rangeDays = 30): Promise<Observa
     dailySignups: countByDay(events, "signup"),
     topPages: topCounts(pageViews, (e) => e.path || "/"),
     topReferrers: topCounts(pageViews, (e) => e.referrer),
-    topCountries: topCounts(pageViews, (e) => e.country),
+    topCountries: countryCounts.map((c) => ({
+      label: countryLabel(c.label),
+      count: c.count,
+    })),
+    geoInsight: {
+      primaryGeo: {
+        code: PRIMARY_GEO_CODE,
+        name: countryLabel(PRIMARY_GEO_CODE),
+        count: saCount,
+        sharePct: Math.round((saCount / totalPv) * 1000) / 10,
+      },
+      saHighlight: saCount > 0,
+    },
+    llmOverview: {
+      calls24h: llm24h.length,
+      calls7d: llm7d.length,
+      tokens7d,
+      errors7d,
+    },
     featureUsage: topCounts(
       events.filter((e) => e.event_type === "feature_use"),
       (e) => String(e.metadata?.feature || e.path || "unknown"),

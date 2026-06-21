@@ -1,6 +1,6 @@
 import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import { GLOBAL_SYSTEM, refineSectionPrompt } from "@/lib/prompts";
-import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
+import { callLLM, llmTracking, extractJSON, isLLMConfigured } from "@/lib/llm";
 import type { LLMRefineResponse, ResearchTypeAnswersV2 } from "@/lib/types";
 import { guidelineById } from "@/lib/guidelines";
 import { designById } from "@/lib/registry/designs";
@@ -73,6 +73,7 @@ export async function POST(req: Request) {
       maxTokens: 4000,
       temperature: 0.2,
       jsonOnly: true,
+      tracking: llmTracking(req, "/api/llm/refine-section"),
     });
     const parsed = extractJSON<LLMRefineResponse>(text);
     return ok(parsed);

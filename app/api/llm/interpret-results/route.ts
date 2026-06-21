@@ -1,5 +1,5 @@
 import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
-import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
+import { callLLM, llmTracking, extractJSON, isLLMConfigured } from "@/lib/llm";
 import {
   buildResultsInterpretationPrompt,
   RESULTS_INTERPRETATION_SYSTEM,
@@ -44,6 +44,7 @@ export async function POST(req: Request) {
       maxTokens: 4000,
       temperature: 0.2,
       jsonOnly: true,
+      tracking: llmTracking(req, "/api/llm/interpret-results"),
     });
     const parsed = extractJSON<ResultsInterpretation>(text);
     return ok(parsed);

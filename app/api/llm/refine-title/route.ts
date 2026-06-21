@@ -1,6 +1,6 @@
 import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import { GLOBAL_SYSTEM, refineTitlePrompt } from "@/lib/prompts";
-import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
+import { callLLM, llmTracking, extractJSON, isLLMConfigured } from "@/lib/llm";
 import type { ResearchTypeAnswersV2 } from "@/lib/types";
 import { buildContextBundle, bundleToPromptBlock } from "@/lib/agents/contextBundle";
 import { bundleJournalHints, journalStyleHints } from "@/lib/agents/journalStyle";
@@ -75,6 +75,7 @@ SCIENTIFIC ALIGNMENT — multi-check the entire pipeline:
       maxTokens: 1800,
       temperature: 0.4,
       jsonOnly: true,
+      tracking: llmTracking(req, "/api/llm/refine-title"),
     });
     const parsed = extractJSON<{
       candidates: Array<{ text: string; rationale: string; warnings: string[] }>;

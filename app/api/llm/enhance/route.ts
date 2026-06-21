@@ -1,6 +1,6 @@
 import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import { GLOBAL_SYSTEM } from "@/lib/prompts";
-import { callLLM, isLLMConfigured } from "@/lib/llm";
+import { callLLM, llmTracking, isLLMConfigured } from "@/lib/llm";
 import type { ResearchTypeAnswersV2 } from "@/lib/types";
 import { buildContextBundle, bundleToPromptBlock } from "@/lib/agents/contextBundle";
 
@@ -54,6 +54,7 @@ Return ONLY this JSON:
       maxTokens: 400,
       temperature: 0.2,
       jsonOnly: true,
+      tracking: llmTracking(req, "/api/llm/enhance"),
     });
 
     // Try to parse the JSON; on failure, return the raw text as value.

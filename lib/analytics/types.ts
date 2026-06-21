@@ -12,7 +12,8 @@ export type AnalyticsEventType =
   | "rate_limit"
   | "feature_use"
   | "share_created"
-  | "project_sync";
+  | "project_sync"
+  | "llm_call";
 
 export type TrackEventInput = {
   eventType: AnalyticsEventType;
@@ -40,7 +41,97 @@ export type ObservabilityAlert = {
 
 export type DailyCount = { date: string; count: number };
 
-export type TopItem = { label: string; count: number };
+export type TopItem = { label: string; count: number; tokens?: number };
+
+export type GeoCountryItem = {
+  code: string;
+  name: string;
+  flag: string;
+  count: number;
+  sharePct: number;
+  isPrimary: boolean;
+};
+
+export type UsersInsightPayload = {
+  total: number;
+  activeInRange: number;
+  users: Array<{
+    id: string;
+    ref: string;
+    maskedEmail: string;
+    role: string;
+    registeredAt: string | null;
+    eventCount: number;
+    lastActiveAt: string | null;
+    eventTypes: string[];
+  }>;
+  note: string;
+};
+
+export type PageInsightPayload = {
+  path: string | null;
+  totalViews: number;
+  uniqueSessions: number;
+  topPaths: TopItem[];
+  topReferrers: TopItem[];
+  topCountries: TopItem[];
+  topUserAgents: TopItem[];
+  dailyViews: DailyCount[];
+};
+
+export type GeoInsightPayload = {
+  totalViews: number;
+  primaryGeo: { code: string; name: string; count: number; sharePct: number };
+  countries: GeoCountryItem[];
+  note: string;
+};
+
+export type LLMInsightPayload = {
+  totalCalls: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  errors: number;
+  avgLatencyMs: number;
+  topRoutes: TopItem[];
+  byProvider: TopItem[];
+  dailyCalls: DailyCount[];
+  recent: Array<{
+    id: string;
+    at: string;
+    route: string;
+    provider: string;
+    model: string;
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    latencyMs: number;
+    ok: boolean;
+    userRef: string;
+  }>;
+  note: string;
+};
+
+export type AuditTrailPayload = {
+  userId: string | null;
+  userRef: string | null;
+  totalEvents: number;
+  byEventType: TopItem[];
+  byUser: TopItem[];
+  entries: Array<{
+    id: string;
+    at: string;
+    eventType: string;
+    category: string;
+    summary: string;
+    path: string | null;
+    country: string | null;
+    userRef: string;
+    ipHash: string;
+    severity: string;
+  }>;
+  note: string;
+};
 
 export type ActivityFeedItem = {
   id: string;
@@ -85,6 +176,16 @@ export type ObservabilityPayload = {
   topPages: TopItem[];
   topReferrers: TopItem[];
   topCountries: TopItem[];
+  geoInsight: {
+    primaryGeo: { code: string; name: string; count: number; sharePct: number };
+    saHighlight: boolean;
+  };
+  llmOverview: {
+    calls24h: number;
+    calls7d: number;
+    tokens7d: number;
+    errors7d: number;
+  };
   featureUsage: TopItem[];
   abuseSignals: {
     rateLimitByTier: TopItem[];

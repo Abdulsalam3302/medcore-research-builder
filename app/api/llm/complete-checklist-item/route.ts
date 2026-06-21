@@ -1,6 +1,6 @@
 import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
 import { GLOBAL_SYSTEM } from "@/lib/prompts";
-import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
+import { callLLM, llmTracking, extractJSON, isLLMConfigured } from "@/lib/llm";
 import type { ResearchTypeAnswersV2 } from "@/lib/types";
 import { buildContextBundle, bundleToPromptBlock } from "@/lib/agents/contextBundle";
 
@@ -65,6 +65,7 @@ Return ONLY this JSON:
       maxTokens: 900,
       temperature: 0.15,
       jsonOnly: true,
+      tracking: llmTracking(req, "/api/llm/complete-checklist-item"),
     });
     const parsed = extractJSON<{
       canDraft: boolean;

@@ -1,5 +1,5 @@
 import { bad, handleError, ok, safeJson, enforceRateLimit } from "../../_utils";
-import { callLLM, extractJSON, isLLMConfigured } from "@/lib/llm";
+import { callLLM, llmTracking, extractJSON, isLLMConfigured } from "@/lib/llm";
 import { GLOBAL_SYSTEM, finalReportPrompt } from "@/lib/prompts";
 import type { ProjectState } from "@/lib/types";
 import { buildContextBundle, bundleToPromptBlock } from "@/lib/agents/contextBundle";
@@ -113,6 +113,7 @@ export async function POST(req: Request) {
       maxTokens: 4000,
       temperature: 0.1,
       jsonOnly: true,
+      tracking: llmTracking(req, "/api/llm/final-report"),
     });
     let report = extractJSON<Record<string, unknown>>(text1);
 
@@ -130,6 +131,7 @@ export async function POST(req: Request) {
           maxTokens: 4000,
           temperature: 0.05,
           jsonOnly: true,
+          tracking: llmTracking(req, "/api/llm/final-report"),
         });
         report = extractJSON<Record<string, unknown>>(text2);
       } catch {

@@ -40,9 +40,25 @@ Non-admins are redirected to `/auth?next=/admin/observability`.
 | Feature panels | Lifecycle navigation | usage |
 | Cloud sync | `/api/projects` PUT | usage |
 | Share links | `/api/share` POST | usage |
+| LLM calls | All `/api/llm/*` routes | usage (tokens, latency, route) |
 
 No raw IPs or user emails are stored in events — only hashed IP prefixes and
-aggregates.
+aggregates. The dashboard masks emails in user drill-downs.
+
+## Drill-down API (admin-only)
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/admin/observability/users?days=30` | Registered users (masked emails) |
+| `GET /api/admin/observability/pages?days=30&path=/foo` | Page view breakdown |
+| `GET /api/admin/observability/geo?days=30` | Full country names + SA highlight |
+| `GET /api/admin/observability/llm?days=30` | Token usage & LLM call stats |
+| `GET /api/admin/observability/audit?days=30&userId=...` | Audit trail |
+
+## Schema migration (LLM indexes)
+
+After the base schema, run `docs/ANALYTICS_SCHEMA_MIGRATION.sql` for LLM and
+user audit indexes.
 
 ## Retrospective report
 
