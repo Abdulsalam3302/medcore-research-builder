@@ -4,7 +4,7 @@ Each external service uses a **dedicated project** scoped to MedCore Research Bu
 
 | Integration | Dedicated resource | Purpose |
 |-------------|-------------------|---------|
-| **Supabase** | Org **learning** — project ref `ysxlisnarregiyzksahg` | Auth + cloud manuscript sync |
+| **Supabase** | Org **learning** — project ref `hhmhwfekrzncmjxgjsya` | Auth + cloud manuscript sync |
 | **Vercel** | Project `medcore-research-builder` | Next.js app + API routes |
 | **GitHub** | Repo `Abdulsalam3302/medcore-research-builder` | Source + CI/CD |
 | **LLM** | Env keys on Vercel only | Server-side drafting |
@@ -30,7 +30,7 @@ Unlike split Vite+Railway setups, **API and UI deploy together** on Vercel. Supa
 
 ## Supabase dashboard checklist
 
-Project ref: **ysxlisnarregiyzksahg** (Supabase org: **learning**)
+Project ref: **hhmhwfekrzncmjxgjsya** (Supabase org: **learning**)
 
 1. **Authentication → URL configuration**
    - Site URL: `https://medcore-research-builder.vercel.app`
@@ -57,7 +57,7 @@ Sync from `.env.local`:
 ```bash
 ./scripts/sync-vercel-env.sh .env.local
 printf '%s' 'https://medcore-research-builder.vercel.app' | vercel env add NEXT_PUBLIC_APP_URL production --force --yes
-printf '%s' 'https://ysxlisnarregiyzksahg.supabase.co' | vercel env add NEXT_PUBLIC_SUPABASE_URL production --force --yes
+printf '%s' 'https://hhmhwfekrzncmjxgjsya.supabase.co' | vercel env add NEXT_PUBLIC_SUPABASE_URL production --force --yes
 # … anon key, OWNER_EMAIL, LLM keys, etc.
 vercel deploy --prod
 ```
